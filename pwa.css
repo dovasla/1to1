@@ -26,3 +26,12 @@ body.pwa-pad { padding-bottom: 150px; }
 .install-steps .muted { margin: 12px 0 0; font-size: 15px; }
 .is-installed .install-steps { display: none; }
 @media (display-mode: standalone) { .install-steps { display: none !important; } }
+
+/* Home: one dismissible "Add to your phone" card. Hidden once the app runs installed. */
+.home-install { margin: 0 0 12px; padding: 14px 16px; background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--yellow); border-radius: var(--radius); color: var(--ink); font-family: var(--font-body); }
+.home-install[hidden] { display: none; }
+.home-install h2 { margin: 0 0 8px; font: 700 20px/1.2 var(--font-head); text-transform: uppercase; letter-spacing: .02em; color: var(--gold-text); }
+.home-install p { margin: 0 0 6px; font-size: 16px; line-height: 1.4; }
+.home-install .btn { margin-top: 8px; }
+.is-installed .home-install { display: none; }
+@media (display-mode: standalone) { .home-install { display: none !important; } }

@@ -83,7 +83,7 @@
   <section id="doneView" class="card" hidden>
     <p class="ok">You're in.</p>
     <p class="big" id="keptPin"></p>
-    <p>On the night, open <a href="night.html" class="link" style="display:inline-flex;align-items:center;min-height:48px;color:var(--gold-text);font-weight:800">tonight's page</a> and log in with your first name, last initial and PIN to see your team.</p>
+    <p>On the night, open <a href="app.html" class="link" style="display:inline-flex;align-items:center;min-height:48px;color:var(--gold-text);font-weight:800">the 1TO1 app</a> and log in with your first name, last initial and PIN to see your team.</p>
     <section class="install-steps" aria-labelledby="installHDone">
       <h2 id="installHDone">Get the app</h2>
       <ol class="install-list">
@@ -101,8 +101,8 @@
 
   <section class="card">
     <h2>Already signed up?</h2>
-    <p class="muted">Log in on the night page with your first name, last initial and PIN.</p>
-    <a class="btn ghost" href="night.html">Log in</a>
+    <p class="muted">Log in in the app with your first name, last initial and PIN.</p>
+    <a class="btn ghost" href="app.html">Log in</a>
   </section>
 
   <p class="muted" id="modeNote" hidden></p>
@@ -118,7 +118,7 @@
     { url: cfg.supabaseUrl, anonKey: cfg.supabaseAnonKey });
   var $ = function (id) { return document.getElementById(id); };
   var touched = false;
-  // ?next=app.html sends the player to the app shell after sign-up. Anything else goes to night.html.
+  // ?next=app.html sends the player to the app shell after sign-up. Anything else stays on this page.
   var NEXT_OK = { 'app.html': true };
   var nextPage = new URLSearchParams(location.search).get('next') || '';
 

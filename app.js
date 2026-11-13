@@ -39,17 +39,6 @@
     blue: [['Sam', 'K', 12, 'Steady Starter'], ['Ali', 'R', 9, 'Quick Hands'], ['Jo', 'M', 7, 'Ball Mover'], ['Mia', 'L', 10, 'Rim Runner'], ['Tom', 'W', 3, 'Rookie']],
     red: [['Priya', 'T', 14, 'Floor General'], ['Ben', 'C', 5, 'Corner Sniper'], ['Zoe', 'B', 8, 'Box Out'], ['Leo', 'F', 6, 'Pick and Roll'], ['Ava', 'D', 11, 'Glue Guy']]
   };
-  var TEAMS = [
-    { id: 'b', name: 'Blue', played: 4, wins: 3, points: 14 },
-    { id: 'r', name: 'Red', played: 4, wins: 1, points: 9 }
-  ];
-  var PLAYERS = [
-    { id: 'priya', name: 'Priya Taylor', level: 14, stars: 0, points: 240, wins: 21, banner: 'gold', clanTag: 'OG' },
-    { id: 'sam', name: 'Sam Kowalski', level: 12, stars: 1, points: 212, wins: 19, banner: 'blue', clanTag: 'NX' },
-    { id: 'ava', name: 'Ava Dunn', level: 11, stars: 0, points: 180, wins: 15, banner: '', clanTag: '' },
-    { id: 'mia', name: 'Mia Lewis', level: 10, stars: 0, points: 150, wins: 12, banner: '', clanTag: '' },
-    { id: 'zoe', name: 'Zoe Brown', level: 8, stars: 0, points: 95, wins: 7, banner: '', clanTag: '' }
-  ];
 
   var S = {
     pin: '',         // kept in memory for this session only (I've paid), never stored
@@ -72,6 +61,44 @@
   function hhmm(iso) {
     return new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
   }
+  // ---------- the signed-in player and tonight (real data only) ----------
+  function fullName() { return S.me ? S.me.first + ' ' + S.me.lastInitial : ''; }
+  function teamName(t) { return t && t.name ? String(t.name) : 'TBC'; }
+  function skillText(level) { return window.PlayerRules ? PlayerRules.levelLabel(level) : ''; }
+  function sameP(p) {
+    return !!(S.me && p && String(p.first || '').toLowerCase() === S.me.first.toLowerCase() && String(p.lastInitial || '').toUpperCase() === S.me.lastInitial.toUpperCase());
+  }
+  function myTeamIn(game) {
+    var list = (game && game.teams) || [];
+    for (var i = 0; i < list.length; i++) { if ((list[i].players || []).some(sameP)) return list[i]; }
+    return null;
+  }
+  function oppIn(game) {
+    var mine = myTeamIn(game);
+    return ((game && game.teams) || []).filter(function (t) { return t !== mine; })[0] || null;
+  }
+  function myTeamNow() {
+    var g = nextGame(Date.now()) || ((S.night && S.night.games) || [])[0];
+    return g ? myTeamIn(g) : null;
+  }
+  // Standings only exist once the organiser publishes them. Until then the screens show a plain note.
+  function standingsOf() {
+    var raw = S.night && Array.isArray(S.night.standings) ? S.night.standings : [];
+    return raw.filter(function (t) { return t && t.name; }).slice().sort(function (a, b) { return (b.points || 0) - (a.points || 0); });
+  }
+  // The XP run for the level the server holds (same curve as lib/xp.js totalForLevel). No demo numbers.
+  function myRun() {
+    var L = Math.max(1, Math.min(60, Math.round(Number(S.me && S.me.xpLevel)) || 1));
+    var run = PlayerXp.newRun();
+    run.xp = Math.round((L - 1) * (30 + 1.5 * L));
+    run.maxLevel = L;
+    return run;
+  }
+  function dayOf(iso) { return new Date(iso).toLocaleDateString('en-GB', { weekday: 'long' }) + ', ' + hhmm(iso); }
+  function isInstalled() { return !!((window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true); }
+  function installDismissed() { try { return localStorage.getItem('1to1-install-dismissed') === '1'; } catch (e) { return false; } }
+  function setInstallDismissed() { try { localStorage.setItem('1to1-install-dismissed', '1'); } catch (e) { /* private window: asks again next visit */ } }
+
   function toP(row) { return { first: row[0], lastInitial: row[1], level: row[2], title: row[3] }; }
   function sameGroup(list) { return list.map(toP); }
 
@@ -149,16 +176,16 @@
     var game = nextGame(now);
     var games = (S.night && S.night.games) || [];
     return {
-      player: { name: 'Sam Kowalski', banner: 'gold', nameStyle: '', clanTag: 'NX', skill: 'Steady Starter', games: 34, wins: 19 },
+      player: { name: fullName(), banner: '', nameStyle: '', clanTag: '', skill: skillText(S.me && S.me.level), games: 0, wins: 0 },
       run: S.run,
       coins: S.coins || 0,
-      next: game ? { gameNo: game.no, vs: 'Red', dayLabel: 'Thursday, ' + hhmm(game.startsAt), startsAt: game.startsAt } : null,
-      nextRunLabel: 'Sunday 12:45',
+      next: game ? { gameNo: game.no, vs: teamName(oppIn(game)), dayLabel: dayOf(game.startsAt), startsAt: game.startsAt } : null,
+      nextRunLabel: (S.night && S.night.nextRun) || '',
       schedule: games.map(function (g) {
         var state = game && g.id === game.id ? 'next' : 'todo';
-        return { no: g.no, time: hhmm(g.startsAt), vs: 'Red', state: state };
+        return { no: g.no, time: hhmm(g.startsAt), vs: teamName(oppIn(g)), state: state };
       }),
-      lastNight: { xp: 143, games: 3, wins: 2 },
+      lastNight: null,
       live: S.live,
       updatedAt: null
     };
@@ -198,22 +225,23 @@
     var soon = game && (Date.parse(game.startsAt) - Date.now()) <= 60000 ? game : null;
     var lineup = null;
     if (soon) {
-      var mine = soon.teams.filter(function (t) { return t.name === 'Blue'; })[0];
-      var theirs = soon.teams.filter(function (t) { return t.name !== 'Blue'; })[0];
+      var mine = myTeamIn(soon), theirs = oppIn(soon);
       var pl = function (t) {
         return (t ? t.players : []).map(function (p) {
           return { id: p.first + p.lastInitial, name: p.first + ' ' + p.lastInitial, level: p.level, stars: 0, banner: '', clanTag: '', captain: false };
         });
       };
-      lineup = { game: soon.no, teamA: 'Blue', teamB: 'Red', players: { Blue: pl(mine), Red: pl(theirs) } };
+      lineup = { game: soon.no, teamA: teamName(mine), teamB: teamName(theirs), players: {} };
+      lineup.players[teamName(mine)] = pl(mine);
+      lineup.players[teamName(theirs)] = pl(theirs);
     }
     return {
-      me: { team: 'Blue' },
+      me: { team: teamName(myTeamNow()) },
       now: S.live,
-      nextUp: game ? { team: 'Red' } : null,
+      nextUp: game ? { team: teamName(oppIn(game)) } : null,
       lineup: lineup,
       upcoming: games.map(function (g) {
-        return { no: g.no, time: hhmm(g.startsAt), vs: 'Red', state: game && g.id === game.id ? 'next' : 'todo' };
+        return { no: g.no, time: hhmm(g.startsAt), vs: teamName(oppIn(g)), state: game && g.id === game.id ? 'next' : 'todo' };
       }),
       updatedAt: null
     };
@@ -224,13 +252,14 @@
     else S.liveScreen.update(liveData());
     var ul = $('standings');
     ul.innerHTML = '';
-    TEAMS.slice().sort(function (a, b) { return b.points - a.points; }).forEach(function (t, i) {
+    var st = standingsOf();
+    st.forEach(function (t, i) {
       var li = document.createElement('li');
       var a = document.createElement('span'); a.textContent = (i + 1) + '. ' + t.name;
-      var b = document.createElement('span'); b.className = 'muted'; b.textContent = t.points + ' pts';
+      var b = document.createElement('span'); b.className = 'muted'; b.textContent = (t.points || 0) + ' pts';
       li.appendChild(a); li.appendChild(b); ul.appendChild(li);
     });
-    $('standNote').textContent = 'Standings update during run time.';
+    $('standNote').textContent = st.length ? 'Standings after tonight’s games.' : 'Standings show here after the first game.';
   }
 
   function onPrestige() {
@@ -240,10 +269,14 @@
   }
 
   function renderProfile() {
-    var d = JSON.parse(JSON.stringify(PlayerProfile.SCENARIOS.mid));
-    d.name = 'Sam Kowalski';
-    d.run = S.run;
+    var d = JSON.parse(JSON.stringify(PlayerProfile.SCENARIOS['new']));
+    d.name = fullName();
+    d.skill = Math.max(1, Math.min(30, Math.round(Number(S.me && S.me.level)) || 1));
+    d.run = myRun();
     d.coins = S.coins || 0;
+    d.clanTag = '';
+    d.equipped = {};
+    d.totals = { points: 0, wins: 0, games: 0, nights: 0 };
     var box = $('profile');
     box.innerHTML = PlayerProfile.render(d);
     // The shop lives inside Profile: its "Open shop" link opens the shop in the shell, not a separate page.
@@ -252,7 +285,10 @@
   }
 
   function leaderboardData() {
-    return { teams: TEAMS, players: PLAYERS };
+    return {
+      teams: standingsOf().map(function (t) { return { id: t.name, name: t.name, played: t.played || 0, wins: t.wins || 0, points: t.points || 0 }; }),
+      players: []
+    };
   }
 
   // Sub-screens that are not tabs: Leaderboard (from Live) and Shop (from Profile).
@@ -260,8 +296,13 @@
     var box = $('sub');
     box.innerHTML = '';
     if (name === 'leaderboard') {
-      box.innerHTML = '<h1>Leaderboard</h1><div id="lb"></div>';
-      Leaderboard.mount($('lb'), leaderboardData(), { meId: 'sam', myTeamId: 'b', sort: 'level' });
+      if (!standingsOf().length) {
+        box.innerHTML = '<h1>Leaderboard</h1><p class="muted">Results show here after the first game.</p>';
+      } else {
+        box.innerHTML = '<h1>Leaderboard</h1><div id="lb"></div>';
+        var mt = myTeamNow();
+        Leaderboard.mount($('lb'), leaderboardData(), { meId: S.me ? S.me.id : null, myTeamId: mt ? teamName(mt) : null, sort: 'level' });
+      }
     } else if (name === 'shop') {
       // The frame has its own "Shop" heading, so the shell adds none (QA item 5).
       box.innerHTML = '<iframe class="sub-frame" src="shop/shop.html" title="Shop"></iframe>';
@@ -311,7 +352,7 @@
       tonight: { nightId: NIGHT_ID, label: 'Tonight', amount: S.night && S.night.price ? S.night.price : '', status: S.claimed ? 'claimed' : 'due' },
       history: [],
       cfg: window.PLAYER_APP_CONFIG || {},
-      version: 'Shell 0.2'
+      version: '0.2'
     };
   }
 
@@ -337,9 +378,11 @@
   };
 
   function startApp(player, pin) {
-    S.me = { first: player.first, lastInitial: player.lastInitial, status: player.status };
+    S.me = { id: player.id, first: player.first, lastInitial: player.lastInitial, status: player.status, level: player.level, xpLevel: player.xpLevel };
     S.pin = pin;
-    S.run = JSON.parse(JSON.stringify(PlayerProfile.SCENARIOS.mid.run));
+    S.run = myRun();
+    var inst = $('homeInstall');
+    if (inst) inst.hidden = isInstalled() || installDismissed();
     ensureShop().load();
     if (!S.home) {
       S.home = PlayerHome.mount($('home'), homeData(Date.now()), {
@@ -409,6 +452,7 @@
   function boot() {
     applyTheme(readTheme());
     $('loginBtn').addEventListener('click', logIn);
+    $('homeInstallNo').addEventListener('click', function () { $('homeInstall').hidden = true; setInstallDismissed(); });
     $('lPin').addEventListener('keydown', function (e) { if (e.key === 'Enter') logIn(); });
     $('lPin').addEventListener('input', function () { this.value = this.value.replace(/[^0-9]/g, ''); });
     window.addEventListener('hashchange', route);
