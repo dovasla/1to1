@@ -239,11 +239,13 @@
       // The shell's claimPaid handler holds the PIN for this session. More never sees it.
       PP.render(box, {
         cfg: cfg,
-        backend: { claimPaid: function (f, l, p, nightId) { return h.claimPaid ? h.claimPaid(nightId) : Promise.resolve({ ok: false, reason: 'no-night' }); } },
+        // The shell sends the claim with the sign-in token it holds. The token passed here is only a marker.
+        backend: { claimPaid: function (token, nightId) { return h.claimPaid ? h.claimPaid(nightId) : Promise.resolve({ ok: false, reason: 'no-night' }); } },
         nightId: t.nightId,
         night: { price: t.amount },
         me: st.data.me,
-        pin: 'session'
+        pin: 'session',
+        token: 'shell'
       });
     }
 

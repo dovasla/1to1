@@ -317,8 +317,9 @@
 
   var moreHandlers = {
     claimPaid: function (nightId) {
-      if (!S.me || !S.pin) return Promise.resolve({ ok: false, reason: 'need-pin' });
-      return be.claimPaid(S.me.first, S.me.lastInitial, S.pin, nightId).then(function (r) {
+      // The sign-in token (not the PIN) is what the server checks. It is read from this phone, as on sign-in.
+      if (!S.me) return Promise.resolve({ ok: false, reason: 'signed-out' });
+      return be.claimPaid(readToken(), nightId).then(function (r) {
         if (r && r.ok) S.claimed = true;
         if (S.moreScreen) S.moreScreen.update(moreData());
         return r;
