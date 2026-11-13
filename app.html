@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0E0E0E">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="1TO1">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png">
+<link rel="stylesheet" href="pwa.css">
+<link rel="manifest" href="manifest.webmanifest">
+<title>1TO1 Basketball</title>
+<link rel="icon" href="icons/icon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="app.css">
+<link rel="stylesheet" href="app-tokens.css">
+<link rel="stylesheet" href="lib/player-name.css">
+<link rel="stylesheet" href="reveal/reveal.css">
+<link rel="stylesheet" href="loading/loading.css">
+<link rel="stylesheet" href="screens/home/home.css">
+<link rel="stylesheet" href="screens/profile/profile.css">
+<link rel="stylesheet" href="screens/leaderboard/leaderboard.css">
+<link rel="stylesheet" href="screens/live/live.css">
+<link rel="stylesheet" href="pay/pay.css">
+<link rel="stylesheet" href="screens/more/more.css">
+<link rel="stylesheet" href="app-shell.css">
+</head>
+<body>
+
+<!-- Log in (shown first, after the loading screen). Session is kept in memory only, as in night.html. -->
+<section class="login" id="login" aria-labelledby="loginH" hidden>
+  <h1 id="loginH">Log in</h1>
+  <p class="muted">Type your first name, last initial and PIN.</p>
+  <div class="card">
+    <label for="lFirst">First name</label>
+    <input id="lFirst" type="text" autocomplete="given-name" maxlength="20">
+    <label for="lLi">Last initial</label>
+    <input id="lLi" type="text" autocomplete="off" maxlength="2">
+    <label for="lPin">PIN</label>
+    <input id="lPin" type="password" inputmode="numeric" autocomplete="current-password" pattern="[0-9]*" maxlength="4">
+    <p class="err" id="loginErr" role="alert" hidden></p>
+    <button class="btn yellow" id="loginBtn" type="button">Log in</button>
+  </div>
+  <p class="muted centre">New here? <a href="signup.html?next=app.html" class="link tap">Sign up</a></p>
+  <p class="muted centre">Forgot your PIN? Ask Jord at the desk.</p>
+</section>
+
+<!-- The app shell: four tabs. Each tab is one view; the router shows one at a time. -->
+<div class="shell" id="shell" hidden>
+  <main class="shell-main" id="main">
+
+    <section class="view" id="v-home" data-view="home" aria-label="Home">
+      <div id="home"></div>
+    </section>
+
+    <section class="view" id="v-live" data-view="live" aria-label="Live" hidden>
+      <div id="live"></div>
+      <h2>Standings</h2>
+      <div class="card">
+        <ul class="list" id="standings"></ul>
+        <p class="muted" id="standNote"></p>
+        <p class="muted"><a href="#live/leaderboard" class="link">See the leaderboard</a></p>
+      </div>
+    </section>
+
+    <section class="view" id="v-profile" data-view="profile" aria-label="Profile" hidden>
+      <div id="profile"></div>
+    </section>
+
+    <section class="view" id="v-more" data-view="more" aria-label="More" hidden>
+      <div id="more"></div>
+    </section>
+
+    <section class="view" id="v-sub" data-view="sub" hidden>
+      <a href="#more" class="back" id="backLink">Back to More</a>
+      <div id="sub"></div>
+    </section>
+
+  </main>
+
+  <nav class="tabs" id="tabs" aria-label="Main">
+    <a href="#home" data-tab="home">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.2 11.4 L12.1 4.6 L19.9 11.2"/><path d="M6.4 9.9 V19.6 H18.1 V10.1"/><path d="M10.3 19.7 V14.6 H13.9 V19.8"/></svg>
+      <span>Home</span>
+    </a>
+    <a href="#live" data-tab="live">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12.1" cy="11.9" r="2.1"/><path d="M7.3 7.2 C4.7 9.5 4.9 14.6 7.1 16.9"/><path d="M16.9 7.1 C19.4 9.4 19.1 14.8 16.8 17.0"/></svg>
+      <span>Live</span>
+    </a>
+    <a href="#profile" data-tab="profile">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12.2" cy="8.6" r="3.6"/><path d="M5.3 19.8 C6.1 15.7 8.7 14.1 12.1 14.2 C15.3 14.3 17.9 15.6 18.7 19.7"/></svg>
+      <span>Profile</span>
+    </a>
+    <a href="#more" data-tab="more">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.6 7.3 H19.3"/><path d="M4.4 12.3 H19.6"/><path d="M4.8 17.2 H19.1"/></svg>
+      <span>More</span>
+    </a>
+  </nav>
+</div>
+
+<script src="config.js"></script>
+<script src="rules.js"></script>
+<script src="backend.js"></script>
+<script src="lib/xp.js"></script>
+<script src="lib/player-name.js"></script>
+<script src="loading/loading.js"></script>
+<script src="reveal/reveal.js"></script>
+<script src="shop/cosmetics.js"></script>
+<script src="shop/shop-rules.js"></script>
+<script src="shop/shop-backend.js"></script>
+<script src="screens/home/home.js"></script>
+<script src="screens/profile/profile.js"></script>
+<script src="screens/leaderboard/leaderboard.js"></script>
+<script src="screens/live/live.js"></script>
+<script src="pay/pay.js"></script>
+<script src="screens/more/more.js"></script>
+<script src="app.js"></script>
+<script src="pwa.js"></script>
+</body>
+</html>

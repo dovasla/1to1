@@ -1,0 +1,85 @@
+/* My Profile screen. Own file: screens/profile/profile.css. Uses tokens from ../../app.css and chips from ../../lib/player-name.css.
+   Dark base, yellow headings, bold caps. 48px taps, 14px minimum text. Reduced motion stops every animation. */
+
+.profile { max-width: 520px; margin: 0 auto; padding: 16px 16px 40px; box-sizing: border-box; }
+
+.p-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.p-top h1 { margin: 4px 0 6px; }
+.coins {
+  display: inline-flex; align-items: center; min-height: 48px; padding: 8px 14px; border-radius: 999px;
+  background: var(--yellow); color: #0E0E0E; font-weight: 900; text-transform: uppercase;
+  letter-spacing: .04em; font-size: 15px; white-space: nowrap;
+}
+
+.cap {
+  display: block; font-size: 14px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--muted); margin: 0 0 10px;
+}
+
+/* Player card: ticket, card C. Cream paper in both themes, so the ink is set here. */
+.ticket {
+  --ink: #14161B; --card: #F6EFE2; --muted: #3B3F4A; --yellow: #B88A00;
+  position: relative; background: #F6EFE2; color: #14161B; border-radius: 18px;
+  padding: 16px; margin: 12px 0; overflow: hidden;
+}
+.tk-top { display: flex; align-items: center; gap: 10px; }
+.tk-brand {
+  background: #FF3D8B; color: #fff; font-weight: 900; padding: 4px 10px; border-radius: 8px;
+  font-size: 14px; letter-spacing: .04em;
+}
+.tk-admit { margin-left: auto; font-size: 14px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.tk-name { margin: 14px 0 6px; }
+.ticket .pn { background: transparent; min-height: 0; padding: 0; overflow: visible; }
+.ticket .pn-name { font-size: 40px; font-weight: 900; line-height: .98; text-transform: uppercase; }
+.ticket .pn-lv { color: #1F4FD1; }
+.ticket .pn-stars { color: #B88A00; }
+.ticket .pn-clan { color: #F6EFE2; background: #14161B; }
+.tk-rule { border-top: 2px dashed #14161B; margin: 14px 0 10px; }
+.tk-foot { margin: 0; font-size: 14px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+
+/* Level block. */
+.lvl { display: flex; align-items: center; gap: 14px; }
+.lvl-num { font-size: 64px; font-weight: 900; line-height: .9; color: var(--yellow); }
+.lvl-word { display: block; font-size: 14px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.badge {
+  display: inline-block; margin-top: 6px; padding: 4px 10px; border-radius: 999px; background: var(--blue);
+  color: #fff; font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em;
+}
+.bar { height: 14px; background: var(--line); border-radius: 999px; overflow: hidden; margin: 14px 0 8px; }
+.bar i { display: block; height: 100%; background: var(--yellow); border-radius: 999px; transition: width .6s ease; }
+.stars-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+.stars { font-size: 22px; letter-spacing: 3px; color: var(--yellow); }
+.stars .off { color: var(--line); }
+.prestige { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+.prestige p { margin: 0 0 4px; }
+.prestige .btn { margin-top: 10px; }
+
+/* Season numbers. */
+.grid4 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.stat { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; }
+.stat b { display: block; font-size: 34px; font-weight: 900; line-height: 1; color: var(--ink); }
+.stat span {
+  display: block; margin-top: 6px; font-size: 14px; font-weight: 800; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--muted);
+}
+
+/* Skill rating. */
+.skill-num { margin: 0; font-size: 40px; font-weight: 900; line-height: 1; color: var(--ink); }
+.skill-num small { font-size: 16px; font-weight: 800; color: var(--muted); }
+.skill-name { margin: 6px 0 8px; font-size: 20px; font-weight: 900; text-transform: uppercase; color: var(--yellow); }
+
+/* Equipped look. */
+.profile .list li { min-height: 48px; align-items: center; }
+.profile .list li .muted { text-align: right; }
+.profile .card > .btn { margin-top: 14px; }
+
+select {
+  width: 100%; min-height: 48px; padding: 10px 12px; border-radius: 12px; border: 2px solid var(--line);
+  background: var(--card); color: var(--ink); font: inherit;
+}
+
+/* Reduced motion: no transitions or animations anywhere on this screen. */
+@media (prefers-reduced-motion: reduce) {
+  .profile *, .profile *::before, .profile *::after { animation: none !important; transition: none !important; }
+}
+.frame.reduce *, .frame.reduce *::before, .frame.reduce *::after { animation: none !important; transition: none !important; }

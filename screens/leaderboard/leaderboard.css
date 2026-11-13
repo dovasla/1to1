@@ -1,0 +1,105 @@
+/* Leaderboard screen. Own file: screens/leaderboard/leaderboard.css.
+   Uses the shared Courtside tokens (app-tokens.css, loaded after app.css). No fixed colours.
+   Headings take their colour from app-tokens (yellow dark, blue in Bright hall).
+   Rows 48px min, labels 15px min, two-word headings, no chevrons. Reduced motion stops every animation. */
+
+.lb { max-width: 520px; margin: 0 auto; padding: 20px 16px 40px; color: var(--ink); }
+.lb h2 { font-size: 20px; margin: 24px 0 10px; }
+.lb .muted { color: var(--muted); font-size: 15px; margin: 0 0 12px; }
+
+.lb-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+
+.lb-row {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.lb-rank {
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1;
+  color: var(--gold-text);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.lb-row > .pn { min-width: 0; }
+
+/* Me or my team: a thick yellow frame on the row. Outline, so it does not fight the row effect ring. */
+.lb-row--me > .pn,
+.lb-row--me > .lb-card { outline: 3px solid var(--gold-text); outline-offset: -3px; }
+
+/* Team name card, same height as a player row. */
+.lb-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  min-height: 48px;
+  min-width: 0;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: var(--card);
+  border: 1px solid var(--line);
+}
+.lb-team { font-size: 16px; font-weight: 900; text-transform: uppercase; letter-spacing: .03em; overflow-wrap: anywhere; }
+.lb-sub { font-size: 15px; color: var(--muted); }
+
+.lb-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-size: 15px;
+  color: var(--muted);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.lb-stat b { font-size: 18px; font-weight: 900; color: var(--ink); }
+.lb-you {
+  margin-top: 2px;
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--on-yellow);
+  background: var(--yellow);
+  border-radius: 6px;
+  padding: 1px 6px;
+}
+
+/* Level / Points switch. Two big buttons, 48px tall. */
+.lb-seg { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 0 0 10px; }
+.lb-seg button {
+  min-height: 48px;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  cursor: pointer;
+}
+.lb-seg button[aria-pressed="true"] { background: var(--yellow); border-color: var(--yellow); color: var(--on-yellow); }
+.lb-seg button:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+
+.lb-empty {
+  margin: 0;
+  padding: 16px;
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+  color: var(--muted);
+  font-size: 15px;
+  text-align: center;
+}
+
+/* Reduced motion: no transitions or animations on this screen or its name chips. */
+@media (prefers-reduced-motion: reduce) {
+  .lb *, .lb *::before, .lb *::after { animation: none !important; transition: none !important; }
+}
+:root[data-reduce-motion="1"] .lb *,
+:root[data-reduce-motion="1"] .lb *::before,
+:root[data-reduce-motion="1"] .lb *::after { animation: none !important; transition: none !important; }

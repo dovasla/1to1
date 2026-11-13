@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0E0E0E">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png">
+<title>No signal</title>
+<link rel="icon" href="icons/icon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="app.css">
+<link rel="stylesheet" href="pwa.css">
+</head>
+<body>
+<main>
+  <h1>No signal</h1>
+  <p class="muted">This screen has not been saved on this phone yet. Open it once when you have signal, and it will open next time, even with no signal.</p>
+  <p class="muted">Screens you have opened before still show.</p>
+  <button class="btn yellow" type="button" id="retry">Try again</button>
+  <p class="muted centre"><a href="app.html" class="link">Go to the app</a></p>
+</main>
+<script src="pwa.js"></script>
+<script>
+  document.getElementById('retry').addEventListener('click', function () { location.reload(); });
+</script>
+</body>
+</html>

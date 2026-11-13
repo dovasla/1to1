@@ -1,0 +1,53 @@
+/* More tab (player app). Colours come from app-tokens.css (dark, and Bright hall). 48px taps, 14px minimum labels.
+   No chevrons. Reduced motion is handled in app-shell.css. */
+
+.more-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+
+.more-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  width: 100%; min-height: 56px; padding: 12px 16px; box-sizing: border-box;
+  border: 1px solid var(--line); border-radius: var(--radius); background: var(--card);
+  color: var(--ink); font: inherit; text-align: left; cursor: pointer;
+}
+.more-row .more-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.more-row .muted { font-size: 14px; }
+.more-title { font-size: 18px; font-weight: 800; line-height: 1.2; }
+.more-switch { cursor: default; }
+.more-switch .switch { flex: 0 0 auto; }
+
+.more-logout { margin-top: 6px; }
+.more-version { margin: 14px 0 0; }
+.more-back { margin-top: 12px; }
+
+/* Payments */
+.more-label { margin: 0; font-size: 14px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.more-big { margin: 2px 0 2px; font-family: var(--font-head); font-size: 48px; font-weight: 700; line-height: 1; color: var(--ink); }
+.more-tone { margin: 0; font-size: 16px; font-weight: 800; }
+.tone-due { color: var(--gold-text); }
+.tone-wait { color: var(--blue-text); }
+.tone-paid { color: var(--green); }
+.more-hist li { font-size: 16px; }
+.more-hist .more-tone { font-size: 14px; white-space: nowrap; }
+#morePayBox { margin-top: 4px; }
+#morePayBox .muted { margin: 0; }
+
+/* My details */
+.more-card-note { margin: 6px 0 0; }
+.more-team { margin: 14px 0 6px; padding: 0; border: 0; }
+.more-team legend { padding: 0; margin-bottom: 6px; }
+.more-radio { display: flex; align-items: center; gap: 12px; min-height: 48px; margin: 0; font-size: 18px; font-weight: 700; text-transform: none; letter-spacing: 0; cursor: pointer; }
+.more-radio input[type="radio"] { width: 24px; height: 24px; margin: 0; accent-color: var(--yellow); }
+.more-msg { min-height: 20px; margin: 10px 0 0; font-size: 15px; font-weight: 700; color: var(--ink); }
+.more-save { margin-top: 12px; }
+
+/* Rules */
+.more-rules { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 10px; font-size: 17px; }
+
+/* Keep wide text inside the phone width */
+.more-row, .more-title, .more-text, .more-hist li span { overflow-wrap: anywhere; }
+
+/* Focus lands on the panel title after a tap: no box around it. Keyboard focus rings elsewhere stay. */
+h1[tabindex="-1"]:focus { outline: none; }
+
+/* pay.css draws the hint in light grey, which is hard to read on Bright hall. Use the theme's muted ink here. */
+#morePayBox .pay-hint { color: var(--muted); }

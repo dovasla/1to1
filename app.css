@@ -1,0 +1,51 @@
+/* 1TO1 player app. Dark base, yellow headings, blue actions. Light mode follows the phone setting. */
+:root { --bg:#0E0E0E; --card:#1A1C22; --ink:#F4F5F7; --muted:#AEB4C0; --yellow:#FFD21F; --blue:#0A5CFF; --red:#FF6B6B; --green:#2BD67B; --line:#2C2F38; --radius:16px; }
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) { --bg:#F4F6FA; --card:#FFFFFF; --ink:#111318; --muted:#4B5263; --yellow:#B88A00; --line:#D9DEE8; }
+}
+:root[data-theme="light"] { --bg:#F4F6FA; --card:#FFFFFF; --ink:#111318; --muted:#4B5263; --yellow:#B88A00; --line:#D9DEE8; }
+* { box-sizing: border-box; }
+/* Barlow, the same family as the organiser. Files copied from organiser-v9/fonts. */
+@font-face { font-family: 'Barlow'; src: url('fonts/barlow-400.woff2') format('woff2'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'Barlow'; src: url('fonts/barlow-600.woff2') format('woff2'); font-weight: 600; font-display: swap; }
+@font-face { font-family: 'Barlow'; src: url('fonts/barlow-700.woff2') format('woff2'); font-weight: 700; font-display: swap; }
+@font-face { font-family: 'Barlow Condensed'; src: url('fonts/barlowcondensed-700.woff2') format('woff2'); font-weight: 700; font-display: swap; }
+body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.45 Barlow, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+main { max-width:520px; margin:0 auto; padding:20px 16px 40px; }
+h1 { font-size:30px; text-transform:uppercase; letter-spacing:.02em; color:var(--yellow); margin:8px 0 6px; }
+h2 { font-size:20px; text-transform:uppercase; color:var(--yellow); margin:24px 0 10px; }
+p { margin:0 0 12px; }
+.muted { color:var(--muted); font-size:15px; }
+.card { background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:16px; margin:0 0 12px; }
+label { display:block; font-weight:700; margin:12px 0 6px; }
+input[type="text"], input[type="email"], input[type="password"] { width:100%; min-height:48px; padding:10px 12px; border-radius:12px; border:2px solid var(--line); background:var(--card); color:var(--ink); font:inherit; }
+input:focus-visible, button:focus-visible, a:focus-visible { outline:3px solid var(--blue); outline-offset:2px; }
+fieldset { border:0; padding:0; margin:14px 0 0; }
+legend { font-weight:700; margin-bottom:6px; }
+.opts { display:grid; grid-template-columns:repeat(5, 1fr); gap:6px; }
+.opts label { margin:0; }
+.opts input { position:absolute; opacity:0; pointer-events:none; }
+.opts span { display:flex; align-items:center; justify-content:center; min-height:48px; border:2px solid var(--line); border-radius:12px; font-weight:800; cursor:pointer; background:var(--card); }
+.opts input:checked + span { border-color:var(--yellow); background:var(--yellow); color:#0E0E0E; }
+.opts input:focus-visible + span { outline:3px solid var(--blue); outline-offset:2px; }
+.scale { display:flex; justify-content:space-between; font-size:14px; color:var(--muted); margin-top:4px; }
+.check { display:flex; gap:10px; align-items:flex-start; margin-top:14px; font-weight:400; }
+.check input { width:24px; height:24px; margin-top:2px; }
+.btn { display:flex; align-items:center; justify-content:center; width:100%; min-height:52px; margin-top:12px; padding:12px 16px; border:0; border-radius:14px; background:var(--blue); color:#fff; font:inherit; font-size:18px; font-weight:800; text-decoration:none; cursor:pointer; text-align:center; }
+.btn.yellow { background:var(--yellow); color:#0E0E0E; }
+.btn.ghost { background:transparent; color:var(--ink); border:2px solid var(--line); }
+.btn.small { width:auto; min-height:48px; margin:0; padding:10px 14px; font-size:16px; }
+.row { display:flex; gap:10px; }
+.row > * { flex:1; }
+.err { color:var(--red); font-weight:700; font-size:15px; margin:6px 0 0; }
+.ok { color:var(--green); font-weight:700; }
+.code { font-size:34px; font-weight:900; letter-spacing:.12em; color:var(--yellow); }
+.banner { background:var(--card); border:2px dashed var(--yellow); border-radius:var(--radius); padding:10px 12px; font-size:15px; margin:0 0 12px; }
+.list { list-style:none; margin:0; padding:0; }
+.list li { display:flex; justify-content:space-between; gap:10px; padding:10px 0; border-bottom:1px solid var(--line); }
+.list li:last-child { border-bottom:0; }
+.big { font-size:26px; font-weight:900; }
+.actions { display:flex; gap:10px; margin-top:12px; flex-wrap:wrap; }
+.actions .btn { margin:0; flex:1; }
+[hidden] { display:none !important; }
+@media (max-width:360px) { .opts { grid-template-columns:repeat(5,1fr); gap:4px; } .opts span { font-size:15px; } h1 { font-size:26px; } }

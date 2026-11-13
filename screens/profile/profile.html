@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0E0E0E">
+<title>My Profile</title>
+<link rel="stylesheet" href="../../app.css">
+<link rel="stylesheet" href="../../app-tokens.css">
+<link rel="stylesheet" href="../../lib/player-name.css">
+<link rel="stylesheet" href="profile.css">
+</head>
+<body>
+<main id="screen" class="profile"></main>
+
+<script src="../../lib/xp.js"></script>
+<script src="../../lib/player-name.js"></script>
+<script src="../../rules.js"></script>
+<script src="../../shop/cosmetics.js"></script>
+<script src="profile.js"></script>
+<script>
+  /* Open with ?s=new, ?s=mid or ?s=max to see each mock player. Default is mid. */
+  (function () {
+    var P = window.PlayerProfile;
+    var key = new URLSearchParams(location.search).get('s');
+    if (!P.SCENARIOS[key]) key = 'mid';
+    var data = JSON.parse(JSON.stringify(P.SCENARIOS[key]));
+    var el = document.getElementById('screen');
+
+    function paint() {
+      el.innerHTML = P.render(data);
+      P.bind(el, function () {
+        data.run = PlayerXp.prestige(data.run || PlayerXp.newRun());
+        paint();
+      });
+    }
+    paint();
+  })();
+</script>
+</body>
+</html>

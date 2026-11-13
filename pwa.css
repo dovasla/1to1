@@ -1,0 +1,12 @@
+/* 1TO1 player app: offline bar and Add-to-Home-Screen card. Own colours so it works before app.css loads. */
+.pwa-offline { position: fixed; top: 0; left: 0; right: 0; z-index: 60; padding: 10px 16px; background: #FFD21F; color: #0E0E0E; font: 600 15px/1.35 Barlow, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; text-align: center; }
+.pwa-offline[hidden] { display: none; }
+.pwa-install { position: fixed; left: 0; right: 0; bottom: 0; z-index: 60; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: #1A1C22; color: #F4F5F7; border-top: 2px solid #FFD21F; font: 400 16px/1.4 Barlow, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+.pwa-install[hidden] { display: none; }
+.pwa-install-text { margin: 0; flex: 1 1 220px; min-width: 0; }
+.pwa-install-actions { display: flex; gap: 8px; }
+.pwa-btn { min-height: 48px; min-width: 48px; padding: 10px 16px; border-radius: 14px; border: 0; font: 800 16px/1 Barlow, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; cursor: pointer; }
+.pwa-btn[hidden] { display: none; }
+.pwa-yes { background: #FFD21F; color: #0E0E0E; }
+.pwa-no { background: transparent; color: #F4F5F7; border: 2px solid #2C2F38; }
+body.pwa-pad { padding-bottom: 150px; }

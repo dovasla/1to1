@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0E0E0E">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="1TO1">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png">
+<link rel="stylesheet" href="pwa.css">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Join the run</title>
+<link rel="icon" href="icons/icon-32.png" sizes="32x32" type="image/png">
+<script>
+  // Same theme rule as the app: the saved choice wins, otherwise the phone setting (handled in CSS).
+  try { var t = localStorage.getItem('1to1-theme'); if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); } catch (e) { /* private window: phone setting */ }
+</script>
+<link rel="stylesheet" href="app.css">
+<link rel="stylesheet" href="app-tokens.css">
+<style>
+  /* 48px tap area for the skill slider (QA item 5). */
+  #level { display:block; width:100%; height:48px; margin:6px 0 0; cursor:pointer; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Join the run</h1>
+  <p class="muted">Use your first name and the first letter of your last name. Example: John Smith becomes <b>John S</b>. We keep nothing else.</p>
+
+  <section id="formView" class="card">
+    <form id="f" novalidate>
+      <label for="first">First name</label>
+      <input id="first" name="first" type="text" autocomplete="given-name" maxlength="20" required>
+      <p class="err" id="e-first" hidden></p>
+
+      <label for="li">Last initial</label>
+      <input id="li" name="lastInitial" type="text" autocomplete="off" maxlength="2" required>
+      <p class="err" id="e-lastInitial" hidden></p>
+
+      <div id="extraRow" hidden>
+        <label for="extra">More letters of your surname</label>
+        <input id="extra" name="extra" type="text" autocomplete="off" maxlength="10">
+        <p class="err" id="e-extra" hidden></p>
+      </div>
+
+      <label for="door">Door code</label>
+      <p class="muted">Ask at the desk. You need it to join on the night.</p>
+      <input id="door" name="door" type="text" autocomplete="off" autocapitalize="characters" maxlength="8">
+      <p class="err" id="e-door" hidden></p>
+
+      <label for="pin">Your 4-digit PIN</label>
+      <p class="muted">You use this with your name to log in later. Pick four digits you will remember. Don't use your birthday or anything obvious.</p>
+      <input id="pin" name="pin" type="password" inputmode="numeric" autocomplete="new-password" pattern="[0-9]*" maxlength="4" required>
+      <p class="err" id="e-pin" hidden></p>
+
+      <fieldset>
+        <legend>How good are you?</legend>
+        <p class="big" id="lvlName">Slide to pick</p>
+        <p class="muted" id="lvlNum"></p>
+        <input id="level" type="range" min="1" max="30" step="1" value="15" aria-describedby="lvlName">
+        <div class="scale"><span>Noob</span><span>HIM</span></div>
+        <p class="err" id="e-level" hidden></p>
+      </fieldset>
+
+      <label class="check"><input id="u18" type="checkbox"> <span>I am under 18. I will check in at the desk.</span></label>
+
+      <button class="btn" type="submit" id="send">Send</button>
+      <p class="err" id="e-form" hidden></p>
+    </form>
+  </section>
+
+  <section id="doneView" class="card" hidden>
+    <p class="ok">You're in.</p>
+    <p class="big" id="keptPin"></p>
+    <p>On the night, open <a href="night.html">tonight's page</a> and log in with your first name, last initial and PIN to see your team.</p>
+    <button class="btn ghost" id="again" type="button">Sign up someone else</button>
+  </section>
+
+  <section class="card">
+    <h2>Already signed up?</h2>
+    <p class="muted">Log in on the night page with your first name, last initial and PIN.</p>
+    <a class="btn ghost" href="night.html">Log in</a>
+  </section>
+
+  <p class="muted" id="modeNote" hidden></p>
+</main>
+<script src="config.js"></script>
+<script src="rules.js"></script>
+<script src="backend.js"></script>
+<script>
+(function () {
+  'use strict';
+  var cfg = window.PLAYER_APP_CONFIG || {};
+  var be = PlayerBackend.create(cfg.backend === 'supabase' ? 'supabase' : 'mock',
+    { url: cfg.supabaseUrl, anonKey: cfg.supabaseAnonKey });
+  var $ = function (id) { return document.getElementById(id); };
+  var touched = false;
+  // ?next=app.html sends the player to the app shell after sign-up. Anything else goes to night.html.
+  var NEXT_OK = { 'app.html': true };
+  var nextPage = new URLSearchParams(location.search).get('next') || '';
+
+  if (be.kind === 'mock') { $('modeNote').hidden = false; $('modeNote').textContent = 'Test mode: this device only.'; }
+
+  // Skill slider: 1 to 30, each with a name. Nothing is picked until the player moves it.
+  function drawLevel() {
+    var n = Number($('level').value);
+    $('lvlName').textContent = touched ? PlayerRules.levelLabel(n) : 'Slide to pick';
+    $('lvlNum').textContent = touched ? 'Level ' + n + ' of 30' : '';
+  }
+  $('level').addEventListener('input', function () { touched = true; $('e-level').hidden = true; drawLevel(); });
+  drawLevel();
+
+  function showErrors(errors) {
+    document.querySelectorAll('.err').forEach(function (p) { if (p.id !== 'e-form') p.hidden = true; });
+    Object.keys(errors).forEach(function (k) {
+      var p = $('e-' + k);
+      if (p) { p.textContent = errors[k]; p.hidden = false; }
+    });
+  }
+
+  $('pin').addEventListener('input', function () { this.value = this.value.replace(/[^0-9]/g, ''); $('e-pin').hidden = true; });
+
+  $('f').addEventListener('submit', function (e) {
+    e.preventDefault();
+    $('e-form').hidden = true;
+    var v = PlayerRules.validateSignup({
+      first: $('first').value, lastInitial: $('li').value,
+      level: touched ? Number($('level').value) : null
+    });
+    // Under-18 is not sent online (Fable A6). The tick box is a reminder only; the desk takes it from there.
+    var pin = PlayerRules.validatePin($('pin').value);
+    var errors = v.errors;
+    if (!pin.ok) errors.pin = pin.error;
+    showErrors(errors);
+    if (!v.ok || !pin.ok) return;
+    $('send').disabled = true;
+    v.clean.extra = $('extra').value.replace(/[^A-Za-z]/g, '').toLowerCase();
+    be.signUp(v.clean, pin.pin, $('door').value).then(function (r) {
+      if (!r.ok) {
+        $('send').disabled = false;
+        if (r.reason === 'name-taken') {
+          // Unique names (Fable A2): the name is already used. Ask for more letters, never say whose PIN.
+          var first = $('first').value.trim(), li = $('li').value.trim().toUpperCase();
+          $('e-lastInitial').textContent = "There's already a " + first + ' ' + li + '. Add one more letter.';
+          $('e-lastInitial').hidden = false;
+          $('extraRow').hidden = false;
+          $('extra').focus();
+        }
+        else if (r.reason === 'bad-door') { $('e-door').textContent = 'That door code is not right. Ask at the desk.'; $('e-door').hidden = false; }
+        else if (r.reason === 'busy') { $('e-form').textContent = 'Sign-up is busy right now. Try again in a minute.'; $('e-form').hidden = false; }
+        else { $('e-form').textContent = 'Check your name and try again.'; $('e-form').hidden = false; }
+        return;
+      }
+      // The PIN you keep is shown once. It may differ from the one you typed.
+      $('keptPin').textContent = 'Your PIN is ' + r.pin + '. Remember it.';
+      $('pin').value = '';
+      // Only known pages can be the next step (no open redirects).
+      if (NEXT_OK[nextPage]) { location.href = nextPage; return; }
+      $('formView').hidden = true;
+      $('doneView').hidden = false;
+      $('doneView').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }).catch(function () {
+      $('e-form').textContent = 'Could not send. Check the signal and try again.';
+      $('e-form').hidden = false;
+    }).then(function () { $('send').disabled = false; });
+  });
+
+  $('again').addEventListener('click', function () {
+    $('f').reset(); $('u18').checked = false; touched = false; drawLevel();
+    $('doneView').hidden = true; $('formView').hidden = false;
+  });
+})();
+</script>
+<script src="pwa.js"></script>
+</body>
+</html>

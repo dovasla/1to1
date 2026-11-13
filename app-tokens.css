@@ -1,0 +1,48 @@
+/* Courtside tokens for the player app (shared). Source: player-app-plan/DECISIONS-AND-BRAND.md section 4.
+   Loads after app.css, so these values win. Keeps the old names (--bg, --card, --ink...) so every screen keeps working.
+   Fonts: the organiser's Barlow files, copied to fonts/. Nothing loads from the web. */
+
+@font-face { font-family:"Barlow"; font-weight:400; font-style:normal; font-display:swap; src:url("fonts/barlow-400.woff2") format("woff2"); }
+@font-face { font-family:"Barlow"; font-weight:600; font-style:normal; font-display:swap; src:url("fonts/barlow-600.woff2") format("woff2"); }
+@font-face { font-family:"Barlow"; font-weight:700; font-style:normal; font-display:swap; src:url("fonts/barlow-700.woff2") format("woff2"); }
+@font-face { font-family:"Barlow Condensed"; font-weight:700; font-style:normal; font-display:swap; src:url("fonts/barlowcondensed-700.woff2") format("woff2"); }
+
+:root {
+  /* Colour: dark is the default */
+  --bg:#0E0E0E; --card:#1A1C22; --raised:#23262E; --line:#2C2F38;
+  --ink:#F4F5F7; --muted:#AEB4C0;
+  --yellow:#FFD21F; --on-yellow:#0E0E0E; --gold-text:#FFD21F;
+  --blue:#0A5CFF; --blue-text:#6FA0FF;
+  --red:#FF6B6B; --green:#2BD67B;
+  --tabs-bg:#121419;
+
+  /* Shape and motion */
+  --radius:16px; --radius-btn:12px;
+  --ease:cubic-bezier(.2,.7,.2,1);
+  --font-body:"Barlow", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-head:"Barlow Condensed", "Barlow", system-ui, sans-serif;
+}
+
+/* Bright hall: light colours. Same rule as app.css: explicit choice first, then the phone setting. */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg:#F4F6FA; --card:#FFFFFF; --raised:#EDF0F5; --line:#D9DEE8;
+    --ink:#111318; --muted:#4B5263;
+    --yellow:#FFD21F; --gold-text:#6B4E00;
+    --blue-text:#0A5CFF; --red:#C62828; --green:#0E7A43; --tabs-bg:#FFFFFF;
+  }
+}
+:root[data-theme="light"] {
+  --bg:#F4F6FA; --card:#FFFFFF; --raised:#EDF0F5; --line:#D9DEE8;
+  --ink:#111318; --muted:#4B5263;
+  --gold-text:#6B4E00; --blue-text:#0A5CFF; --red:#C62828; --green:#0E7A43; --tabs-bg:#FFFFFF;
+}
+
+body { font-family:var(--font-body); font-size:16px; line-height:1.4; background:var(--bg); color:var(--ink); }
+h1, h2 { font-family:var(--font-head); font-weight:700; text-transform:uppercase; letter-spacing:.02em; }
+h1 { font-size:28px; line-height:1.1; color:var(--yellow); }
+h2 { font-size:20px; line-height:1.1; color:var(--yellow); }
+:root[data-theme="light"] h1, :root[data-theme="light"] h2 { color:var(--blue-text); }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) h1, :root:not([data-theme="dark"]) h2 { color:var(--blue-text); } }
+label, .label { font-size:14px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; }
+.muted { font-size:14px; color:var(--muted); }

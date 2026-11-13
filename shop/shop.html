@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0E0E0E">
+<title>Shop</title>
+<link rel="stylesheet" href="../lib/player-name.css">
+<link rel="stylesheet" href="shop.css">
+</head>
+<body class="shop">
+<main>
+  <header class="top">
+    <h1>Shop</h1>
+    <span class="coins" aria-live="polite"><span id="coins">&nbsp;</span> coins</span>
+  </header>
+  <p class="cap">Looks only. No team places.</p>
+
+  <section class="card" aria-labelledby="youH">
+    <h2 class="cap" id="youH">Your look</h2>
+    <p class="label">Level</p>
+    <p class="hero" id="heroLv" aria-label="Your level">&nbsp;</p>
+    <div id="preview"></div>
+  </section>
+
+  <p class="err" id="loadErr" hidden>Could not load the shop. Check the signal and try again.</p>
+  <button class="btn ghost" id="retry" type="button" hidden>Try again</button>
+  <div id="grid"><p class="muted">Loading the shop...</p></div>
+</main>
+
+<div class="scrim" id="scrim" hidden></div>
+<section class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetT" hidden>
+  <div class="grab" aria-hidden="true"></div>
+  <h2 id="sheetT" tabindex="-1"></h2>
+  <div id="sheetPreview"></div>
+  <p class="muted" id="sheetInfo"></p>
+  <label for="tagIn" id="tagLabel" hidden>Clan tag (2 to 4 letters or numbers)</label>
+  <input id="tagIn" type="text" maxlength="4" autocomplete="off" autocapitalize="characters" hidden>
+  <p class="err" id="sheetErr" hidden></p>
+  <button class="btn" id="act" type="button"></button>
+  <button class="btn ghost" id="close" type="button">Close</button>
+</section>
+
+<script src="../lib/player-name.js"></script>
+<script src="cosmetics.js"></script>
+<script src="shop-rules.js"></script>
+<script src="shop-backend.js"></script>
+<script src="shop.js"></script>
+</body>
+</html>

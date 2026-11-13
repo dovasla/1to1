@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0E0E0E">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="1TO1">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png">
+<link rel="stylesheet" href="pwa.css">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Tonight</title>
+<link rel="icon" href="icons/icon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="app.css">
+<link rel="stylesheet" href="lib/player-name.css">
+<link rel="stylesheet" href="reveal/reveal.css">
+<link rel="stylesheet" href="pay/pay.css">
+</head>
+<body>
+<main>
+  <h1 id="title">Tonight</h1>
+  <p class="muted" id="sub">Loading...</p>
+  <p class="err" id="loadErr" hidden>Could not load the night. Check the signal and refresh.</p>
+
+  <section class="card" id="mine" hidden>
+    <h2>My team</h2>
+    <div id="loginBox">
+      <label for="lFirst">First name</label>
+      <input id="lFirst" type="text" autocomplete="given-name" maxlength="20">
+      <label for="lLi">Last initial</label>
+      <input id="lLi" type="text" autocomplete="off" maxlength="2">
+      <label for="lPin">PIN</label>
+      <input id="lPin" type="password" inputmode="numeric" autocomplete="current-password" pattern="[0-9]*" maxlength="4">
+      <button class="btn small" id="loginBtn" type="button">Log in</button>
+      <p class="err" id="loginErr" hidden></p>
+      <p class="muted">Forgot your PIN? Ask Jord at the desk.</p>
+      <p class="muted">This phone stays signed in for 90 days. It keeps a sign-in token only, never your PIN.</p>
+    </div>
+    <div id="mineBox" hidden>
+      <p class="big" id="myTeam"></p>
+      <button class="btn ghost small" id="logoutBtn" type="button">Log out</button>
+    </div>
+  </section>
+
+  <section class="card" id="payCard" hidden>
+    <h2>Pay</h2>
+    <p id="payText" class="muted"></p>
+    <div class="actions" id="payActions"></div>
+  </section>
+
+  <h2>Live standings</h2>
+  <section class="card">
+    <ul class="list" id="standings"></ul>
+    <p class="muted" id="standNote"></p>
+  </section>
+
+  <h2>Teams</h2>
+  <section class="card"><ul class="list" id="teams"></ul></section>
+
+  <h2>Schedule</h2>
+  <section class="card"><ul class="list" id="schedule"></ul></section>
+</main>
+<script src="config.js"></script>
+<script src="rules.js"></script>
+<script src="backend.js"></script>
+<script src="lib/player-name.js"></script>
+<script src="reveal/reveal.js"></script>
+<script src="pay/pay.js"></script>
+<script>
+(function () {
+  'use strict';
+  var cfg = window.PLAYER_APP_CONFIG || {};
+  var be = PlayerBackend.create(cfg.backend === 'supabase' ? 'supabase' : 'mock',
+    { url: cfg.supabaseUrl, anonKey: cfg.supabaseAnonKey });
+  var $ = function (id) { return document.getElementById(id); };
+  var nightId = new URLSearchParams(location.search).get('n') || 'tonight';
+  var FIVE_MIN = 5 * 60 * 1000;
+  var timer = null;
+  var night = null;
+  var me = null;     // { first, lastInitial, status } after a good log in.
+  // Stay signed in on this phone for 90 days. The phone keeps only a sign-in token, never the PIN.
+  var TOKEN_KEY = '1to1-player-token';
+  function saveToken(t) { try { if (t) localStorage.setItem(TOKEN_KEY, t); } catch (x) { /* blocked: sign in each time */ } }
+  function readToken() { try { return localStorage.getItem(TOKEN_KEY) || ''; } catch (x) { return ''; } }
+  function clearToken() { try { localStorage.removeItem(TOKEN_KEY); } catch (x) { /* nothing to clear */ } }
+
+  var LOGIN_MSG = {
+    'wrong-pin': 'Name or PIN not right. Check both and try again.',
+    'locked': 'Too many wrong tries. Wait a few minutes and try again, or ask Jord at the desk.'
+  };
+
+  function li(text) { var l = document.createElement('li'); var s = document.createElement('span'); s.textContent = text; l.appendChild(s); return l; }
+  function liRight(text, right) { var l = li(text); var r = document.createElement('span'); r.className = 'muted'; r.textContent = right; l.appendChild(r); return l; }
+
+  function drawTeams(payload) {
+    var teams = payload.teams || [];
+    var ul = $('teams'); ul.innerHTML = '';
+    if (!teams.length) ul.appendChild(li('Teams come out once the night is set up.'));
+    teams.forEach(function (t) { ul.appendChild(liRight(t.name, (t.players || []).length + ' players')); });
+    var sc = $('schedule'); sc.innerHTML = '';
+    (payload.schedule || []).forEach(function (s) { sc.appendChild(liRight(s.label, s.time)); });
+    if (!(payload.schedule || []).length) sc.appendChild(li('No schedule yet.'));
+  }
+
+  function drawStandings(payload) {
+    var ul = $('standings'); ul.innerHTML = '';
+    var rows = payload.standings || [];
+    if (!rows.length) ul.appendChild(li('No games finished yet.'));
+    rows.forEach(function (r, i) { ul.appendChild(liRight((i + 1) + '. ' + r.team, r.points + ' pts')); });
+  }
+
+  function refreshStandings() {
+    var now = new Date();
+    if (!PlayerRules.isRunTime(now)) {
+      $('standNote').textContent = 'Standings update during run time.';
+      return;
+    }
+    be.getNight(nightId).then(function (nt) {
+      if (nt && nt.payload) { night = nt.payload; drawStandings(night); }
+      $('standNote').textContent = 'Updated ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + '. Refreshes every 5 minutes.';
+    }).catch(function () { $('standNote').textContent = 'Could not refresh. Showing the last update.'; });
+  }
+
+  function loadNight() {
+    return be.getNight(nightId).then(function (nt) {
+      $('loadErr').hidden = true;
+      if (!nt || !nt.payload) {
+        $('sub').textContent = 'No night published yet.';
+        $('mine').hidden = true;
+        return;
+      }
+      night = nt.payload;
+      $('title').textContent = night.title || 'Tonight';
+      $('sub').textContent = night.when || '';
+      drawTeams(night);
+      drawStandings(night);
+      $('mine').hidden = false;
+      if (me) showMine();
+    }).catch(function () { $('loadErr').hidden = false; });
+  }
+
+  function findTeam(p) {
+    var name = p.first + ' ' + p.lastInitial;
+    var t = (night && night.teams || []).filter(function (tm) { return (tm.players || []).indexOf(name) > -1; })[0];
+    return t ? t.name : null;
+  }
+
+  // Lineup reveal: watches for this player's game while the page is open. Restarts on each log in.
+  var reveal = null;
+  function startReveal() {
+    if (reveal) { reveal.stop(); reveal = null; }
+    if (typeof LineupReveal === 'undefined') return;
+    reveal = LineupReveal.watch({ backend: be, nightId: nightId, me: { first: me.first, lastInitial: me.lastInitial } });
+  }
+
+  function showMine() {
+    $('loginBox').hidden = true;
+    $('mineBox').hidden = false;
+    startReveal();
+    var team = findTeam(me);
+    $('myTeam').textContent = me.first + ': ' + (team ? team : (me.status === 'declined' ? 'Ask at the desk' : 'Not on a team yet'));
+    var pay = $('payCard');
+    if (me.status !== 'approved') { pay.hidden = true; return; }
+    pay.hidden = false;
+    // Jord takes the money himself (cash or Square) and records it in the organiser. The player only sees the price.
+    var amount = night && night.price ? ('Price: ' + night.price + '. ') : '';
+    $('payText').textContent = amount + 'Pay Jord on the night, in cash or by Square.';
+    var acts = $('payActions'); acts.innerHTML = '';
+    if (window.PlayerPay && PlayerPay.payUrl(cfg)) {
+      // Pay on Square, then "I've paid" sends a claim only. Jord confirms Paid in the organiser.
+      $('payText').textContent = amount + 'Pay on Square below, or in cash on the night.';
+      PlayerPay.render(acts, { cfg: cfg, backend: be, nightId: nightId, night: night, token: readToken() });
+    }
+  }
+
+  function logIn() {
+    var first = $('lFirst').value.trim(), lastI = $('lLi').value.trim(), pin = $('lPin').value.trim();
+    $('loginErr').hidden = true;
+    if (!first || !lastI || !pin) { $('loginErr').textContent = 'Type your first name, last initial and PIN.'; $('loginErr').hidden = false; return; }
+    $('loginBtn').disabled = true;
+    be.login(first, lastI, pin).then(function (r) {
+      if (!r.ok) {
+        $('loginErr').textContent = LOGIN_MSG[r.reason] || 'Could not log in. Try again.';
+        $('loginErr').hidden = false;
+        return;
+      }
+      $('lPin').value = '';
+      // The phone keeps just the 90-day sign-in token. The PIN is not kept anywhere.
+      saveToken(r.token);
+      me = { first: r.player.first, lastInitial: r.player.lastInitial, status: r.player.status };
+      showMine();
+    }).catch(function () {
+      $('loginErr').textContent = 'Could not check. Try again.';
+      $('loginErr').hidden = false;
+    }).then(function () { $('loginBtn').disabled = false; });
+  }
+
+  $('loginBtn').addEventListener('click', logIn);
+  $('lPin').addEventListener('keydown', function (e) { if (e.key === 'Enter') logIn(); });
+  $('lPin').addEventListener('input', function () { this.value = this.value.replace(/[^0-9]/g, ''); });
+  $('logoutBtn').addEventListener('click', function () {
+    var t = readToken();
+    clearToken();
+    if (t) be.logout(t).catch(function () { /* the token expires in 90 days anyway */ });
+    me = null;
+    if (reveal) { reveal.stop(); reveal = null; }
+    $('mineBox').hidden = true; $('loginBox').hidden = false; $('payCard').hidden = true;
+    $('lPin').value = '';
+  });
+
+  // Start: load the night, then refresh standings every 5 minutes during run time only.
+  loadNight().then(function () {
+    var t = readToken();
+    if (t) {
+      be.resume(t).then(function (r) {
+        if (r && r.ok) { me = { first: r.player.first, lastInitial: r.player.lastInitial, status: r.player.status, pin: '' }; showMine(); }
+        else clearToken();
+      }).catch(function () { /* no signal: ask for the PIN */ });
+    }
+    refreshStandings();
+    timer = setInterval(function () { refreshStandings(); }, FIVE_MIN);
+  });
+})();
+</script>
+<script src="pwa.js"></script>
+</body>
+</html>

@@ -1,0 +1,359 @@
+/* Lineup reveal. Colours, type and motion from DECISIONS-AND-BRAND.md section 4.
+   Dark is the base. "Bright hall" is the light version (data-theme="light" on the overlay).
+   Yellow is for doing (the one main button, your own row, dark headings). Yellow text never sits on white. */
+
+@font-face { font-family: "Barlow"; font-weight: 400; font-style: normal; font-display: swap; src: url("fonts/barlow-400.woff2") format("woff2"); }
+@font-face { font-family: "Barlow"; font-weight: 600; font-style: normal; font-display: swap; src: url("fonts/barlow-600.woff2") format("woff2"); }
+@font-face { font-family: "Barlow"; font-weight: 700; font-style: normal; font-display: swap; src: url("fonts/barlow-700.woff2") format("woff2"); }
+@font-face { font-family: "Barlow Condensed"; font-weight: 700; font-style: normal; font-display: swap; src: url("fonts/barlowcondensed-700.woff2") format("woff2"); }
+
+.lr-overlay {
+  --lr-bg: #0E0E0E;
+  --lr-card: #1A1C22;
+  --lr-raised: #23262E;
+  --lr-line: #2C2F38;
+  --lr-text: #F4F5F7;
+  --lr-muted: #AEB4C0;
+  --lr-yellow: #FFD21F;
+  --lr-on-yellow: #0E0E0E;
+  --lr-head: #FFD21F;
+  --lr-blue: #0A5CFF;
+  --lr-blue-text: #6FA0FF;
+  --lr-gold-text: #FFD21F;
+  --lr-opp: #FF6B6B;
+  --lr-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  /* PlayerName reads these, so the chip follows this screen's theme even on a light page. */
+  --card: #1A1C22;
+  --ink: #F4F5F7;
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  background: var(--lr-bg);
+  color: var(--lr-text);
+  font-family: "Barlow", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.4;
+  animation: lr-sheet 0.24s var(--lr-ease);
+}
+.lr-overlay[data-theme="light"] {
+  --lr-bg: #F4F6FA;
+  --lr-card: #FFFFFF;
+  --lr-raised: #EDF0F5;
+  --lr-line: #D9DEE8;
+  --lr-text: #111318;
+  --lr-muted: #4B5263;
+  --lr-head: #0A5CFF;
+  --lr-blue-text: #0A5CFF;
+  --lr-gold-text: #6B4E00;
+  --lr-opp: #C62828;
+  --card: #FFFFFF;
+  --ink: #111318;
+}
+
+.lr-phone {
+  width: 100%;
+  max-width: 390px;
+  height: 100%;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  padding: 0 16px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.lr-top {
+  display: flex;
+  justify-content: space-between;
+  padding: 16px 0 8px;
+  font-family: "Barlow", sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1.2;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--lr-muted);
+}
+
+.lr-stage {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Court card: brand blue player surface. Shows the map and the team now on screen. */
+.lr-court {
+  height: 64px;
+  flex: 0 0 auto;
+  border-radius: 16px;
+  background: var(--lr-blue);
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+.lr-map {
+  position: absolute;
+  left: 12px;
+  top: 10px;
+  background: var(--lr-yellow);
+  color: var(--lr-on-yellow);
+  font-family: "Barlow", sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1.2;
+  padding: 3px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.06em;
+}
+.lr-side {
+  position: absolute;
+  right: 12px;
+  bottom: 8px;
+  max-width: 60%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: "Barlow Condensed", "Barlow", sans-serif;
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+  color: #FFFFFF;
+}
+
+/* Screen title: two words, caps, Barlow Condensed 28px. */
+.lr-h {
+  margin: 8px 0 0;
+  min-height: 31px;
+  font-family: "Barlow Condensed", "Barlow", sans-serif;
+  font-weight: 700;
+  font-size: 28px;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--lr-head);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  animation: lr-rise 0.32s var(--lr-ease);
+}
+
+.lr-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  margin-top: 4px;
+}
+
+.lr-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  /* 6px, not 8px: five opponent rows now fit under the title at 360x640 and 390x667 (QA item 2). */
+  padding: 6px 0;
+  border-top: 1px solid var(--lr-line);
+  opacity: 0;
+  transform: translateX(-24px);
+  transition: opacity 0.32s var(--lr-ease), transform 0.32s var(--lr-ease);
+}
+.lr-row.in { opacity: 1; transform: none; }
+.lr-row.lr-opp { transform: translateX(24px); }
+.lr-row.lr-opp.in { transform: none; }
+.lr-row.lr-cur { background: linear-gradient(90deg, rgba(255, 210, 31, 0.14), rgba(255, 210, 31, 0)); }
+
+.lr-n {
+  width: 22px;
+  font-family: "Barlow Condensed", "Barlow", sans-serif;
+  font-weight: 700;
+  font-size: 20px;
+  color: var(--lr-muted);
+}
+.lr-opp .lr-n { color: var(--lr-opp); }
+.lr-p { flex: 1; min-width: 0; }
+
+/* Your own row is yellow. */
+.lr-me .lr-chip { color: var(--lr-head); }
+.lr-cur .lr-chip { color: var(--lr-head); }
+
+.lr-chip { font-family: "Barlow Condensed", "Barlow", sans-serif; font-weight: 700; }
+.lr-chip .pn { font-family: "Barlow Condensed", "Barlow", sans-serif; font-weight: 700; font-size: 20px; line-height: 1.1; min-height: 48px; }
+.lr-chip .pn-lv { color: var(--lr-blue-text); }
+.lr-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; padding-left: 12px; align-items: center; }
+.lr-title { display: none; }
+
+.lr-tag {
+  display: inline-block;
+  font-family: "Barlow", sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1.2;
+  padding: 2px 6px;
+  border-radius: 6px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.lr-tag-blue { background: var(--lr-blue); color: #FFFFFF; }
+.lr-tag-yellow { background: var(--lr-yellow); color: var(--lr-on-yellow); }
+.lr-tier {
+  font-family: "Barlow", sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1.2;
+  color: var(--lr-muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* Prestige players get a gold frame and a slow sheen. The sheen is off with reduced motion. */
+.lr-row.lr-prestige {
+  position: relative;
+  border: 1px solid var(--lr-yellow);
+  border-radius: 12px;
+  padding: 8px 10px;
+  margin-top: 4px;
+  overflow: hidden;
+}
+.lr-row.lr-prestige::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(255, 210, 31, 0), rgba(255, 210, 31, 0.22), rgba(255, 210, 31, 0));
+  background-size: 200% 100%;
+  animation: lr-sheen 2.4s linear infinite;
+  pointer-events: none;
+}
+
+.lr-vs {
+  align-self: center;
+  width: 64px;
+  margin: 8px auto;
+  padding: 4px 0;
+  border-radius: 99px;
+  background: var(--lr-yellow);
+  color: var(--lr-on-yellow);
+  text-align: center;
+  font-family: "Barlow Condensed", "Barlow", sans-serif;
+  font-weight: 700;
+  font-size: 22px;
+  line-height: 1.1;
+  opacity: 0;
+  transform: scale(1.15);
+  transition: opacity 0.5s var(--lr-ease), transform 0.5s var(--lr-ease);
+}
+.lr-vs.in { opacity: 1; transform: none; }
+
+.lr-status {
+  min-height: 20px;
+  margin: 4px 0;
+  text-align: center;
+  font-family: "Barlow", sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--lr-muted);
+}
+
+.lr-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.lr-foot {
+  display: grid;
+  gap: 6px;
+  padding: 10px 0 18px;
+}
+.lr-bench {
+  font-family: "Barlow", sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.06em;
+  color: var(--lr-muted);
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.32s var(--lr-ease);
+}
+.lr-bench.lr-in { opacity: 1; }
+.lr-bench[hidden] { display: none; }
+.lr-btn {
+  height: 52px;
+  width: 100%;
+  border: 0;
+  border-radius: 12px;
+  background: var(--lr-yellow);
+  color: var(--lr-on-yellow);
+  font-family: "Barlow Condensed", "Barlow", sans-serif;
+  font-weight: 700;
+  font-size: 20px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  animation: lr-fade 0.32s var(--lr-ease);
+}
+.lr-btn[hidden] { display: none; }
+.lr-skip {
+  min-height: 48px;
+  width: 100%;
+  border: 0;
+  background: none;
+  color: var(--lr-muted);
+  font-family: "Barlow", sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.lr-btn:focus-visible,
+.lr-skip:focus-visible {
+  outline: 3px solid var(--lr-blue);
+  outline-offset: 2px;
+}
+
+/* Skip and reduced motion: everything shows at once, no sliding. */
+.lr-instant,
+.lr-instant * {
+  transition: none !important;
+  animation: none !important;
+}
+
+@keyframes lr-sheet {
+  from { transform: translateY(100%); }
+  to { transform: none; }
+}
+@keyframes lr-rise {
+  from { transform: translateY(16px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+@keyframes lr-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes lr-sheen {
+  to { background-position: -200% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lr-overlay,
+  .lr-row,
+  .lr-vs,
+  .lr-h,
+  .lr-bench,
+  .lr-btn,
+  .lr-row.lr-prestige::before {
+    transition: none;
+    animation: none;
+  }
+}

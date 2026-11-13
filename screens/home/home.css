@@ -1,0 +1,78 @@
+/* Player app: Home lobby styles. Owner: Home thread. Uses the tokens from app.css (dark base, bright hall in light). */
+.ph { max-width:520px; margin:0 auto; padding:16px 16px 24px; color:var(--ink); }
+.ph * { box-sizing:border-box; }
+.ph a { color:inherit; text-decoration:none; }
+.ph-ic { width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; flex:none; }
+.ph-cap { font-size:14px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); }
+.ph-muted { color:var(--muted); font-size:16px; margin:6px 0 0; }
+.ph-ink { color:var(--ink); }
+.ph-note { color:var(--muted); font-size:14px; margin:10px 0 0; display:flex; gap:6px; align-items:center; }
+
+/* Top bar */
+.ph-top { display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:48px; }
+.ph h1 { font-size:28px; line-height:1; margin:0; }  /* font and colour come from app-tokens.css */
+.ph-coins { display:inline-flex; align-items:center; gap:6px; min-height:48px; padding:0 12px; border:2px solid var(--line); border-radius:99px; background:var(--card); }
+.ph-coins b { font-size:18px; font-weight:900; }
+.ph-coins .ph-cap { font-size:14px; }
+.ph-coins .ph-ic { color:var(--yellow); }
+
+/* Hero: the player card */
+.ph-hero { display:block; margin-top:10px; padding:14px; border-radius:18px; border:2px solid var(--yellow); background:var(--card); min-height:48px; }
+.ph-hero:focus-visible { outline:3px solid var(--blue); outline-offset:3px; }
+.ph-hero-top { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.ph-pill { display:inline-block; padding:4px 10px; border-radius:8px; background:var(--yellow); color:var(--on-yellow); font-size:14px; font-weight:900; letter-spacing:.04em; }
+.ph-hero-name { margin:10px 0 2px; }
+.ph-skill { font-size:16px; color:var(--muted); text-transform:uppercase; font-weight:700; letter-spacing:.04em; }
+.ph-skill b { color:var(--ink); }
+.ph-dash { border-top:2px dashed var(--line); margin:10px 0 8px; }
+.ph-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; text-align:center; }
+.ph-stats > div { display:flex; flex-direction:column; gap:2px; }
+.ph-stats b { font-size:28px; font-weight:900; line-height:1; color:var(--ink); }
+
+/* XP bar */
+.ph-xp { margin-top:12px; }
+.ph-xp-row { display:flex; justify-content:space-between; gap:10px; font-size:16px; color:var(--muted); }
+.ph-xp-row b { color:var(--ink); text-transform:uppercase; font-weight:800; }
+.ph-bar { height:12px; border-radius:99px; background:var(--line); overflow:hidden; margin-top:8px; }
+.ph-bar i { display:block; height:100%; background:var(--yellow); border-radius:99px; transition:width .6s ease; }
+
+/* Tonight card */
+.ph-card { margin-top:12px; padding:14px; border-radius:16px; border:1px solid var(--line); background:var(--card); }
+.ph-card--hero { border-color:var(--blue); }
+.ph-card h2 { font-size:24px; line-height:1.05; margin:6px 0 0; }  /* heading style from app-tokens.css */
+.ph-vs { font-size:18px; margin:6px 0 0; color:var(--muted); }
+.ph-vs b { color:var(--ink); }
+.ph-count { margin-top:8px; display:flex; flex-direction:column; gap:2px; }
+.ph-count-label { font-size:14px; font-weight:800; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); }
+.ph-count-num { font-size:44px; font-weight:900; line-height:1; font-variant-numeric:tabular-nums; color:var(--ink); font-family:var(--font-head); }
+.ph-btn { display:flex; align-items:center; justify-content:center; width:100%; min-height:52px; margin-top:10px; border-radius:var(--radius-btn); background:var(--yellow); color:var(--on-yellow); font-weight:900; text-transform:uppercase; letter-spacing:.04em; font-size:17px; }
+.ph-btn--ghost { background:transparent; color:var(--ink); border:2px solid var(--line); }
+.ph-btn:focus-visible, .ph-row:focus-visible, .ph-chip:focus-visible, .ph-coins:focus-visible { outline:3px solid var(--blue); outline-offset:2px; }
+
+/* Blocks: schedule strip, last night, live */
+.ph-block { margin-top:14px; }
+.ph-h2 { font-size:20px; margin:0 0 10px; }  /* heading style from app-tokens.css */
+.ph-strip { display:flex; gap:8px; overflow-x:auto; padding-bottom:4px; -webkit-overflow-scrolling:touch; }
+.ph-chip { flex:0 0 auto; min-width:96px; min-height:48px; padding:10px 12px; border-radius:14px; border:2px solid var(--line); background:var(--card); display:flex; flex-direction:column; gap:2px; }
+.ph-chip b { font-size:18px; font-variant-numeric:tabular-nums; }
+.ph-chip small { font-size:14px; font-weight:800; text-transform:uppercase; color:var(--muted); }
+.ph-chip--done { opacity:.6; }
+.ph-chip--next { border-color:var(--yellow); }
+.ph-chip--live { border-color:var(--green); background:var(--green); color:var(--on-yellow); }
+.ph-chip--live .ph-cap, .ph-chip--live small { color:var(--on-yellow); }
+.ph-row { display:flex; align-items:center; gap:12px; min-height:56px; padding:12px 14px; margin-top:10px; border-radius:14px; border:1px solid var(--line); background:var(--card); }
+.ph-row-body { display:flex; flex-direction:column; gap:2px; min-width:0; }
+.ph-row-body b { font-size:18px; }
+.ph-row-body span { font-size:16px; color:var(--muted); overflow-wrap:anywhere; }
+.ph-updated { margin-top:16px; }
+
+/* Movement only at moments: the bar fill is the only motion, and it stops for reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  .ph-bar i { transition:none; }
+}
+@media (max-width:360px) {
+  .ph { padding:14px 16px 20px; }
+  .ph h1 { font-size:24px; }
+  .ph-count-num { font-size:44px; }
+  .ph-stats b { font-size:28px; }
+}
