@@ -16,8 +16,12 @@
   var REASON_MSG = {
     'signed-out': 'Your sign-in has run out. Log in again, then tap I’ve paid.',
     'not-approved': 'Ask at the desk.',
-    'no-night': 'Tonight is not ready yet. Try again later.'
+    'no-night': 'Tonight is not ready yet. Try again later.',
+    'no-price': 'Tonight has no price yet. Ask at the desk.',
+    'already-paid': 'You are paid for tonight. See you on the night.',
+    'square-error': 'Square is not answering. Try again in a minute, or pay Jord in cash.'
   };
+  var POLL_MS = 15000;
   var SIGNED_OUT_MSG = 'Your sign-in has run out. Log in again, then tap I’ve paid.';
 
   // Only a real https link is used. Anything else (empty, placeholder text) means "no button yet".
@@ -37,8 +41,103 @@
     return night && night.price ? 'Pay ' + night.price + ' on Square' : 'Pay on Square';
   }
 
+  // Automatic mode: config payAuto true. The server makes a Square link for this player, and only
+  // the Square webhook can mark the night paid. The phone just shows what the server says.
+  function autoOn(cfg) { return !!(cfg && cfg.payAuto === true); }
+
+  function renderAuto(box, o) {
+    box.innerHTML = '';
+    box.classList.add('pay-box');
+    var token = function () { return typeof o.token === 'function' ? o.token() : o.token; };
+
+    var payBtn = el('button', 'btn yellow pay-btn', payLabel(o.night));
+    payBtn.type = 'button';
+    var paidMsg = el('p', 'pay-hint', 'Paid. See you on the night.');
+    paidMsg.hidden = true;
+    var hint = el('p', 'pay-hint', 'Pay on Square. This updates by itself when Square confirms it.');
+    var err = el('p', 'pay-err', '');
+    err.setAttribute('role', 'alert');
+    err.hidden = true;
+    var cashBtn = el('button', 'pay-other', 'Paid another way (cash)?');
+    cashBtn.type = 'button';
+    var cashMsg = el('p', 'pay-hint', 'Thanks. Jord will check and confirm it on the night.');
+    cashMsg.hidden = true;
+
+    box.appendChild(payBtn);
+    box.appendChild(paidMsg);
+    box.appendChild(hint);
+    box.appendChild(err);
+    box.appendChild(cashBtn);
+    box.appendChild(cashMsg);
+
+    var timer = null;
+    function stop() { if (timer) { clearInterval(timer); timer = null; } }
+    function showPaid() {
+      stop();
+      payBtn.hidden = true; hint.hidden = true; cashBtn.hidden = true; cashMsg.hidden = true;
+      paidMsg.hidden = false;
+    }
+    // Asks the server. Returns true when paid. Stops itself when the box is no longer on the page.
+    function check() {
+      if (!document.body.contains(box)) { stop(); return Promise.resolve(false); }
+      var t = token();
+      if (!t) return Promise.resolve(false);
+      return o.backend.paymentStatus(t, o.nightId).then(function (r) {
+        if (r && r.ok && r.paid) { showPaid(); return true; }
+        return false;
+      }, function () { return false; });
+    }
+    function startPoll() { stop(); timer = setInterval(check, POLL_MS); }
+
+    payBtn.addEventListener('click', function () {
+      err.hidden = true;
+      var t = token();
+      if (!t) { err.textContent = SIGNED_OUT_MSG; err.hidden = false; return; }
+      // Open the tab inside the tap (phone browsers block a tab opened later), then send it to Square.
+      var win = window.open('', '_blank');
+      payBtn.disabled = true;
+      o.backend.payLink(t, o.nightId).then(function (r) {
+        payBtn.disabled = false;
+        if (r && r.ok && r.url) {
+          if (win) win.location.href = r.url; else window.location.href = r.url;
+          startPoll();
+          return;
+        }
+        if (win) win.close();
+        if (r && r.reason === 'already-paid') { check(); return; }
+        err.textContent = REASON_MSG[r && r.reason] || 'Could not make your payment link. Try again, or pay Jord in cash.';
+        err.hidden = false;
+      }, function () {
+        payBtn.disabled = false;
+        if (win) win.close();
+        err.textContent = 'Could not make your payment link. Check your connection and try again.';
+        err.hidden = false;
+      });
+    });
+
+    cashBtn.addEventListener('click', function () {
+      var t = token();
+      if (!t) { err.textContent = SIGNED_OUT_MSG; err.hidden = false; return; }
+      cashBtn.disabled = true;
+      o.backend.claimPaid(t, o.nightId).then(function (r) {
+        if (r && r.ok) { cashMsg.hidden = false; cashBtn.hidden = true; return; }
+        cashBtn.disabled = false;
+        err.textContent = REASON_MSG[r && r.reason] || 'Could not send. Check your connection and try again.';
+        err.hidden = false;
+      }, function () { cashBtn.disabled = false; });
+    });
+
+    // Back from Square: look again straight away. Also one look when the box is drawn (already paid?).
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'visible' && timer) check();
+    });
+    check();
+    return true;
+  }
+
   // Builds the Pay + I've paid block inside box. Returns false when there is no link yet.
   function render(box, o) {
+    if (box && autoOn(o.cfg)) return renderAuto(box, o);
     var url = payUrl(o.cfg);
     if (!box || !url) return false;
     box.innerHTML = '';
@@ -91,5 +190,5 @@
     return true;
   }
 
-  return { payUrl: payUrl, render: render, payLabel: payLabel, REASON_MSG: REASON_MSG };
+  return { payUrl: payUrl, render: render, payLabel: payLabel, autoOn: autoOn, REASON_MSG: REASON_MSG };
 });

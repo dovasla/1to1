@@ -287,6 +287,23 @@
             return { ok: false, reason: (j && j.reason) || 'error' };
           }, function () { return { ok: false, reason: 'error' }; });
       },
+      // Automatic Square pay (Edge Functions). Only used when config payAuto is on.
+      // payLink -> { ok: true, url } or { ok: false, reason }. The Square link is made per player on the server.
+      payLink: function (token, nightId) {
+        return call('POST', '/functions/v1/create-pay-link', { token: token, night: nightId })
+          .then(function (j) {
+            if (j && j.ok && j.url) return { ok: true, url: j.url };
+            return { ok: false, reason: (j && j.reason) || 'error' };
+          }, function () { return { ok: false, reason: 'error' }; });
+      },
+      // paymentStatus -> { ok: true, paid: true|false } or { ok: false, reason }. Only the webhook sets paid.
+      paymentStatus: function (token, nightId) {
+        return call('POST', '/rest/v1/rpc/player_payment_status', { p_token: token, p_night: nightId })
+          .then(function (j) {
+            if (j && j.ok) return { ok: true, paid: j.paid === true };
+            return { ok: false, reason: (j && j.reason) || 'error' };
+          }, function () { return { ok: false, reason: 'error' }; });
+      },
       resetPin: function (id, pin) {
         return call('POST', '/rest/v1/rpc/organiser_reset_pin', { p_id: id, p_pin: pin }).then(function (ok) { return ok === true; });
       },

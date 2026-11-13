@@ -10,3 +10,19 @@
 .pwa-yes { background: #FFD21F; color: #0E0E0E; }
 .pwa-no { background: transparent; color: #F4F5F7; border: 2px solid #2C2F38; }
 body.pwa-pad { padding-bottom: 150px; }
+
+/* "Get the app" steps on the You're in screen and the login screen. Hidden once the app runs installed. */
+.install-steps { margin: 16px 0 0; padding: 16px; background: var(--card); border: 1px solid var(--line); border-top: 3px solid var(--yellow); border-radius: var(--radius); color: var(--ink); font-family: var(--font-body); }
+.install-steps h2 { margin: 0 0 12px; font: 700 22px/1.2 var(--font-head); text-transform: uppercase; letter-spacing: .02em; color: var(--gold-text); }
+.install-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.install-list li { display: flex; gap: 12px; align-items: flex-start; }
+.install-list li > div { flex: 1 1 auto; min-width: 0; }
+.install-list b { font-size: 17px; }
+.install-list p { margin: 6px 0 0; font-size: 16px; line-height: 1.4; }
+.is-num { flex: 0 0 auto; width: 36px; height: 36px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font: 800 18px/1 var(--font-head); background: var(--raised); color: var(--ink); border: 2px solid var(--line); }
+.is-done .is-num { background: var(--green); border-color: var(--green); color: var(--on-yellow); }
+.is-next .is-num { background: var(--yellow); border-color: var(--yellow); color: var(--on-yellow); }
+.is-state { display: inline-block; margin-left: 8px; font-size: 14px; font-weight: 700; color: var(--green); }
+.install-steps .muted { margin: 12px 0 0; font-size: 15px; }
+.is-installed .install-steps { display: none; }
+@media (display-mode: standalone) { .install-steps { display: none !important; } }

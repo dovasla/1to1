@@ -20,7 +20,17 @@
 <link rel="stylesheet" href="app-tokens.css">
 <style>
   /* 48px tap area for the skill slider (QA item 5). */
-  #level { display:block; width:100%; height:48px; margin:6px 0 0; cursor:pointer; }
+  #level { display:block; width:100%; height:48px; margin:6px 0 0; cursor:pointer; accent-color:var(--yellow); }
+  /* Brand: yellow Send button with dark text, like the other yellow buttons. */
+  #send.btn { background:var(--yellow); color:var(--on-yellow); }
+  /* Brand: the under-18 tick box is dark with a yellow tick. Whole row is the tap target (48px). */
+  .check { display:flex; gap:12px; align-items:center; min-height:48px; cursor:pointer; margin:12px 0 0; }
+  .check span { flex:1 1 auto; }
+  .check input[type=checkbox] { appearance:none; -webkit-appearance:none; flex:0 0 28px; width:28px; height:28px; margin:0; border:2px solid var(--line); border-radius:8px; background:var(--raised); display:grid; place-content:center; cursor:pointer; }
+  .check input[type=checkbox]::before { content:""; width:14px; height:14px; transform:scale(0); background:var(--on-yellow); clip-path:polygon(14% 44%,0 65%,50% 100%,100% 16%,80% 0%,43% 62%); }
+  .check input[type=checkbox]:checked { background:var(--yellow); border-color:var(--yellow); }
+  .check input[type=checkbox]:checked::before { transform:scale(1); }
+  .check input[type=checkbox]:focus-visible { outline:3px solid var(--blue-text); outline-offset:2px; }
 </style>
 </head>
 <body>
@@ -73,7 +83,19 @@
   <section id="doneView" class="card" hidden>
     <p class="ok">You're in.</p>
     <p class="big" id="keptPin"></p>
-    <p>On the night, open <a href="night.html" class="link" style="display:inline-flex;align-items:center;min-height:48px">tonight's page</a> and log in with your first name, last initial and PIN to see your team.</p>
+    <p>On the night, open <a href="night.html" class="link" style="display:inline-flex;align-items:center;min-height:48px;color:var(--gold-text);font-weight:800">tonight's page</a> and log in with your first name, last initial and PIN to see your team.</p>
+    <section class="install-steps" aria-labelledby="installHDone">
+      <h2 id="installHDone">Get the app</h2>
+      <ol class="install-list">
+        <li class="is-done"><span class="is-num">1</span><div><b>Scan</b><span class="is-state">Done</span></div></li>
+        <li class="is-done"><span class="is-num">2</span><div><b>Sign up</b><span class="is-state">Done</span></div></li>
+        <li class="is-next"><span class="is-num">3</span><div><b>Add to Home Screen</b>
+          <p><b>iPhone:</b> in Safari, tap Share (the box with an arrow) at the bottom, then Add to Home Screen.</p>
+          <p><b>Android:</b> in Chrome, tap the three dots, then Install app.</p>
+        </div></li>
+      </ol>
+      <p class="muted">Then tap the 1TO1 icon on game night.</p>
+    </section>
     <button class="btn ghost" id="again" type="button">Sign up someone else</button>
   </section>
 
@@ -161,7 +183,7 @@
       $('doneView').hidden = false;
       $('doneView').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }).catch(function () {
-      $('e-form').textContent = 'Could not send. Check the signal and try again.';
+      $('e-form').textContent = 'Couldn’t send just now. Check your signal and tap Send again. What you typed is still here.';
       $('e-form').hidden = false;
     }).then(function () { $('send').disabled = false; });
   });

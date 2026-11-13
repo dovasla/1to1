@@ -23,6 +23,8 @@
     var isIOS = /iphone|ipad|ipod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     var isAndroid = /android/i.test(ua);
     var isStandalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+    // Installed copies hide the "Get the app" steps (CSS in pwa.css reads this class).
+    if (isStandalone) document.documentElement.classList.add('is-installed');
 
     // 2. Offline bar. Shown only while the phone has no connection.
     var bar = document.createElement('div');

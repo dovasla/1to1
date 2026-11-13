@@ -3,7 +3,7 @@
 // This file never reads or writes localStorage, IndexedDB or cookies.
 // Only same-origin GET requests are handled and saved. The online database and any other
 // cross-origin call go straight to the network and are never saved.
-const CACHE = 'player-shell-1-r4';
+const CACHE = 'player-shell-1-r6';
 const SHELL = [
   './', 'signup.html', 'app.html', 'night.html', 'offline.html',
   'manifest.webmanifest', 'pwa.js', 'pwa.css',
