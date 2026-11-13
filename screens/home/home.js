@@ -59,12 +59,12 @@
     });
     return '' +
       '<a class="ph-hero" href="#card" data-go="card" aria-label="Open my player card">' +
-        '<div class="ph-hero-top"><span class="ph-pill">1TO1</span><span class="ph-cap">Admit one</span></div>' +
+        '<div class="ph-hero-top"><span class="ph-pill">1TO1</span><span class="ph-cap">Player card</span></div>' +
         '<div class="ph-hero-name">' + chip + '</div>' +
         (p.skill ? '<div class="ph-skill">Skill <b>' + esc(p.skill) + '</b></div>' : '') +
         '<div class="ph-dash" aria-hidden="true"></div>' +
         '<div class="ph-stats">' +
-          '<div><span class="ph-cap">XP level</span><b>' + prog.level + '</b></div>' +
+          '<div><span class="ph-cap">Level</span><b>' + prog.level + '</b></div>' +
           '<div><span class="ph-cap">Games</span><b>' + (p.games || 0) + '</b></div>' +
           '<div><span class="ph-cap">Wins</span><b>' + (p.wins || 0) + '</b></div>' +
         '</div>' +
@@ -150,7 +150,7 @@
     var prog = XP.progress(run);
     return '' +
       '<header class="ph-top">' +
-        '<h1>Your Lobby</h1>' +
+        '<h1>Home</h1>' +
         '<a class="ph-coins" href="#shop" data-go="shop" aria-label="Coins, open shop">' + ICON.coin +
           '<b>' + esc(d.coins || 0) + '</b><span class="ph-cap">Coins</span></a>' +
       '</header>' +

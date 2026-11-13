@@ -105,7 +105,7 @@
 
     // Player card (ticket, card C). Name, level and stars come from PlayerName.
     h += '<section class="ticket" aria-label="Player card">' +
-      '<div class="tk-top"><span class="tk-brand">1TO1</span><span class="tk-admit">Admit one</span></div>' +
+      '<div class="tk-top"><span class="tk-brand">1TO1</span><span class="tk-admit">Player card</span></div>' +
       '<div class="tk-name">' + PN.html(Object.assign({ size: 'full' }, v.playerName)) + '</div>' +
       '<div class="tk-rule"></div>' +
       '<p class="tk-foot">Player card</p>' +
