@@ -23,14 +23,8 @@
   #level { display:block; width:100%; height:48px; margin:6px 0 0; cursor:pointer; accent-color:var(--yellow); }
   /* Brand: yellow Send button with dark text, like the other yellow buttons. */
   #send.btn { background:var(--yellow); color:var(--on-yellow); }
-  /* Brand: the under-18 tick box is dark with a yellow tick. Whole row is the tap target (48px). */
-  .check { display:flex; gap:12px; align-items:center; min-height:48px; cursor:pointer; margin:12px 0 0; }
-  .check span { flex:1 1 auto; }
-  .check input[type=checkbox] { appearance:none; -webkit-appearance:none; flex:0 0 28px; width:28px; height:28px; margin:0; border:2px solid var(--line); border-radius:8px; background:var(--raised); display:grid; place-content:center; cursor:pointer; }
-  .check input[type=checkbox]::before { content:""; width:14px; height:14px; transform:scale(0); background:var(--on-yellow); clip-path:polygon(14% 44%,0 65%,50% 100%,100% 16%,80% 0%,43% 62%); }
-  .check input[type=checkbox]:checked { background:var(--yellow); border-color:var(--yellow); }
-  .check input[type=checkbox]:checked::before { transform:scale(1); }
-  .check input[type=checkbox]:focus-visible { outline:3px solid var(--blue-text); outline-offset:2px; }
+  /* Honesty note under Skill Level: calm, short, like the other muted notes. */
+  .skill-note { margin:12px 0 0; }
 </style>
 </head>
 <body>
@@ -65,7 +59,7 @@
       <p class="err" id="e-pin" hidden></p>
 
       <fieldset>
-        <legend>How good are you?</legend>
+        <legend>Skill Level</legend>
         <p class="big" id="lvlName">Slide to pick</p>
         <p class="muted" id="lvlNum"></p>
         <input id="level" type="range" min="1" max="30" step="1" value="15" aria-describedby="lvlName">
@@ -73,7 +67,7 @@
         <p class="err" id="e-level" hidden></p>
       </fieldset>
 
-      <label class="check"><input id="u18" type="checkbox"> <span>I am under 18. I will check in at the desk.</span></label>
+      <p class="muted skill-note">Please answer honestly. It helps us balance teams on the night and saves time at the door. Your stats are checked later in your app, then reviewed and confirmed by the organiser, who can adjust them.</p>
 
       <button class="btn" type="submit" id="send">Send</button>
       <p class="err" id="e-form" hidden></p>
@@ -150,7 +144,6 @@
       first: $('first').value, lastInitial: $('li').value,
       level: touched ? Number($('level').value) : null
     });
-    // Under-18 is not sent online (Fable A6). The tick box is a reminder only; the desk takes it from there.
     var pin = PlayerRules.validatePin($('pin').value);
     var errors = v.errors;
     if (!pin.ok) errors.pin = pin.error;
@@ -189,7 +182,7 @@
   });
 
   $('again').addEventListener('click', function () {
-    $('f').reset(); $('u18').checked = false; touched = false; drawLevel();
+    $('f').reset(); touched = false; drawLevel();
     $('doneView').hidden = true; $('formView').hidden = false;
   });
 })();
