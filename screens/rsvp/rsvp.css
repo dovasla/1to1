@@ -1,0 +1,19 @@
+/* "I'm in" slot (N2 r2). Counts and own status only; no names on the player side. Uses app tokens. Taps 48px+, text 14px+. */
+.rs-card { margin-top:12px; padding:14px; border-radius:var(--radius); border:1px solid var(--line); background:var(--card); }
+.rs-kicker { margin:0; font-size:14px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
+.rs-h { margin:4px 0 0; font-family:var(--font-head); font-size:24px; line-height:1.05; text-transform:uppercase; color:var(--yellow); }
+.rs-count { margin:10px 0 0; font-size:16px; color:var(--ink); }
+.rs-num { font-family:var(--font-head); font-size:44px; line-height:1; font-weight:700; color:var(--ink); margin-right:4px; }
+.rs-paid { color:var(--muted); }
+.rs-need, .rs-note { margin:8px 0 0; font-size:16px; color:var(--muted); }
+.rs-note[role="alert"] { color:var(--ink); }
+.rs-btns { display:flex; gap:10px; margin-top:12px; }
+.rs-btn { flex:1; display:flex; align-items:center; justify-content:center; min-height:52px; padding:0 12px;
+  border-radius:var(--radius-btn); font:inherit; font-size:16px; font-weight:900; text-transform:uppercase; letter-spacing:.04em; cursor:pointer; }
+.rs-btn--in { background:var(--yellow); color:var(--on-yellow); border:2px solid var(--yellow); }
+.rs-btn--ghost { background:transparent; color:var(--ink); border:2px solid var(--line); }
+.rs-btn[aria-pressed="true"]:not(.rs-btn--in) { border-color:var(--blue); color:var(--blue-text); }
+.rs-link { display:flex; align-items:center; justify-content:center; width:100%; min-height:48px; margin-top:8px;
+  background:none; border:0; color:var(--blue-text); font:inherit; font-size:16px; font-weight:700; cursor:pointer; }
+.rs-btn:focus-visible, .rs-link:focus-visible { outline:3px solid var(--blue); outline-offset:2px; }
+

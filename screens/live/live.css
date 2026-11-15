@@ -3,14 +3,14 @@
 .lv * { box-sizing:border-box; }
 .lv h1 { font-size:28px; line-height:1; margin:0; }
 .lv-head { display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:48px; }
-.lv-h { font-family:var(--font-head, "Barlow Condensed", "Barlow", system-ui, sans-serif); font-size:22px; font-weight:700; text-transform:uppercase; letter-spacing:.02em; color:var(--yellow); margin:10px 0 8px; line-height:1.1; }
+.lv-h { font-family:var(--font-head, "Barlow Condensed", "Barlow", system-ui, sans-serif); font-size:22px; font-weight:700; text-transform:uppercase; letter-spacing:.02em; color:var(--yellow-text); margin:10px 0 8px; line-height:1.1; }
 .lv-h3 { font-family:var(--font-head, "Barlow Condensed", "Barlow", system-ui, sans-serif); font-size:18px; font-weight:700; text-transform:uppercase; margin:0 0 6px; color:var(--ink); }
 .lv-cap { font-size:14px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); }
 .lv-muted { color:var(--muted); font-size:16px; }
 .lv-you { display:inline-block; margin-left:4px; padding:2px 6px; border-radius:6px; background:var(--yellow); color:var(--on-yellow, #0E0E0E); font-size:14px; font-weight:900; letter-spacing:.04em; vertical-align:middle; }
 .lv-card { margin-top:12px; padding:14px; border-radius:16px; border:1px solid var(--line); background:var(--card); }
 .lv-top { display:flex; align-items:center; justify-content:space-between; gap:10px; }
-.lv-card.is-mine, .lv-team-block.is-mine { border-color:var(--yellow); }
+.lv-card.is-mine, .lv-team-block.is-mine { border-color:var(--yellow-text); }
 
 /* Live pill and dot */
 .lv-pill { display:inline-flex; align-items:center; gap:8px; min-height:32px; padding:4px 10px; border-radius:8px; background:var(--red); color:#0E0E0E; font-size:14px; font-weight:900; letter-spacing:.06em; text-transform:uppercase; }
@@ -23,7 +23,7 @@
 .lv-team { font-family:var(--font-head, "Barlow Condensed", "Barlow", system-ui, sans-serif); font-size:20px; font-weight:700; text-transform:uppercase; letter-spacing:.02em; }
 .lv-team .lv-you { font-size:14px; }
 .lv-score { font-size:56px; font-weight:900; line-height:1; font-variant-numeric:tabular-nums; }
-.lv-side.is-mine .lv-score { color:var(--yellow); }
+.lv-side.is-mine .lv-score { color:var(--yellow-text); }
 .lv-vs { font-size:24px; color:var(--muted); font-weight:700; }
 .lv-meta { display:flex; justify-content:space-between; gap:10px; border-top:2px dashed var(--line); margin-top:10px; padding-top:8px; }
 .lv-clock { font-size:18px; font-weight:800; font-variant-numeric:tabular-nums; }
@@ -54,8 +54,8 @@
 .lv-state { font-size:14px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); flex:none; }
 .lv-game.is-live .lv-no { background:var(--red); border-color:var(--red); color:#0E0E0E; }
 .lv-game.is-live .lv-state { color:var(--red); }
-.lv-game.is-next .lv-no { border-color:var(--yellow); color:var(--yellow); }
-.lv-game.is-next .lv-state { color:var(--yellow); }
+.lv-game.is-next .lv-no { border-color:var(--yellow-text); color:var(--yellow-text); }
+.lv-game.is-next .lv-state { color:var(--yellow-text); }
 .lv-game.is-done { opacity:.7; }
 
 .lv-empty .lv-h { margin-top:0; }
@@ -69,3 +69,20 @@
   .lv-score { font-size:44px; }
   .lv-teams { grid-template-columns:1fr; }
 }
+/* Live feed (live-schedule module): no-signal note and the next-run card. */
+.lv-offline { margin:10px 0 0; padding:8px 12px; border-radius:12px; border:1px dashed var(--yellow); color:var(--yellow-text); font-size:16px; }
+.lv-sched { display:grid; gap:4px; }
+.lv-sched .lv-h { margin:0; }
+
+/* v2 (live score with clock, fouls, recap). Calm: no flashing, one short fade on a changed score. */
+.lv-score { animation: lvIn .35s ease-out both; }
+@keyframes lvIn { from { opacity: .35; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+.lv-fouls { display: block; font-size: 14px; opacity: .8; margin-top: 2px; }
+.lv-clock { font-variant-numeric: tabular-nums; font-size: 28px; font-weight: 800; letter-spacing: .02em; }
+.lv-clock.is-running { color: var(--lv-accent, #FFD400); }
+.lv-clock-end { color: var(--lv-accent, #FFD400); }
+.lv-clock-state { font-size: 14px; margin-left: 8px; opacity: .8; }
+.lv-recap .lv-final { font-size: 20px; margin: 6px 0; }
+.lv-recap .lv-final b { font-weight: 800; }
+.lv-recap .lv-muted { font-size: 14px; }
+@media (prefers-reduced-motion: reduce) { .lv-score { animation: none; } }

@@ -1,0 +1,16 @@
+/* Achievements grid. Own file: player/screens/achievements/achievements.css. Uses tokens from ../../app.css (player-app root).
+   Two columns at 390 and 360 wide, one when the text will not fit. 48px rows, 15px minimum text. No motion. */
+.ach-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.ach {
+  display: grid; gap: 2px; align-content: start; min-height: 48px; padding: 10px 12px;
+  border-radius: 12px; border: 2px solid var(--line, #2C2F38); background: var(--card, #1A1C22);
+  color: var(--ink, #F4F5F7); min-width: 0;
+}
+.ach--earned { border-color: var(--yellow, #FFD21F); }
+.ach--locked { opacity: .78; }
+.ach-title { font-size: 18px; font-weight: 900; text-transform: uppercase; letter-spacing: .02em; color: var(--yellow, #FFD21F); overflow-wrap: anywhere; }
+.ach--locked .ach-title { color: var(--ink, #F4F5F7); }
+.ach-goal { font-size: 15px; font-weight: 700; color: var(--ink, #F4F5F7); overflow-wrap: anywhere; }
+.ach-meta { font-size: 15px; font-weight: 600; color: var(--muted, #AEB4C0); }
+.ach-empty { font-size: 16px; color: var(--muted, #AEB4C0); margin: 8px 0; }
+@media (max-width: 340px) { .ach-grid { grid-template-columns: 1fr; } }

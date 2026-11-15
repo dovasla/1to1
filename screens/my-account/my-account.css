@@ -1,0 +1,23 @@
+/* My account (T1). Colours come from the app tokens (app-tokens.css): dark is the default, Bright hall is light.
+ * Fallbacks below are the dark values, so the block still looks right on its own.
+ * Yellow headings use --yellow-text (dark gold in Bright hall, for contrast on white). */
+.ma-panel, .ma-sheet { background: var(--card, #1A1C22); color: var(--ink, #F4F5F7); border-radius: 16px; padding: 16px; margin: 12px 0; }
+.ma-title { color: var(--yellow-text, #FFD21F); font-size: 18px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; margin: 0 0 10px; }
+.ma-sub { color: var(--yellow-text, #FFD21F); font-size: 14px; font-weight: 800; text-transform: uppercase; margin: 12px 0 4px; }
+.ma-hint, .ma-plain li { color: var(--muted, #AEB4C0); font-size: 14px; margin: 4px 0; }
+.ma-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.ma-row, .ma-btn, .ma-text { min-height: 48px; width: 100%; border-radius: 12px; font-size: 16px; font-weight: 800; border: 2px solid var(--yellow-text, #FFD21F); background: transparent; color: var(--ink, #F4F5F7); text-align: left; padding: 0 14px; }
+.ma-btn { background: var(--yellow, #FFD21F); border-color: var(--yellow, #FFD21F); color: var(--on-yellow, #0E0E0E); text-align: center; margin-top: 12px; }
+.ma-btn.is-quiet, .ma-text { background: transparent; color: var(--yellow-text, #FFD21F); border-color: transparent; width: auto; padding: 0; min-height: 48px; }
+.ma-row.is-danger { border-color: var(--red, #FF6B6B); color: var(--red, #FF6B6B); }
+.ma-btn.is-danger { background: var(--red, #FF6B6B); border-color: var(--red, #FF6B6B); color: var(--on-red, #0E0E0E); }
+.ma-field { display: grid; gap: 6px; font-size: 14px; color: var(--muted, #AEB4C0); margin-top: 10px; }
+.ma-field input { min-height: 48px; font-size: 16px; border-radius: 10px; border: 2px solid var(--muted, #AEB4C0); background: transparent; color: var(--ink, #F4F5F7); padding: 0 12px; }
+.ma-error { color: var(--red, #FF6B6B); font-size: 14px; font-weight: 700; margin: 6px 0; }
+.ma-link { margin: 8px 0 0; }
+.ma-plain { padding-left: 18px; }
+@media (max-width: 360px) { .ma-title { font-size: 16px; } }
+
+/* Sheet overlay (integrator, next-17): dims the page and holds the sheet. */
+.ma-overlay { position: fixed; inset: 0; z-index: 80; display: flex; align-items: flex-end; justify-content: center; padding: 16px; background: rgba(0,0,0,.6); }
+.ma-overlay .ma-sheet { width: 100%; max-width: 480px; max-height: 90vh; overflow: auto; }

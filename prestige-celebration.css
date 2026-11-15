@@ -1,0 +1,39 @@
+/* Prestige celebration (player app). Dark in both themes on purpose: it is a reward moment, like the lineup reveal.
+   Loads after app-tokens.css. Reduced motion: the moment is off (prestige-celebration.js), so no keyframes run. */
+.pc-overlay { position:fixed; inset:0; z-index:90; display:flex; align-items:center; justify-content:center; padding:24px 16px; cursor:pointer; animation:pc-in .15s ease-out both; }
+.pc-overlay.pc-out { animation:pc-fade-out .3s ease-in both; }
+.pc-scrim { position:absolute; inset:0; background:#0E0E0E; opacity:.94; }
+.pc-card { position:relative; width:100%; max-width:360px; text-align:center; color:#F4F5F7; outline:none; font-family:var(--font-body, system-ui, sans-serif); }
+.pc-star { width:168px; height:168px; margin:0 auto 14px; border-radius:50%; background:radial-gradient(circle, rgba(255,210,31,.35) 0%, rgba(255,210,31,0) 70%); display:flex; align-items:center; justify-content:center; animation:pc-slam .6s cubic-bezier(.2,.7,.2,1) both; }
+.pc-star svg { width:132px; height:132px; fill:#FFD21F; filter:drop-shadow(0 0 24px rgba(255,210,31,.35)); }
+.pc-kicker { margin:0 0 6px; font-family:var(--font-head, "Barlow Condensed", sans-serif); font-weight:700; font-size:20px; letter-spacing:.06em; text-transform:uppercase; color:#6FA0FF; }
+:root .pc-overlay .pc-title { margin:0 0 10px; font-family:var(--font-head, "Barlow Condensed", sans-serif); font-weight:700; font-size:44px; line-height:1; letter-spacing:.02em; text-transform:uppercase; color:#FFD21F; }
+.pc-line { margin:0 0 22px; font-size:18px; line-height:1.4; color:#F4F5F7; }
+.pc-tap { margin:0; font-size:14px; letter-spacing:.06em; text-transform:uppercase; color:#AEB4C0; }
+
+@keyframes pc-in { from { opacity:0; } to { opacity:1; } }
+@keyframes pc-fade-out { from { opacity:1; } to { opacity:0; } }
+@keyframes pc-slam {
+  0%   { transform:scale(2.6); opacity:0; }
+  55%  { transform:scale(.92); opacity:1; }
+  80%  { transform:scale(1.05); }
+  100% { transform:scale(1); }
+}
+
+/* ---- Prestige sheet fixes for Bright hall (prestige/screens sheet, owned by the prestige thread) ---- */
+/* Yellow text fails on white. In Bright hall the big count uses the blue text colour. */
+:root[data-theme="light"] .pr-count { color:var(--blue-text, #0A5CFF); }
+:root[data-theme="light"] .pr-count .off { color:var(--muted); }
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) .pr-count { color:var(--blue-text, #0A5CFF); }
+  :root:not([data-theme="dark"]) .pr-count .off { color:var(--muted); }
+}
+/* Error text on the dark sheet: the bright red, not the dark one (#B3261E is under 4.5:1 on the sheet). */
+.sheet .sheet-err { color:#FF6B6B; }
+/* The sheet is always dark. Keep its title visible when it opens (the focus scroll is fixed in HOOKS.md). */
+.sheet { overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
+:root .sheet .sheet-title { color:#FFD21F; position:sticky; top:0; background:#16181E; z-index:1; padding-top:4px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .pc-overlay, .pc-overlay.pc-out, .pc-star { animation:none !important; }
+}

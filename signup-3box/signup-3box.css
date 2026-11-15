@@ -1,0 +1,16 @@
+/* Sign-up in three boxes (R18). Owns only the signup-3box page. Uses app.css tokens. */
+.s3-form { display:grid; gap:4px; }
+.s3-form label { font-weight:800; font-size:16px; margin-top:12px; }
+.s3-form input[type="text"], .s3-form input[type="password"] {
+  width:100%; min-height:48px; box-sizing:border-box; font-size:18px; padding:10px 12px;
+  border-radius:12px; border:1px solid var(--line); background:var(--card); color:var(--ink);
+}
+.s3-form input:focus { outline:3px solid var(--yellow); outline-offset:2px; }
+.s3-check { display:flex; align-items:center; gap:10px; min-height:48px; margin-top:14px; font-size:16px; font-weight:700; }
+.s3-check input { width:24px; height:24px; accent-color:var(--yellow-text); flex:0 0 auto; }
+.s3-run { border:2px solid var(--yellow); border-radius:var(--radius); padding:12px 14px; margin:0 0 12px; }
+.s3-run b { font-size:22px; letter-spacing:.12em; }
+.s3-form .btn { width:100%; min-height:48px; margin-top:16px; }
+.s3-actions .btn { display:flex; justify-content:center; align-items:center; min-height:48px; width:100%; box-sizing:border-box; margin-top:10px; }
+.s3-btn-outline { background:transparent; color:var(--yellow-text); border:2px solid var(--yellow); }
+@media (max-width: 360px) { .s3-form input[type="text"], .s3-form input[type="password"] { font-size:17px; } }

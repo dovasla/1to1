@@ -1,0 +1,32 @@
+/* Streak card (Home slot) and attendance badges (Profile row). Own file: screens/streaks/streaks.css.
+   Uses tokens from ../../app-tokens.css (--yellow, --card, --ink, --muted, --line, --radius). Dark base.
+   48px taps are not needed here (no buttons). Text 14px minimum. Same layout at 360 and 390 wide. */
+
+.st-card, .st-badges { box-sizing: border-box; width: 100%; background: var(--card, #16181E); color: var(--ink, #F4F1EA);
+  border: 1px solid var(--line, #2A2E38); border-radius: var(--radius, 14px); padding: 14px 16px; margin: 0 0 12px; }
+.st-head { margin: 0; font-size: 18px; letter-spacing: .06em; text-transform: uppercase; color: var(--yellow, #FFD21F); }
+.st-title { margin: 2px 0 0; font-size: 16px; font-weight: 600; }
+.st-line { margin: 6px 0 0; font-size: 14px; color: var(--muted, #B9BDC8); line-height: 1.4; }
+
+.st-top { display: flex; align-items: center; gap: 14px; }
+.st-num { display: flex; flex-direction: column; align-items: flex-start; min-width: 64px; }
+.st-big { font-size: 56px; line-height: 1; font-weight: 700; color: var(--yellow, #FFD21F); letter-spacing: .02em; }
+.st-big-off { color: var(--muted, #B9BDC8); }
+.st-unit { font-size: 14px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted, #B9BDC8); }
+.st-words { min-width: 0; }
+
+.st-shield { display: flex; align-items: center; gap: 8px; margin: 10px 0 0; font-size: 14px; color: var(--ink, #F4F1EA); }
+.st-ic { width: 20px; height: 20px; flex: 0 0 20px; fill: none; stroke: var(--blue, #0A5CFF); stroke-width: 2;
+  stroke-linejoin: round; stroke-linecap: round; }
+.st-reset .st-big, .st-none .st-big { color: var(--muted, #B9BDC8); }
+
+.st-badge-row { list-style: none; margin: 10px 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.st-badge { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 64px;
+  border-radius: var(--radius, 12px); border: 1px solid var(--line, #2A2E38); padding: 8px 4px; text-align: center; }
+.st-badge-n { font-size: 24px; font-weight: 700; line-height: 1; }
+.st-badge-t { font-size: 14px; margin-top: 4px; color: var(--muted, #B9BDC8); }
+.st-badge-on { border-color: var(--yellow, #FFD21F); color: var(--yellow, #FFD21F); }
+.st-badge-on .st-badge-t { color: var(--ink, #F4F1EA); }
+.st-badge-off { opacity: .85; }
+
+@media (prefers-reduced-motion: reduce) { .st-card, .st-badges { transition: none; } }

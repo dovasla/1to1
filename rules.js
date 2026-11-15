@@ -17,7 +17,7 @@
 })(typeof self !== 'undefined' ? self : this, function () {
   'use strict';
 
-  // Named skill levels from Jord (13 Nov). Index 0 is level 1.
+  // Named skill levels from the organiser (13 Nov). Index 0 is level 1.
   var SKILL_LEVELS = [
     'Noob', 'Fresh Out the Box', 'Still Learning', 'Brick Layer', 'Airball Artist',
     'Bench Warmer', 'Warming Up', 'Not Bad', 'Decent Hands', 'Has a Jump Shot',
@@ -52,6 +52,19 @@
     return n >= 1 && n <= SKILL_LEVELS.length ? SKILL_LEVELS[n - 1] : '';
   }
 
+  // Names players may not sign up with (owner and staff names). Stored as character codes so the
+  // words do not appear in the player build. Compared lower case, first name only.
+  var RESERVED_FIRST = [
+    [106, 111, 114, 100],
+    [111, 114, 103, 97, 110, 105, 115, 101, 114],
+    [111, 114, 103, 97, 110, 105, 122, 101, 114],
+    [111, 119, 110, 101, 114],
+    [97, 100, 109, 105, 110]                                               // admin
+  ].map(function (codes) { return String.fromCharCode.apply(null, codes); });
+  function isReservedFirst(first) {
+    return RESERVED_FIRST.indexOf(cleanName(first).toLowerCase()) >= 0;
+  }
+
   function validateSignup(input) {
     input = input || {};
     var errors = {};
@@ -61,6 +74,7 @@
     if (!first) errors.first = 'Add your first name.';
     else if (first.length > 20) errors.first = 'Keep it under 20 letters.';
     else if (!/^[A-Za-z][A-Za-z'\- ]*$/.test(first)) errors.first = 'Use letters only.';
+    else if (isReservedFirst(first)) errors.first = 'That name is not available. Use your own first name.';
 
     if (!li) errors.lastInitial = 'Add the first letter of your last name.';
     else if (!/^[A-Z]$/.test(li)) errors.lastInitial = 'Just one letter, no full name.';
@@ -94,6 +108,29 @@
     return Math.round((1 + (n - 1) * 9 / (SKILL_LEVELS.length - 1)) * 10) / 10;
   }
 
+  // Skill on the organiser's 1 to 1000 scale (the number teams are built on). Placeholder from the 1 to 30 pick:
+  // level 1 = 100, level 30 = 1000, linear. Same as signups_set_placeholder() in supabase/migration-6-skill.sql.
+  function skillScoreFromLevel(level) {
+    var n = Math.min(SKILL_LEVELS.length, Math.max(1, Math.round(Number(level)) || 1));
+    return Math.round(100 + (n - 1) * 900 / (SKILL_LEVELS.length - 1));
+  }
+
+  // Score from the skill questions, 100 to 1000. Answers: exp, shoot, dribble, run (each 1 to 10, the hidden
+  // value of the card picked) and height (inches, 53 to 84). Weights 40/20/15/15/10 (Fable 23:14), as in
+  // off-rating.js. Same maths as skill_score_from_answers() in supabase/migration-6-skill.sql (the server copy wins).
+  var SKILL_WEIGHTS = { exp: 0.40, shoot: 0.20, dribble: 0.15, run: 0.15, height: 0.10 };
+  function skillScoreFromAnswers(a) {
+    if (!a) return null;
+    var keys = ['exp', 'shoot', 'dribble', 'run', 'height'];
+    for (var i = 0; i < keys.length; i++) if (!isFinite(Number(a[keys[i]]))) return null;
+    var h = Math.min(84, Math.max(53, Number(a.height)));
+    var heightValue = 1 + (h - 53) * 9 / 31;
+    var raw = SKILL_WEIGHTS.exp * Number(a.exp) + SKILL_WEIGHTS.shoot * Number(a.shoot) +
+              SKILL_WEIGHTS.dribble * Number(a.dribble) + SKILL_WEIGHTS.run * Number(a.run) +
+              SKILL_WEIGHTS.height * heightValue;
+    return Math.min(1000, Math.max(100, Math.round(raw * 100)));
+  }
+
   // XP level is separate from skill. Everyone starts at 1. Sign-up never sets it; games and attendance will.
   var XP_START_LEVEL = 1;
 
@@ -104,7 +141,7 @@
       first: clean.first,
       lastInitial: clean.lastInitial,
       phoneLast4: '',
-      rating: ratingFromLevel(clean.level),   // from skill only
+      rating: skillScoreFromLevel(clean.level),   // placeholder, 100 to 1000 (organiser scale)
       level: clean.level,                     // skill pick (1 to 30)
       xpLevel: XP_START_LEVEL,                // XP level, separate from skill
       payHistory: [],
@@ -166,9 +203,12 @@
     cleanName: cleanName,
     levelLabel: levelLabel,
     validateSignup: validateSignup,
+    isReservedFirst: isReservedFirst,
     validatePin: validatePin,
     keyFor: keyFor,
     ratingFromLevel: ratingFromLevel,
+    skillScoreFromLevel: skillScoreFromLevel,
+    skillScoreFromAnswers: skillScoreFromAnswers,
     toRegular: toRegular,
     toRegularsCsv: toRegularsCsv,
     mergeApproved: mergeApproved,

@@ -1,0 +1,12 @@
+/* Who's in tonight (Home card). Yellow accent, 48px-friendly, 14px minimum text. Dark first, light below. */
+:root { --tc-bg: #111; --tc-fg: #fff; --tc-accent: #FFD400; --tc-line: #333; --tc-muted: #ccc; }
+:root[data-theme="dark"] { --tc-bg: #111; --tc-fg: #fff; --tc-accent: #FFD400; --tc-line: #333; --tc-muted: #ccc; }
+:root[data-theme="light"] { --tc-bg: #fff; --tc-fg: #000; --tc-accent: #000; --tc-line: #bbb; --tc-muted: #333; }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) { --tc-bg: #fff; --tc-fg: #000; --tc-accent: #000; --tc-line: #bbb; --tc-muted: #333; } }
+
+.tc-card { background: var(--tc-bg); color: var(--tc-fg); border: 1px solid var(--tc-line); border-radius: 16px; padding: 14px 16px; box-sizing: border-box; width: 100%; max-width: 100%; }
+.tc-title { margin: 0 0 10px; font-size: 18px; text-transform: uppercase; color: var(--tc-accent); }
+.tc-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; text-align: center; }
+.tc-big { display: block; font-size: 40px; font-weight: 800; color: var(--tc-accent); line-height: 1; }
+.tc-lab { display: block; margin-top: 4px; font-size: 14px; text-transform: uppercase; color: var(--tc-muted); }
+.tc-line { margin: 10px 0 0; font-size: 16px; color: var(--tc-fg); }

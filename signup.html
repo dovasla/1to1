@@ -7,27 +7,26 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="1TO1">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon-180-v2.png">
 <link rel="stylesheet" href="pwa.css">
 <link rel="manifest" href="manifest.webmanifest">
 <title>Join the run</title>
-<link rel="icon" href="icons/icon-32.png" sizes="32x32" type="image/png">
+<link rel="icon" href="icons/icon-32-v2.png" sizes="32x32" type="image/png">
 <script>
   // Same theme rule as the app: the saved choice wins, otherwise the phone setting (handled in CSS).
   try { var t = localStorage.getItem('1to1-theme'); if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); } catch (e) { /* private window: phone setting */ }
 </script>
 <link rel="stylesheet" href="app.css">
 <link rel="stylesheet" href="app-tokens.css">
+<link rel="stylesheet" href="keyboard-submit.css">
 <style>
-  /* 48px tap area for the skill slider (QA item 5). */
-  #level { display:block; width:100%; height:48px; margin:6px 0 0; cursor:pointer; accent-color:var(--yellow); }
   /* Brand: yellow Send button with dark text, like the other yellow buttons. */
   #send.btn { background:var(--yellow); color:var(--on-yellow); }
-  /* Honesty note under Skill Level: calm, short, like the other muted notes. */
-  .skill-note { margin:12px 0 0; }
 </style>
+<link rel="stylesheet" href="weak-signal/signal.css">
 </head>
-<body>
+<body data-no-install-card>
 <main>
   <h1>Join the run</h1>
   <p class="muted">Use your first name and the first letter of your last name. Example: John Smith becomes <b>John S</b>. We keep nothing else.</p>
@@ -48,26 +47,17 @@
         <p class="err" id="e-extra" hidden></p>
       </div>
 
+      <div id="doorRow">
       <label for="door">Door code</label>
       <p class="muted">Ask at the desk. You need it to join on the night.</p>
       <input id="door" name="door" type="text" autocomplete="off" autocapitalize="characters" maxlength="8">
       <p class="err" id="e-door" hidden></p>
+      </div>
 
       <label for="pin">Your 4-digit PIN</label>
       <p class="muted">You use this with your name to log in later. Pick four digits you will remember. Don't use your birthday or anything obvious.</p>
       <input id="pin" name="pin" type="password" inputmode="numeric" autocomplete="new-password" pattern="[0-9]*" maxlength="4" required>
       <p class="err" id="e-pin" hidden></p>
-
-      <fieldset>
-        <legend>Skill Level</legend>
-        <p class="big" id="lvlName">Slide to pick</p>
-        <p class="muted" id="lvlNum"></p>
-        <input id="level" type="range" min="1" max="30" step="1" value="15" aria-describedby="lvlName">
-        <div class="scale"><span>Noob</span><span>HIM</span></div>
-        <p class="err" id="e-level" hidden></p>
-      </fieldset>
-
-      <p class="muted skill-note">Please answer honestly. It helps us balance teams on the night and saves time at the door. Your stats are checked later in your app, then reviewed and confirmed by the organiser, who can adjust them.</p>
 
       <button class="btn" type="submit" id="send">Send</button>
       <p class="err" id="e-form" hidden></p>
@@ -77,7 +67,9 @@
   <section id="doneView" class="card" hidden>
     <p class="ok">You're in.</p>
     <p class="big" id="keptPin"></p>
-    <p>On the night, open <a href="app.html" class="link" style="display:inline-flex;align-items:center;min-height:48px;color:var(--gold-text);font-weight:800">the 1TO1 app</a> and log in with your first name, last initial and PIN to see your team.</p>
+    <p>You are signed in on this phone. Tap the button to open the app.</p>
+    <p><a class="btn yellow" href="app.html">Open 1TO1</a></p>
+    <p class="muted">Next time, log in with your first name, last initial and PIN.</p>
     <section class="install-steps" aria-labelledby="installHDone">
       <h2 id="installHDone">Get the app</h2>
       <ol class="install-list">
@@ -104,6 +96,9 @@
 <script src="config.js"></script>
 <script src="rules.js"></script>
 <script src="backend.js"></script>
+<script src="weak-signal/signal.js"></script>
+<script src="onboarding/onboarding.js"></script>
+<script src="screens/invite/invite.js"></script>
 <script>
 (function () {
   'use strict';
@@ -111,21 +106,15 @@
   var be = PlayerBackend.create(cfg.backend === 'supabase' ? 'supabase' : 'mock',
     { url: cfg.supabaseUrl, anonKey: cfg.supabaseAnonKey });
   var $ = function (id) { return document.getElementById(id); };
-  var touched = false;
-  // ?next=app.html sends the player to the app shell after sign-up. Anything else stays on this page.
-  var NEXT_OK = { 'app.html': true };
-  var nextPage = new URLSearchParams(location.search).get('next') || '';
+  // Same key the app uses, so the app opens already signed in. Never stores the PIN.
+  var TOKEN_KEY = '1to1-player-token';
+  function saveToken(t) { try { localStorage.setItem(TOKEN_KEY, t); } catch (e) { /* private window: the app asks for a log in */ } }
+  // The skill is set at the desk (The organiser), not by the player. Sign-up sends the middle level for now.
+  var DEFAULT_LEVEL = 15;
 
+  // Bring a friend (N13): the code from the link, kept for the sign-up call only.
+  var inviteCode = (window.PlayerInvite && PlayerInvite.readCode(location.search)) || '';
   if (be.kind === 'mock') { $('modeNote').hidden = false; $('modeNote').textContent = 'Test mode: this device only.'; }
-
-  // Skill slider: 1 to 30, each with a name. Nothing is picked until the player moves it.
-  function drawLevel() {
-    var n = Number($('level').value);
-    $('lvlName').textContent = touched ? PlayerRules.levelLabel(n) : 'Slide to pick';
-    $('lvlNum').textContent = touched ? 'Level ' + n + ' of 30' : '';
-  }
-  $('level').addEventListener('input', function () { touched = true; $('e-level').hidden = true; drawLevel(); });
-  drawLevel();
 
   function showErrors(errors) {
     document.querySelectorAll('.err').forEach(function (p) { if (p.id !== 'e-form') p.hidden = true; });
@@ -142,7 +131,7 @@
     $('e-form').hidden = true;
     var v = PlayerRules.validateSignup({
       first: $('first').value, lastInitial: $('li').value,
-      level: touched ? Number($('level').value) : null
+      level: DEFAULT_LEVEL
     });
     var pin = PlayerRules.validatePin($('pin').value);
     var errors = v.errors;
@@ -151,7 +140,9 @@
     if (!v.ok || !pin.ok) return;
     $('send').disabled = true;
     v.clean.extra = $('extra').value.replace(/[^A-Za-z]/g, '').toLowerCase();
-    be.signUp(v.clean, pin.pin, $('door').value).then(function (r) {
+    var doorOn = !(window.PLAYER_APP_CONFIG && PLAYER_APP_CONFIG.doorCodeAtSignUp === false);
+    $('doorRow').hidden = !doorOn;
+    be.signUp(v.clean, pin.pin, doorOn ? $('door').value : '', inviteCode).then(function (r) {
       if (!r.ok) {
         $('send').disabled = false;
         if (r.reason === 'name-taken') {
@@ -170,11 +161,15 @@
       // The PIN you keep is shown once. It may differ from the one you typed.
       $('keptPin').textContent = 'Your PIN is ' + r.pin + '. Remember it.';
       $('pin').value = '';
-      // Only known pages can be the next step (no open redirects).
-      if (NEXT_OK[nextPage]) { location.href = nextPage; return; }
-      $('formView').hidden = true;
-      $('doneView').hidden = false;
-      $('doneView').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Sign this phone in, so "Open 1TO1" goes straight to the app. If that fails, the app asks for a log in.
+      if (window.PlayerOnboarding) PlayerOnboarding.markPending(localStorage);
+      return be.login(v.clean.first, v.clean.lastInitial, r.pin).then(function (s) {
+        if (s && s.ok && s.token) saveToken(s.token);
+      }).catch(function () { /* no sign-in saved */ }).then(function () {
+        $('formView').hidden = true;
+        $('doneView').hidden = false;
+        $('doneView').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
     }).catch(function () {
       $('e-form').textContent = 'Couldn’t send just now. Check your signal and tap Send again. What you typed is still here.';
       $('e-form').hidden = false;
@@ -182,11 +177,28 @@
   });
 
   $('again').addEventListener('click', function () {
-    $('f').reset(); touched = false; drawLevel();
+    $('f').reset();
     $('doneView').hidden = true; $('formView').hidden = false;
   });
 })();
 </script>
 <script src="pwa.js"></script>
+<script>
+/* Keep the main button reachable while a name field is focused (small screens, on-screen keyboard). */
+(function () {
+  var btn = document.getElementById('send');
+  if (!btn) return;
+  function lift() {
+    var vv = window.visualViewport;
+    var h = vv ? vv.height : window.innerHeight;
+    if (btn.getBoundingClientRect().bottom > h - 8) btn.scrollIntoView({ block: 'end' });
+  }
+  document.addEventListener('focusin', function (e) {
+    if (!e.target || !e.target.matches || !e.target.matches('input, textarea, select')) return;
+    setTimeout(lift, 350);
+  });
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', function () { setTimeout(lift, 50); });
+})();
+</script>
 </body>
 </html>

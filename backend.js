@@ -1,4 +1,4 @@
-/* Player app backend. Same methods for two adapters:
+/* Player app backend (player-only build). Same methods for two adapters:
    - 'mock': keeps everything in one storage object (localStorage in the browser, memory in tests). One device only.
              Test mode only. Its PIN hash is a simple salted hash, NOT secure. The live adapter is the real one.
    - 'supabase': the real online database (free tier). The PIN is hashed on the server (bcrypt, in schema.sql).
@@ -6,14 +6,13 @@
    Methods:
      signUp(clean, pin, door)      -> { ok: true, pin } or { ok: false, reason }   pin is the PIN the player keeps (can differ from the one typed); reasons: bad-door, busy, bad-name, bad-initial, bad-pin, bad-skill
      resume(token) / logout(token) -> stay signed in on a phone for 90 days (token kept on the phone, only its hash on the server)
-     getDoorCode() / setDoorCode(code) -> organiser only; empty code switches the door off
      login(first, lastInitial, pin)-> { ok: true, player } or { ok: false, reason }   reasons: wrong-pin (also for an unknown name), locked
-     resetPin(id, pin)             -> true (organiser only, signed in)
-     clearLock(id)                 -> true (organiser only, signed in)
-     listSignups(), listApproved(), decide(id, status, level)
      claimPaid(token, nightId)     -> { ok: true } or { ok: false, reason }   "I've paid" claim only, using the sign-in token. Not a payment. Reasons: signed-out, not-approved, no-night, error.
-     publishNight(id, payload), getNight(id), exportAll(), signIn(email, password) (supabase only).
-   No paid state here. Players never mark themselves paid; Jord takes payment and records it in the organiser.
+     pushSave(token, sub, kinds)   -> { ok: true }   push reminder switches (N11). pushRemove(token, endpoint) -> { ok: true }.
+     skillAnswer(token, answers)   -> { ok: true, done: true } or { ok: false, reason }   skill questions, asked once. Reasons: signed-out, already-done, bad-answers, error.
+     skillStatus(token)            -> { ok: true, done: true|false } or { ok: false }   the player never sees the 1 to 1000 number.
+     getNight(id), getLive() -> { payload, updatedAt } or null (live score row, read only). mockSeedNight(id, payload) is mock test seeding only.
+   No paid state here. Players never mark themselves paid; the organiser takes payment and records it in the organiser.
    Global: window.PlayerBackend = { create(kind, opts) }. Node: module.exports.
 */
 (function (root, factory) {
@@ -61,11 +60,12 @@
     function pinMatches(r, pin) { return r.pinHash === mockHash(r.pinSalt, pin); }
     return {
       kind: 'mock',
-      signUp: function (clean, pin, door) {
+      signUp: function (clean, pin, door, invite) {
         return Promise.resolve().then(function () {
           var db = load();
           var code = db.settings && db.settings.doorCode;
-          if (code && String(door || '').trim().toUpperCase() !== code) return { ok: false, reason: 'bad-door' };
+          var doorOn = !(typeof window !== 'undefined' && window.PLAYER_APP_CONFIG && PLAYER_APP_CONFIG.doorCodeAtSignUp === false);
+          if (doorOn && code && String(door || '').trim().toUpperCase() !== code) return { ok: false, reason: 'bad-door' };
           // A clash is never reported. The new player gets another free PIN, and it is shown to them.
           var usedPins = db.signups.filter(function (r) { return sameName(r, clean.first, clean.lastInitial); });
           var finalPin = String(pin);
@@ -87,7 +87,8 @@
           var rows = db.signups.filter(function (r) { return sameName(r, first, li); });
           if (!rows.length) return { ok: false, reason: 'wrong-pin' };   // same answer as a wrong PIN
           var now = Date.now();
-          if (rows.some(function (r) { return r.lockedUntil > now; })) return { ok: false, reason: 'locked' };
+          var lockEnds = rows.reduce(function (m, r) { return r.lockedUntil > m ? r.lockedUntil : m; }, 0);
+          if (lockEnds > now) return { ok: false, reason: 'locked', until: new Date(lockEnds).toISOString() };
           var hit = rows.filter(function (r) { return pinMatches(r, String(pin || '')); })[0];
           if (hit) {
             rows.forEach(function (r) { r.badTries = 0; r.lockCount = 0; r.lockedUntil = 0; });
@@ -110,7 +111,11 @@
           return { ok: false, reason: 'wrong-pin' };
         });
       },
-      // Pay with card (Square). A claim is not a payment: it only flags the night for Jord to check Square.
+      // Pay with card (Square). A claim is not a payment: it only flags the night for the organiser to check Square.
+      pushSave: function () { return Promise.resolve({ ok: true }); },
+      pushRemove: function () { return Promise.resolve({ ok: true }); },
+      pushSave: function (token, sub, kinds) { return call('POST', '/rest/v1/rpc/player_push_save', { p_token: token, p_sub: sub, p_kinds: kinds }); },
+      pushRemove: function (token, endpoint) { return call('POST', '/rest/v1/rpc/player_push_remove', { p_token: token, p_endpoint: endpoint }); },
       claimPaid: function (token, nightId) {
         return Promise.resolve().then(function () {
           var db = load();
@@ -128,26 +133,68 @@
           return { ok: true };
         });
       },
-      resetPin: function (id, pin) {
+      // Skill questions (asked once). The mock keeps the answers only; the 1 to 1000 number is set on the server.
+      skillAnswer: function (token, answers) {
         return Promise.resolve().then(function () {
-          if (!/^[0-9]{4}$/.test(String(pin))) throw new Error('bad-pin');
           var db = load();
-          var r = db.signups.filter(function (x) { return x.id === id; })[0];
-          if (!r) return false;
-          r.pinSalt = mockSalt(); r.pinHash = mockHash(r.pinSalt, String(pin));
-          r.badTries = 0; r.lockCount = 0; r.lockedUntil = 0;
+          var s = db.sessions && db.sessions[String(token || '')];
+          var r = s && s.expires > Date.now() && db.signups.filter(function (x) { return x.id === s.id; })[0];
+          if (!r) return { ok: false, reason: 'signed-out' };
+          if (r.skillDone) return { ok: false, reason: 'already-done' };
+          var a = answers || {};
+          var good = ['exp', 'shoot', 'dribble', 'run'].every(function (k) { return Number.isInteger(a[k]) && a[k] >= 1 && a[k] <= 10; }) &&
+            Number.isInteger(a.height) && a.height >= 53 && a.height <= 84;
+          if (!good) return { ok: false, reason: 'bad-answers' };
+          r.skillDone = true;
+          r.skillAnswers = a;
           save(db);
-          return true;
+          return { ok: true, done: true };
         });
       },
-      clearLock: function (id) {
+      // Mock RSVP (I'm in) so the chaos run can exercise it. Other RPCs stay unavailable in mock.
+      rpc: function (name, body) {
+        // Test-only fault injection: db.faults = { rpcName: 404 } makes that call fail like a missing server function.
+        var fdb = load();
+        if (fdb.faults && fdb.faults[name]) return Promise.reject(new Error('http-' + fdb.faults[name]));
+        return Promise.resolve().then(function () {
+          if (name !== 'player_rsvp_list' && name !== 'player_rsvp_set') return { ok: false, reason: 'mock' };
+          var db = load();
+          var b = body || {};
+          var s = db.sessions && db.sessions[String(b.p_token || '')];
+          var r = s && s.expires > Date.now() && db.signups.filter(function (x) { return x.id === s.id; })[0];
+          if (!r) return { ok: false, reason: 'signed-out' };
+          db.rsvps = db.rsvps && typeof db.rsvps === 'object' ? db.rsvps : {};
+          var night = db.rsvps[String(b.p_night)] = db.rsvps[String(b.p_night)] || {};
+          if (name === 'player_rsvp_set') {
+            var st = String(b.p_state || '');
+            if (st === 'in' || st === 'out' || st === 'maybe') night[r.id] = st; else delete night[r.id];
+            save(db);
+          }
+          var ids = Object.keys(night);
+          var inCount = ids.filter(function (k) { return night[k] === 'in'; }).length;
+          var needed = 12;
+          save(db);
+          return { ok: true, closed: false, cancelled: false, needed: needed, inCount: inCount, paidCount: 0,
+            toBreakEven: Math.max(0, needed - inCount), me: night[r.id] || null };
+        });
+      },
+      xpSummary: function () { return Promise.resolve({ ok: false }); },
+      playerHeadToHead: function () { return Promise.resolve({ ok: true, enough: false, games: 0, player: null, with: null, against: null }); },
+      playerGameLog: function () { return Promise.resolve({ ok: true, games: [], by_colour: [], best_teammate: null, rival: null }); },
+      streakSummary: function (token, nextWeek) { return Promise.resolve({ ok: false, nextWeek: nextWeek || 0 }); },
+      playerLeaderboard: function () { return Promise.resolve({ ok: false, reason: 'mock' }); },
+      playerChangePin: function (token, oldPin) { return Promise.resolve(String(oldPin) === '0000' ? { ok: false, reason: 'wrong-pin' } : { ok: true }); },
+      playerChangeName: function () { return Promise.resolve({ ok: true }); },
+      playerDeleteMe: function () { return Promise.resolve({ ok: true }); },
+      playerMyData: function () { return Promise.resolve({ ok: true, data: { note: 'mock data' } }); },
+      inviteInfo: function () { return Promise.resolve({ ok: true, code: '', joined: 0, rewarded: 0, coins: 0, badge: false }); },
+      checkIn: function () { return Promise.resolve({ ok: false, reason: 'wrong-code' }); },
+      skillStatus: function (token) {
         return Promise.resolve().then(function () {
           var db = load();
-          var r = db.signups.filter(function (x) { return x.id === id; })[0];
-          if (!r) return false;
-          r.badTries = 0; r.lockedUntil = 0;   // repeat count kept, same as organiser_clear_lock in schema.sql
-          save(db);
-          return true;
+          var s = db.sessions && db.sessions[String(token || '')];
+          var r = s && s.expires > Date.now() && db.signups.filter(function (x) { return x.id === s.id; })[0];
+          return r ? { ok: true, done: r.skillDone === true } : { ok: false };
         });
       },
       resume: function (token) {
@@ -166,42 +213,7 @@
           return true;
         });
       },
-      getDoorCode: function () {
-        return Promise.resolve().then(function () { return (load().settings || {}).doorCode || ''; });
-      },
-      setDoorCode: function (code) {
-        return Promise.resolve().then(function () {
-          var c = String(code || '').trim().toUpperCase();
-          if (c && !/^[A-Z0-9]{3,8}$/.test(c)) throw new Error('bad-door-code');
-          var db = load();
-          db.settings = db.settings || {};
-          db.settings.doorCode = c || null;
-          save(db);
-          return true;
-        });
-      },
-      listSignups: function () {
-        return Promise.resolve().then(function () { return load().signups.map(publicRow); });
-      },
-      listApproved: function () {
-        return Promise.resolve().then(function () {
-          return load().signups.filter(function (r) { return r.status === 'approved'; }).map(publicRow);
-        });
-      },
-      // level is Jord's final number from the slider (optional). It replaces the player's own pick.
-      decide: function (id, status, level) {
-        return Promise.resolve().then(function () {
-          if (status !== 'approved' && status !== 'declined' && status !== 'waiting') throw new Error('bad-status');
-          var db = load();
-          var r = db.signups.filter(function (x) { return x.id === id; })[0];
-          if (!r) return false;
-          r.status = status;
-          if (Number.isInteger(level) && level >= 1 && level <= 30) r.level = level;
-          save(db);
-          return true;
-        });
-      },
-      publishNight: function (id, payload) {
+      mockSeedNight: function (id, payload) {
         return Promise.resolve().then(function () {
           var db = load();
           db.nights[id] = { id: id, payload: payload, updatedAt: new Date().toISOString() };
@@ -210,29 +222,29 @@
         });
       },
       getNight: function (id) {
-        return Promise.resolve().then(function () { return load().nights[id] || null; });
+        return Promise.resolve().then(function () { var rec = load().nights[id]; return rec ? Object.assign({}, rec, { status: rec.status || 'on', message: rec.message || '' }) : null; });
       },
-      exportAll: function () {
+      // Live feed (organiser row). Mock: only what a test sets on window; no data is kept.
+      getLive: function () {
+        var lf = load();
+        if (lf.faults && lf.faults.live_state) return Promise.reject(new Error('http-' + lf.faults.live_state));
         return Promise.resolve().then(function () {
-          var db = load();
-          // No PIN hashes in the backup file.
-          return { format: '1to1-player-backup', version: 2, savedAt: new Date().toISOString(),
-            signups: db.signups.map(publicRow), nights: db.nights };
+          var w = typeof window !== 'undefined' ? window : {};
+          if (w.__MOCK_LIVE_DOWN__) throw new Error('no-signal');
+          return w.__MOCK_LIVE__ ? { payload: w.__MOCK_LIVE__, updatedAt: null } : null;
         });
-      }
+      },
     };
   }
 
   function makeSupabase(opts) {
     var base = String(opts.url || '').replace(/\/+$/, '');
     var anon = opts.anonKey || '';
-    var token = null;   // set by signIn; the organiser's login. Players use the anon key only.
     var fetchFn = opts.fetch || (typeof fetch !== 'undefined' ? fetch : null);
 
     function headers(extra) {
-      // Players send only the apikey. The organiser also sends its sign-in token. A publishable key is not a JWT, so it is never sent as a Bearer.
+      // Players send only the apikey. A publishable key is not a JWT, so it is never sent as a Bearer.
       var h = { apikey: anon, 'Content-Type': 'application/json' };
-      if (token) h.Authorization = 'Bearer ' + token;
       Object.keys(extra || {}).forEach(function (k) { h[k] = extra[k]; });
       return h;
     }
@@ -254,17 +266,11 @@
     var LOGIN_REASONS = ['wrong-pin', 'locked'];
     return {
       kind: 'supabase',
-      signIn: function (email, password) {
-        return call('POST', '/auth/v1/token?grant_type=password', { email: email, password: password }).then(function (j) {
-          token = j && j.access_token ? j.access_token : null;
-          return !!token;
-        });
-      },
-      signUp: function (clean, pin, door) {
-        return call('POST', '/rest/v1/rpc/player_sign_up', {
+      signUp: function (clean, pin, door, invite) {
+        return call('POST', invite ? '/rest/v1/rpc/player_sign_up_invited' : '/rest/v1/rpc/player_sign_up', Object.assign({
           p_first: clean.first, p_last_initial: clean.lastInitial, p_pin: pin, p_skill: clean.level,
           p_door: String(door || ''), p_extra: String(clean.extra || '')
-        }).then(function (j) { return { ok: true, pin: j && j.pin }; }, function (e) {
+        }, invite ? { p_invite: String(invite) } : {})).then(function (j) { return { ok: true, pin: j && j.pin }; }, function (e) {
           var hit = SIGNUP_REASONS.filter(function (r) { return String(e.body || '').indexOf(r) > -1; })[0];
           if (hit) return { ok: false, reason: hit };
           throw e;
@@ -274,9 +280,12 @@
         return call('POST', '/rest/v1/rpc/player_login', { p_first: first, p_last_initial: li, p_pin: pin }).then(function (j) {
           if (j && j.ok) {
             return { ok: true, token: j.token, player: { id: j.id, status: j.status, first: j.first, lastInitial: j.last_initial,
-              level: j.skill_level, xpLevel: j.xp_level || 1 } };
+              level: j.skill_level, xpLevel: j.xp_level || 1, checkedIn: !!j.checked_in } };
           }
-          return { ok: false, reason: (j && LOGIN_REASONS.indexOf(j.reason) > -1) ? j.reason : 'wrong-pin' };
+          // R46: a lock passes the server's end time (until) so the app can say how long to wait.
+          var out = { ok: false, reason: (j && LOGIN_REASONS.indexOf(j.reason) > -1) ? j.reason : 'wrong-pin' };
+          if (j && j.until) out.until = String(j.until);
+          return out;
         });
       },
       // Pay with card (Square). Server checks the PIN (same lock rules as login) and records a claim only.
@@ -304,65 +313,66 @@
             return { ok: false, reason: (j && j.reason) || 'error' };
           }, function () { return { ok: false, reason: 'error' }; });
       },
-      resetPin: function (id, pin) {
-        return call('POST', '/rest/v1/rpc/organiser_reset_pin', { p_id: id, p_pin: pin }).then(function (ok) { return ok === true; });
+      // Skill questions (migration 6). Once answered, they are locked. The server also keeps any number the organiser set.
+      skillAnswer: function (token, answers) {
+        return call('POST', '/rest/v1/rpc/player_skill_answer', { p_token: token, p_answers: answers })
+          .then(function (j) {
+            if (j && j.ok) return { ok: true, done: true };
+            return { ok: false, reason: (j && j.reason) || 'error' };
+          }, function (e) {
+            var body = String((e && e.body) || '');
+            return { ok: false, reason: body.indexOf('already-done') > -1 ? 'already-done' : 'error' };
+          });
+      },
+      rpc: function (name, body) { return call('POST', '/rest/v1/rpc/' + name, body); },
+      xpSummary: function (token) { return call('POST', '/rest/v1/rpc/player_xp_summary', { p_token: token }); },
+      playerHeadToHead: function (token, otherId) { return call('POST', '/rest/v1/rpc/player_head_to_head', { p_token: token, p_other: otherId }); },
+      playerGameLog: function (token) { return call('POST', '/rest/v1/rpc/player_game_log', { p_token: token }); },
+      streakSummary: function (token, nextWeek) { return call('POST', '/rest/v1/rpc/player_streak_summary', { p_token: token, p_next_week: nextWeek || 0 }); },
+      inviteInfo: function (token) { return call('POST', '/rest/v1/rpc/player_invite_info', { p_token: token }); },
+      // "I'm here" (D3/H5): the run code. Needs migration-25 (player_check_in) to work live.
+      checkIn: function (token, code) { return call('POST', '/rest/v1/rpc/player_check_in', { p_token: token, p_night: 'tonight', p_code: String(code || '') }); },
+      playerChangePin: function (token, oldPin, newPin) { return call('POST', '/rest/v1/rpc/player_change_pin', { p_token: token, p_old_pin: oldPin, p_new_pin: newPin }); },
+      playerChangeName: function (token, first, lastInitial) { return call('POST', '/rest/v1/rpc/player_change_name', { p_token: token, p_first: first, p_last_initial: lastInitial }); },
+      playerDeleteMe: function (token, pin) { return call('POST', '/rest/v1/rpc/player_delete_me', { p_token: token, p_pin: pin }); },
+      playerMyData: function (token) { return call('POST', '/rest/v1/rpc/player_my_data', { p_token: token }); },
+      playerLeaderboard: function (token, board, limit, season) { return call('POST', '/rest/v1/rpc/player_leaderboard', { p_token: token, p_board: board || 'xp', p_limit: limit || 20, p_season: season || 'all' }); },
+      skillStatus: function (token) {
+        return call('POST', '/rest/v1/rpc/player_skill_status', { p_token: token })
+          .then(function (j) { return (j && j.ok) ? { ok: true, done: j.done === true } : { ok: false }; }, function () { return { ok: false }; });
       },
       resume: function (tok) {
         return call('POST', '/rest/v1/rpc/player_resume', { p_token: tok }).then(function (j) {
           if (!j || !j.ok) return { ok: false };
           return { ok: true, player: { id: j.id, status: j.status, first: j.first, lastInitial: j.last_initial,
-            level: j.skill_level, xpLevel: j.xp_level || 1 } };
+            level: j.skill_level, xpLevel: j.xp_level || 1, checkedIn: !!j.checked_in } };
         });
       },
       logout: function (tok) {
         return call('POST', '/rest/v1/rpc/player_logout', { p_token: tok }).then(function () { return true; });
       },
-      getDoorCode: function () {
-        return call('POST', '/rest/v1/rpc/organiser_get_door_code', {}).then(function (t) { return String(t || ''); });
-      },
-      setDoorCode: function (code) {
-        return call('POST', '/rest/v1/rpc/organiser_set_door_code', { p_code: String(code || '') }).then(function (ok) { return ok === true; });
-      },
-      clearLock: function (id) {
-        return call('POST', '/rest/v1/rpc/organiser_clear_lock', { p_id: id }).then(function (ok) { return ok === true; });
-      },
-      listSignups: function () {
-        return call('GET', '/rest/v1/signups?select=id,first,last_initial,status,skill_level,xp_level,created_at&order=created_at.asc')
-          .then(function (rows) { return rows.map(toRow); });
-      },
-      listApproved: function () {
-        return call('GET', '/rest/v1/signups?select=id,first,last_initial,status,skill_level,xp_level,created_at&status=eq.approved&order=created_at.asc')
-          .then(function (rows) { return rows.map(toRow); });
-      },
-      decide: function (id, status, level) {
-        var body = { status: status };
-        if (Number.isInteger(level) && level >= 1 && level <= 30) body.skill_level = level;
-        return call('PATCH', '/rest/v1/signups?id=eq.' + encodeURIComponent(id), body, { Prefer: 'return=minimal' })
-          .then(function () { return true; });
-      },
-      publishNight: function (id, payload) {
-        return call('POST', '/rest/v1/nights', { id: id, payload: payload, updated_at: new Date().toISOString() },
-          { Prefer: 'resolution=merge-duplicates,return=minimal' }).then(function () { return true; });
-      },
+      // Gives up after 8 seconds, so a dead connection shows log in or "No signal" instead of a blank app.
       getNight: function (id) {
-        return call('GET', '/rest/v1/nights?select=*&id=eq.' + encodeURIComponent(id)).then(function (rows) {
+        var req = call('GET', '/rest/v1/nights?select=*&id=eq.' + encodeURIComponent(id)).then(function (rows) {
           var r = rows && rows[0];
-          return r ? { id: r.id, payload: r.payload, updatedAt: r.updated_at } : null;
+          return r ? { id: r.id, payload: r.payload, updatedAt: r.updated_at, status: r.status, message: r.message } : null;
         });
+        var timer = null;
+        var timeout = new Promise(function (_, reject) {
+          timer = setTimeout(function () { reject(new Error('timeout')); }, 8000);
+        });
+        return Promise.race([req, timeout]).then(function (v) { clearTimeout(timer); return v; }, function (e) { clearTimeout(timer); throw e; });
       },
       // One small value (migration 3, night_version). Fetch the full night only when it changes (Fable A9).
+      // Live score row (migration 11, live_state). Read only with the anon key. Rejects on no signal.
+      getLive: function () {
+        return call('GET', '/rest/v1/live_state?select=payload,updated_at&id=eq.tonight').then(function (rows) {
+          return rows && rows[0] ? { payload: rows[0].payload, updatedAt: rows[0].updated_at } : null;
+        });
+      },
       nightVersion: function (id) {
         return call('POST', '/rest/v1/rpc/night_version', { p_id: id }).then(function (v) { return v || null; });
       },
-      exportAll: function () {
-        return Promise.all([
-          call('GET', '/rest/v1/signups?select=id,first,last_initial,status,skill_level,xp_level,created_at&order=created_at.asc'),
-          call('GET', '/rest/v1/nights?select=*')
-        ]).then(function (x) {
-          return { format: '1to1-player-backup', version: 2, savedAt: new Date().toISOString(), signups: x[0].map(toRow),
-            nights: x[1].reduce(function (m, r) { m[r.id] = { id: r.id, payload: r.payload }; return m; }, {}) };
-        });
-      }
     };
   }
 

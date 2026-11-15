@@ -1,0 +1,49 @@
+/* Stats and leaderboard screen. Uses the Courtside tokens from app-tokens.css (dark and Bright hall).
+   Rules: 48px tap targets, 14px minimum text, no chevrons, no horizontal scroll at 390px. */
+
+.sb { padding: 16px; display: grid; gap: 14px; color: var(--ink); font-family: var(--font-body); }
+.sb-h1 { margin: 0; font-family: var(--font-head); font-weight: 700; text-transform: uppercase; letter-spacing: .02em; font-size: 32px; line-height: 1.05; color:var(--yellow-text); }
+.sb-h2 { margin: 8px 0 0; font-family: var(--font-head); font-weight: 700; text-transform: uppercase; font-size: 18px; color: var(--ink); }
+.sb-note { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.4; }
+
+/* Segment: My stats | Leaderboard */
+.sb-seg { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 4px; }
+.sb-seg-btn, .sb-chip, .sb-retry {
+  min-height: 48px; border: 1px solid transparent; border-radius: var(--radius-btn); background: transparent;
+  color: var(--ink); font: 700 16px/1 var(--font-head); text-transform: uppercase; letter-spacing: .03em; cursor: pointer;
+  padding: 0 12px;
+}
+.sb-seg-btn.is-on { background: var(--yellow); color: var(--on-yellow); }
+.sb-seg-btn:focus-visible, .sb-chip:focus-visible, .sb-retry:focus-visible { outline: 3px solid var(--blue-text); outline-offset: 2px; }
+
+/* My numbers: big-number cards */
+.sb-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.sb-stat { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; text-align: left; }
+.sb-big { font-family: var(--font-head); font-weight: 700; font-size: 40px; line-height: 1; color: var(--gold-text); }
+.sb-lbl { margin-top: 6px; font-size: 14px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+
+.sb-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.sb-night { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; }
+.sb-date { font-weight: 700; font-size: 16px; }
+.sb-xp { grid-row: 1; grid-column: 2; font-family: var(--font-head); font-weight: 700; color: var(--gold-text); font-size: 16px; }
+.sb-nums { grid-column: 1 / -1; font-size: 14px; color: var(--muted); }
+
+/* Leaderboard */
+.sb-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.sb-chip { background: var(--card); border-color: var(--line); padding: 0 16px; }
+.sb-chip.is-on { background: var(--yellow); color: var(--on-yellow); border-color:var(--yellow-text); }
+
+.sb-board { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.sb-row { display: grid; grid-template-columns: 36px 1fr auto 56px; align-items: center; gap: 8px; min-height: 48px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-btn); padding: 6px 12px; }
+.sb-rank { font-family: var(--font-head); font-weight: 700; font-size: 18px; color: var(--muted); }
+.sb-name { font-weight: 600; font-size: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.sb-lvl { font-size: 14px; color: var(--muted); }
+.sb-val { text-align: right; font-family: var(--font-head); font-weight: 700; font-size: 20px; color: var(--ink); }
+.sb-row.is-me { border: 2px solid var(--yellow); }
+.sb-row.is-me .sb-rank, .sb-row.is-me .sb-val { color: var(--gold-text); }
+
+.sb-retry { background: var(--blue); border-color: var(--blue); color: #fff; justify-self: start; }
+
+@media (min-width: 600px) {
+  .sb { max-width: 560px; margin: 0 auto; }
+}

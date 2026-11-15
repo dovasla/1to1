@@ -3,8 +3,29 @@
 (function () {
   'use strict';
 
-  // 1. Service worker. Reload once when a new version takes over from an old one.
-  //    The first-ever install does not reload, so nobody loses what they were typing.
+  // 1. Service worker. A new version waits until the player taps "New version ready. Tap to update."
+  //    Then it reloads once into the new build. The first-ever install does not reload, so nobody loses
+  //    what they were typing.
+  var updateReady = false;
+  var updateTimer = null;
+  // next-23: never show the update bar during a run (PlayerSignal.updateAllowed). Re-checked every 30 s.
+  function updateSafe() {
+    if (!(window.PlayerSignal && PlayerSignal.updateAllowed)) return true;
+    return PlayerSignal.updateAllowed(window.__pwaNight || null, Date.now());
+  }
+  function showUpdateBar() {
+    var bar = document.getElementById('pwaUpdate');
+    if (bar) bar.hidden = false;
+  }
+  function offerUpdate() {
+    updateReady = true;
+    if (updateSafe()) { showUpdateBar(); return; }
+    if (!updateTimer) {
+      updateTimer = setInterval(function () {
+        if (updateReady && updateSafe()) { clearInterval(updateTimer); updateTimer = null; showUpdateBar(); }
+      }, 30000);
+    }
+  }
   if ('serviceWorker' in navigator) {
     var hadController = !!navigator.serviceWorker.controller;
     var reloading = false;
@@ -14,11 +35,46 @@
       location.reload();
     });
     window.addEventListener('load', function () {
-      navigator.serviceWorker.register('sw.js').catch(function () {});
+      navigator.serviceWorker.register('sw.js').then(function (reg) {
+        // A waiting worker while an old one still controls the page = a new version is ready.
+        if (reg.waiting && hadController) offerUpdate();
+        reg.addEventListener('updatefound', function () {
+          var w = reg.installing;
+          if (!w) return;
+          w.addEventListener('statechange', function () {
+            if (w.state === 'installed' && hadController) offerUpdate();
+          });
+        });
+        // Check for a new version every minute, and whenever the app comes back to the front.
+        setInterval(function () { reg.update().catch(function () {}); }, 60000);
+        document.addEventListener('visibilitychange', function () {
+          if (document.visibilityState === 'visible') reg.update().catch(function () {});
+        });
+        window.__pwaRegistration = reg;
+      }).catch(function () {});
     });
   }
 
+  // Tap handler for the update bar: ask the waiting worker to take over. controllerchange reloads.
+  function applyUpdate() {
+    var reg = window.__pwaRegistration;
+    if (reg && reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+    else location.reload();
+  }
+
+  function mountUpdateBar() {
+    var bar = document.createElement('button');
+    bar.type = 'button';
+    bar.className = 'pwa-update';
+    bar.id = 'pwaUpdate';
+    bar.hidden = !updateReady;
+    bar.textContent = 'New version ready. Tap to update.';
+    bar.addEventListener('click', applyUpdate);
+    document.body.appendChild(bar);
+  }
+
   function mount() {
+    mountUpdateBar();
     var ua = navigator.userAgent || '';
     var isIOS = /iphone|ipad|ipod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     var isAndroid = /android/i.test(ua);
@@ -39,7 +95,7 @@
 
     // 3. Add-to-Home-Screen card. Not shown when the app is already installed,
     //    and not on pages with the bottom tab bar (it would sit on top of the tabs).
-    if (isStandalone || document.querySelector('.tabs')) return;
+    if (isStandalone || document.querySelector('.tabs') || document.body.hasAttribute('data-no-install-card')) return;
 
     var card = document.createElement('div');
     card.className = 'pwa-install';
@@ -85,7 +141,10 @@
       document.body.classList.remove('pwa-pad');
     }
 
-    if (isIOS) {
+    var notSafari = /CriOS|FxiOS|EdgiOS|FBAN|FBAV|Instagram|Line\//i.test(ua);
+    if (isIOS && notSafari) {
+      show('To add 1TO1 to your home screen, open this page in Safari first, then tap Share and Add to Home Screen.');
+    } else if (isIOS) {
       show('Add 1TO1 to your home screen. Tap Share (the box with an arrow) at the bottom of Safari, then Add to Home Screen.');
     }
 

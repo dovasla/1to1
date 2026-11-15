@@ -8,7 +8,7 @@
 
   // Keep in step with _shop_blocked_tags() in supabase/shop-server.sql.
   // Tags are cut to 4 characters, so these are the 4-character forms.
-  var BLOCKED_TAGS = ['ADMI', 'MOD', 'MODS', 'STAF', 'ORG', 'JORD', '1TO1', 'OWNE', 'SUPP',
+  var BLOCKED_TAGS = ['ADMI', 'MOD', 'MODS', 'STAF', 'ORG', '1TO1', 'OWNE', 'SUPP',
     'NIGG', 'NIGA', 'FAGG', 'FAG', 'KKK', 'NAZI', 'HITL', 'FUCK', 'SHIT', 'CUNT',
     'BITC', 'SEX', 'PORN', 'RAPE'];
 

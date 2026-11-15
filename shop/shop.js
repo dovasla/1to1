@@ -5,7 +5,7 @@
   var PN = window.PlayerName;
   var C = window.ShopCosmetics;
   var B = window.ShopBackend;
-  var SAMPLE_NAME = 'Sam Kowalski';
+  var DEMO_NAME = 'Sam Kowalski';
 
   // Inside the player app, use the app's own shop backend (one balance shared with Home and Profile, QA item 1).
   // Demo page: falls back to the mock (level 12, 3 stars), in memory only.
@@ -13,6 +13,13 @@
   try { host = window.parent !== window && window.parent.PlayerShop ? window.parent.PlayerShop : null; } catch (e) { host = null; }
   var backend = host ? host.get() : B.create(window.PLAYER_APP_CONFIG || { backend: 'mock', level: 12, stars: 3 },
     function () { return window.PLAYER_TOKEN || ''; });
+
+  // The signed-in player's name, from the app shell. Only the demo page (no shell) shows the sample name.
+  function myName() {
+    var n = '';
+    try { n = host && typeof host.name === 'function' ? host.name() : ''; } catch (e) { n = ''; }
+    return n || DEMO_NAME;
+  }
 
   var st = null;
   var openItem = null;
@@ -29,7 +36,7 @@
   function playerProps(override, size) {
     var l = lookFor(override);
     return {
-      name: SAMPLE_NAME, level: st.level, stars: st.stars, size: size,
+      name: myName(), level: st.level, stars: st.stars, size: size,
       banner: l.banner, nameStyle: l.nameStyle, callingCard: l.callingCard,
       rowEffect: l.rowEffect, clanTag: l.clanTag
     };
@@ -43,16 +50,22 @@
     return item.price + ' coins';
   }
 
-  // Sample for each tile. Calling cards show as the card, the rest as the name chip.
+  // Sample for each tile, shown with the player's own name. Calling cards show as the card, the rest as the name chip.
+  function escText(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
   function swatchHtml(item) {
+    var short = PN.shortName(myName());
     if (item.slot === 'calling') {
       return '<span class="pn-call pn-call--' + item.value + '">' +
-        '<span class="pn-call-title">Sam K</span><span class="pn-call-stat">Lv 12</span></span>';
+        '<span class="pn-call-title">' + escText(short) + '</span><span class="pn-call-stat">Lv ' + (st.level || 1) + '</span></span>';
     }
     var l = R.look({ items: st.items, equipped: {}, clanTag: '' },
       { slot: item.slot, id: item.id, tag: st.clanTag || 'TNT' });
     return PN.html({
-      name: 'Sam K', level: 12, stars: 3,
+      name: short, level: st.level || 1, stars: st.stars || 0,
       banner: l.banner, nameStyle: l.nameStyle, rowEffect: l.rowEffect, clanTag: l.clanTag
     });
   }

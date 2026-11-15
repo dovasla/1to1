@@ -123,8 +123,7 @@
       starsHtml(v.stars) + '</span><span class="muted">' + bonus + '</span></div>';
     if (v.canPrestige) {
       h += '<div class="prestige"><p>Go back to Level 1 and gain a star. Your coins and looks stay.</p>' +
-        '<button class="btn yellow" type="button" data-prestige>Prestige</button>' +
-        '<p class="muted" data-prestige-note aria-live="polite"></p></div>';
+        '<a class="btn yellow" href="#profile/prestige">Prestige now</a></div>';
     }
     h += '</section>';
 

@@ -1,0 +1,55 @@
+/* 1TO1 onboarding (N10). Load after app.css and app-tokens.css.
+   Text 14px minimum, buttons 48px, one yellow button per screen, no animation under reduced motion. */
+
+.ob {
+  position: fixed; inset: 0; z-index: 9500;
+  display: flex; justify-content: center;
+  background: var(--bg, #0E0E0E); color: var(--ink, #F4F5F7);
+  font-family: var(--font-body, Barlow, system-ui, sans-serif);
+  overflow-y: auto;
+}
+.ob-wrap {
+  box-sizing: border-box; width: 100%; max-width: 390px; min-height: 100vh; min-height: 100dvh;
+  display: flex; flex-direction: column; padding: 16px;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+}
+.ob-top { display: flex; justify-content: space-between; align-items: center; min-height: 48px; }
+.ob-count { font: 700 14px/1 var(--font-head, Barlow, sans-serif); letter-spacing: .12em; text-transform: uppercase; color: var(--muted, #A7ADB8); }
+.ob-skip {
+  min-width: 48px; min-height: 48px; padding: 0 14px;
+  border: 2px solid var(--line, #2C2F38); border-radius: 14px; background: transparent; color: var(--ink, #F4F5F7);
+  font: 700 16px/1 var(--font-head, Barlow, sans-serif); letter-spacing: .08em; cursor: pointer;
+}
+
+.ob-card {
+  flex: 0 0 auto; margin-top: 24px; padding: 20px 16px;
+  background: var(--card, #1A1C22); border: 2px solid var(--line, #2C2F38); border-top: 4px solid var(--yellow, #FFD21F);
+  border-radius: 18px;
+}
+.ob-card h2 {
+  margin: 0 0 14px; font: 800 28px/1.1 var(--font-head, Barlow, sans-serif);
+  text-transform: uppercase; letter-spacing: .02em; color: var(--gold-text, var(--yellow, #FFD21F));
+}
+.ob-card h2:focus { outline: none; }
+.ob-lines { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.ob-lines li { font-size: 17px; line-height: 1.45; color: var(--ink, #F4F5F7); }
+
+.ob-go {
+  display: flex; align-items: center; justify-content: center;
+  width: 100%; min-height: 52px; margin-top: 24px; padding: 12px 16px;
+  border: 0; border-radius: 14px; background: var(--yellow, #FFD21F); color: var(--on-yellow, #0E0E0E);
+  font: 800 18px/1 var(--font-head, Barlow, sans-serif); letter-spacing: .04em; text-transform: uppercase; cursor: pointer;
+}
+
+.ob-dots { display: flex; justify-content: center; gap: 10px; min-height: 48px; align-items: center; }
+.ob-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--line, #2C2F38); }
+.ob-dot.on { background: var(--yellow, #FFD21F); }
+
+.ob-skip:focus-visible, .ob-go:focus-visible {
+  outline: 3px solid var(--blue, #0A5CFF); outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ob-go { transition: transform 150ms ease; }
+  .ob-go:active { transform: scale(.98); }
+}

@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0E0E0E">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="1TO1">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon-180-v2.png">
+<link rel="stylesheet" href="pwa.css">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Join the run</title>
+<link rel="icon" href="icons/icon-32-v2.png" sizes="32x32" type="image/png">
+<script>
+  // Same theme rule as the app: the saved choice wins, otherwise the phone setting (handled in CSS).
+  try { var t = localStorage.getItem('1to1-theme'); if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); } catch (e) { /* private window: phone setting */ }
+</script>
+<link rel="stylesheet" href="app.css">
+<link rel="stylesheet" href="app-tokens.css">
+<link rel="stylesheet" href="keyboard-submit.css">
+<link rel="stylesheet" href="signup-3box/signup-3box.css">
+</head>
+<body data-no-install-card>
+<main>
+  <h1>Join the run</h1>
+  <p class="muted">Three boxes and you are in. Your first name, the first letter of your last name, and a 4-digit PIN.</p>
+
+  <section id="formView" class="card">
+    <p class="s3-run" id="runNote" hidden></p>
+    <form id="f" class="s3-form" novalidate>
+      <label for="first">First name</label>
+      <input id="first" name="first" type="text" autocomplete="given-name" maxlength="20" required>
+      <p class="err" id="e-first" hidden></p>
+
+      <label for="li">Last initial</label>
+      <input id="li" name="lastInitial" type="text" autocomplete="off" maxlength="2" required>
+      <p class="err" id="e-lastInitial" hidden></p>
+
+      <div id="extraRow" hidden>
+        <label for="extra">Add one more letter of your surname</label>
+        <input id="extra" name="extra" type="text" autocomplete="off" maxlength="10">
+        <p class="err" id="e-extra" hidden></p>
+      </div>
+
+      <label for="pin">4-digit PIN</label>
+      <p class="muted">You use this with your name to log in. Pick four digits you will remember. Not your birthday.</p>
+      <input id="pin" name="pin" type="password" inputmode="numeric" autocomplete="new-password" pattern="[0-9]*" maxlength="4" required>
+      <p class="err" id="e-pin" hidden></p>
+
+      <label class="s3-check"><input id="u18" type="checkbox"> I'm under 18</label>
+      <p class="muted" id="u18Line" hidden></p>
+
+      <button class="btn" type="submit" id="send">Sign up</button>
+      <p class="err" id="e-form" hidden></p>
+    </form>
+  </section>
+
+  <section id="doneView" class="card" hidden>
+    <p class="ok" id="doneHead">You're in.</p>
+    <p class="big" id="keptPin"></p>
+    <p id="doneCheck" class="muted" hidden></p>
+    <p>You are signed in on this phone. Tap the button to open the app.</p>
+    <div class="s3-actions"><a class="btn yellow" href="app.html">Open 1TO1</a></div>
+    <p class="muted">Next time, log in with your first name, last initial and PIN.</p>
+    <section class="install-steps" aria-labelledby="installHDone">
+      <h2 id="installHDone">Get the app</h2>
+      <ol class="install-list">
+        <li class="is-done"><span class="is-num">1</span><div><b>Sign up</b><span class="is-state">Done</span></div></li>
+        <li class="is-next"><span class="is-num">2</span><div><b>Add to Home Screen</b>
+          <p><b>iPhone:</b> in Safari, tap Share (the box with an arrow) at the bottom, then Add to Home Screen.</p>
+          <p><b>Android:</b> in Chrome, tap the three dots, then Install app.</p>
+        </div></li>
+      </ol>
+      <p class="muted">Then tap the 1TO1 icon on game night.</p>
+    </section>
+    <div class="s3-actions"><button class="btn s3-btn-outline" id="again" type="button">Sign up someone else</button></div>
+  </section>
+
+  <section class="card">
+    <h2>Already signed up?</h2>
+    <p class="muted">Log in in the app with your first name, last initial and PIN.</p>
+    <div class="s3-actions"><a class="btn ghost" href="app.html">Log in</a></div>
+  </section>
+
+  <p class="muted" id="modeNote" hidden></p>
+</main>
+<script src="config.js"></script>
+<script src="rules.js"></script>
+<script src="backend.js"></script>
+<script src="under18/under18.js"></script>
+<script src="onboarding/onboarding.js"></script>
+<script src="signup-3box/signup-3box.js"></script>
+<script>
+(function () {
+  'use strict';
+  var cfg = window.PLAYER_APP_CONFIG || {};
+  var be = PlayerBackend.create(cfg.backend === 'supabase' ? 'supabase' : 'mock',
+    { url: cfg.supabaseUrl, anonKey: cfg.supabaseAnonKey });
+  var S = window.PlayerSignup3Box;
+  var $ = function (id) { return document.getElementById(id); };
+  // Same key the app uses, so the app opens already signed in. Never stores the PIN.
+  var TOKEN_KEY = '1to1-player-token';
+  function saveToken(t) { try { localStorage.setItem(TOKEN_KEY, t); } catch (e) { /* private window: the app asks for a log in */ } }
+
+  // Scanned QR or link: ?code=4821. Kept on this phone so a failed sign-up does not lose it.
+  var runCode = S.readRunCode(location.search);
+  if (runCode) {
+    S.stashRunCode(localStorage, runCode);
+    $('runNote').textContent = 'Run code ' + runCode + ' is filled in. You will be checked in once you sign up.';
+    $('runNote').hidden = false;
+  }
+  if (be.kind === 'mock') { $('modeNote').hidden = false; $('modeNote').textContent = 'Test mode: this device only.'; }
+
+  function showErrors(errors) {
+    document.querySelectorAll('.err').forEach(function (p) { if (p.id !== 'e-form') p.hidden = true; });
+    Object.keys(errors).forEach(function (k) {
+      var p = $('e-' + k);
+      if (p) { p.textContent = errors[k]; p.hidden = false; }
+    });
+  }
+
+  $('pin').addEventListener('input', function () { this.value = this.value.replace(/[^0-9]/g, ''); $('e-pin').hidden = true; });
+  $('u18').addEventListener('change', function () {
+    var line = window.PlayerUnder18 ? PlayerUnder18.line(this.checked) : '';
+    $('u18Line').textContent = line;
+    $('u18Line').hidden = !line;
+  });
+
+  // Checks in with the run code when the backend can (added with migration-25; until then the app does it).
+  function checkIn(token) {
+    if (!runCode || typeof be.checkIn !== 'function' || !token) return Promise.resolve(null);
+    return be.checkIn(token, runCode).catch(function () { return { ok: false, reason: 'error' }; });
+  }
+
+  $('f').addEventListener('submit', function (e) {
+    e.preventDefault();
+    $('e-form').hidden = true;
+    var v = S.validate({ first: $('first').value, lastInitial: $('li').value, pin: $('pin').value, extra: $('extra').value });
+    showErrors(v.errors);
+    if (!v.ok) return;
+    $('send').disabled = true;
+    // The door code is no longer asked at sign-up (R18). Sign-up sends an empty door code.
+    be.signUp(S.payloadFor(v.clean), v.pin, '', window.PlayerInvite ? PlayerInvite.readCode(location.search) : '').then(function (r) {
+      if (!r.ok) {
+        $('send').disabled = false;
+        if (r.reason === 'name-taken') {
+          var first = $('first').value.trim(), li = $('li').value.trim().toUpperCase();
+          $('e-lastInitial').textContent = "There's already a " + first + ' ' + li + '. Add one more letter.';
+          $('e-lastInitial').hidden = false;
+          $('extraRow').hidden = false;
+          $('extra').focus();
+        }
+        else if (r.reason === 'busy') { $('e-form').textContent = 'Sign-up is busy right now. Try again in a minute.'; $('e-form').hidden = false; }
+        else { $('e-form').textContent = 'Check your name and try again.'; $('e-form').hidden = false; }
+        return;
+      }
+      $('keptPin').textContent = 'Your PIN is ' + r.pin + '. Remember it.';
+      $('pin').value = '';
+      if (window.PlayerOnboarding) PlayerOnboarding.markPending(localStorage);
+      // The skill questions come after the first log in (R18), once, skippable.
+      var signedIn = be.login(v.clean.first, v.clean.lastInitial, r.pin).then(function (s) {
+        if (s && s.ok && s.token) { saveToken(s.token); S.markSkillDue(localStorage); return s.token; }
+        return null;
+      }).catch(function () { return null; });
+      return signedIn.then(function (token) { return checkIn(token).then(function (c) { return { c: c }; }); })
+        .then(function (res) {
+          if (res.c && res.c.ok) { S.clearRunCode(localStorage); $('doneHead').textContent = "You're checked in."; $('doneCheck').textContent = 'You are on the list for tonight.'; $('doneCheck').hidden = false; }
+          else if (runCode) { $('doneCheck').textContent = 'Your run code is saved. The app checks you in when you open it.'; $('doneCheck').hidden = false; }
+          $('formView').hidden = true;
+          $('doneView').hidden = false;
+          $('doneView').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    }).catch(function () {
+      $('e-form').textContent = 'Couldn’t send just now. Check your signal and tap Sign up again. What you typed is still here.';
+      $('e-form').hidden = false;
+    }).then(function () { $('send').disabled = false; });
+  });
+
+  $('again').addEventListener('click', function () {
+    $('f').reset();
+    $('u18Line').hidden = true;
+    $('doneView').hidden = true; $('formView').hidden = false;
+    $('doneHead').textContent = "You're in.";
+    $('doneCheck').hidden = true;
+  });
+})();
+</script>
+<script src="pwa.js"></script>
+<script>
+/* Keep the main button reachable while a name field is focused (small screens, on-screen keyboard). */
+(function () {
+  var btn = document.getElementById('send');
+  if (!btn) return;
+  function lift() {
+    var vv = window.visualViewport;
+    var h = vv ? vv.height : window.innerHeight;
+    if (btn.getBoundingClientRect().bottom > h - 8) btn.scrollIntoView({ block: 'end' });
+  }
+  document.addEventListener('focusin', function (e) {
+    if (!e.target || !e.target.matches || !e.target.matches('input, textarea, select')) return;
+    setTimeout(lift, 350);
+  });
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', function () { setTimeout(lift, 50); });
+})();
+</script>
+</body>
+</html>

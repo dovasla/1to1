@@ -217,3 +217,7 @@
 :root[data-reduce-motion="1"] .pn-emb--spark,
 :root[data-reduce-motion="1"] .pn-call--arrive { animation: none; }
 :root[data-reduce-motion="1"] .pn-fx--glow::after { opacity: .5; }
+
+/* Light theme: the star row is yellow text on white (fails contrast). Use the dark gold text token. (gate fix, 15 Nov) */
+:root[data-theme="light"] .pn-stars, :root[data-theme="light"] .pn-stars-more { color: var(--gold-text); }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .pn-stars, :root:not([data-theme="dark"]) .pn-stars-more { color: var(--gold-text); } }

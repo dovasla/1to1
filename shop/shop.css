@@ -54,7 +54,8 @@ h1 { font-size: 28px; line-height: 1.1; letter-spacing: .02em; margin-top: 8px; 
 }
 .tile:active { transform: scale(.97); }
 .tile--on { border: 2px solid var(--gold); padding: 11px; }
-.tile--locked { opacity: .6; }
+/* Dim only the preview, so the locked name and "Unlocks at level" text stay readable. */
+.tile--locked .pn { opacity: .55; }
 .tile-name { font-family: "Barlow Condensed", Barlow, sans-serif; font-weight: 700; font-size: 20px; line-height: 1.1; text-transform: uppercase; letter-spacing: .02em; }
 .tile-meta { font-size: 14px; font-weight: 600; color: var(--muted); }
 .tile--on .tile-meta, .tile--use .tile-meta { color: var(--head); }

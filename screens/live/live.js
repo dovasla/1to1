@@ -1,21 +1,22 @@
 /* Player app: Live tab. Owner: Live thread. Plain JS, no framework, no network, read-only.
    Usage:
      var lv = PlayerLive.mount(el, data, { onReveal: function () {} });
-     lv.update(newData);   // re-render with fresh data
-     lv.destroy();         // remove listeners
+     lv.update(newData);   // call on every poll. Redraws only when something changed; the clock ticks on its own.
+     lv.destroy();         // remove listeners and the clock timer
    data = {
      me:      { team: 'Blue' } or null,                  // your team name for tonight
-     now:     { game: 2, court: 'Court 1', teamA: 'Blue', scoreA: 14, teamB: 'Red', scoreB: 12, clock: '4:10 left' } or null,
+     state:   'none' | 'idle' | 'between' | 'live' | 'paused' | 'full-time' | 'finished',
+     now:     feed.now (see screens/live/live-feed.js) or null,
+     recap:   { games, last, final, winner } or null,
      nextUp:  { team: 'Red', note: 'Winners stay on' } or null,
-     lineup:  { game: 3, teamA: 'Blue', teamB: 'Red',
-                players: { Blue: [ player, ... ], Red: [ player, ... ] } } or null,
+     lineup:  { game: 3, teamA: 'Blue', teamB: 'Red', players: { Blue: [ player, ... ], Red: [ player, ... ] } } or null,
      upcoming: [ { no: 3, time: '19:45', vs: 'Red', state: 'done'|'live'|'next'|'todo' } ],
-     updatedAt: '19:42' or null
+     nextRun: 'Fri 20 Nov, 8:00pm' or null,
+     updatedAt: '19:42' or null,
+     offline: true when the last read failed (no signal)
    }
    player: { id, name, level, stars, banner, nameStyle, clanTag, callingCard, emblemSrc, captain }
-   Names go through PlayerName (lib/player-name.js), so level, stars and cosmetics show the same as everywhere else.
-   Lineup order: highest XP level first (captain), then name A to Z. Rules: revamp/build/player-app-plan/DECISIONS-AND-BRAND.md section 3.
-   The Live tab never changes data. Reveal opens via onReveal (the reveal/ screen).
+   Names go through PlayerName (lib/player-name.js). Lineup order: highest XP level first, then name A to Z.
 */
 (function (root) {
   'use strict';
@@ -23,9 +24,9 @@
   var PN = root.PlayerName || (typeof require === 'function' ? require('../../lib/player-name.js') : null);
 
   var STATE_LABEL = { done: 'Done', live: 'On court', next: 'Next', todo: 'To play' };
+  var TICK_MS = 1000;
 
   function esc(s) { return PN.esc(s == null ? '' : String(s)); }
-
   function teamWord(name) { return String(name == null ? '' : name).toUpperCase(); }
 
   // Highest XP level first (captain), then name A to Z. Never mutates the input.
@@ -43,7 +44,7 @@
     var me = d.me && d.me.team ? String(d.me.team) : '';
     var now = d.now || null;
     var onCourt = !!(now && me && (now.teamA === me || now.teamB === me));
-    var mode = now ? 'on' : (d.upcoming && d.upcoming.length ? 'between' : 'none');
+    var mode = now ? 'on' : (d.state === 'finished' ? 'over' : (d.recap && d.recap.last ? 'between' : (d.upcoming && d.upcoming.length ? 'between' : 'none')));
     return { mode: mode, yourTeamOnCourt: onCourt, yourTeam: me };
   }
 
@@ -54,14 +55,23 @@
     });
   }
 
+  // The clock block. data-ms and data-at let the timer count down without a redraw.
+  function clockHtml(now) {
+    if (now.state === 'full-time') return '<span class="lv-clock lv-clock-end">Full time</span>';
+    var label = now.clockRunning ? '' : '<span class="lv-clock-state">Paused</span>';
+    var ms = now.clockMs == null ? 0 : Math.round(now.clockMs);
+    return '<span class="lv-clock' + (now.clockRunning ? ' is-running' : '') + '" data-clock data-ms="' + ms +
+      '" data-run="' + (now.clockRunning ? '1' : '0') + '" data-at="' + Date.now() + '">' + esc(now.clockText || '') + '</span>' + label;
+  }
+
   function nowHtml(now, me) {
     var mine = me && (now.teamA === me || now.teamB === me);
-    var clock = now.clock ? '<span class="lv-clock">' + esc(now.clock) + '</span>' : '';
     var court = now.court ? '<span class="lv-cap">' + esc(now.court) + '</span>' : '';
-    function side(team, score, isMine) {
+    function side(team, score, fouls, isMine) {
       return '<div class="lv-side' + (isMine ? ' is-mine' : '') + '">' +
         '<span class="lv-team">' + esc(teamWord(team)) + (isMine ? ' <b class="lv-you">You</b>' : '') + '</span>' +
         '<span class="lv-score" aria-label="' + esc(team) + ' ' + esc(score) + '">' + esc(score) + '</span>' +
+        '<span class="lv-fouls">Fouls ' + esc(fouls) + '</span>' +
       '</div>';
     }
     return '' +
@@ -69,11 +79,38 @@
         '<div class="lv-top"><span class="lv-pill"><i class="lv-dot" aria-hidden="true"></i>Live</span>' +
         '<span class="lv-cap">Game ' + esc(now.game) + '</span></div>' +
         '<h2 class="lv-h" id="lvNow">On court</h2>' +
-        '<div class="lv-score-row">' + side(now.teamA, now.scoreA, now.teamA === me) +
+        '<div class="lv-score-row">' + side(now.teamA, now.scoreA, now.foulsA, now.teamA === me) +
           '<span class="lv-vs" aria-hidden="true">–</span>' +
-          side(now.teamB, now.scoreB, now.teamB === me) + '</div>' +
-        '<div class="lv-meta">' + court + clock + '</div>' +
+          side(now.teamB, now.scoreB, now.foulsB, now.teamB === me) + '</div>' +
+        '<div class="lv-meta">' + clockHtml(now) + court + '</div>' +
       '</section>';
+  }
+
+  function recapLine(r) {
+    if (!r) return '';
+    return '<b>' + esc(teamWord(r.teamA)) + ' ' + esc(r.scoreA) + '</b> <span class="lv-vs">–</span> <b>' +
+      esc(teamWord(r.teamB)) + ' ' + esc(r.scoreB) + '</b>';
+  }
+
+  // Between games: the last result. After wrap: the final game and the winner.
+  function recapHtml(d) {
+    var r = d.recap;
+    if (!r || !r.last) return '';
+    if (d.state === 'finished') {
+      var f = r.final || r.last;
+      var win = r.winner ? '<p class="lv-muted">' + esc(teamWord(r.winner)) + ' won the final.</p>' : '<p class="lv-muted">It was a tie.</p>';
+      return '<section class="lv-card lv-recap" aria-labelledby="lvRecap">' +
+        '<span class="lv-cap">Tonight is over</span>' +
+        '<h2 class="lv-h" id="lvRecap">Final score</h2>' +
+        '<p class="lv-final">' + recapLine(f) + '</p>' + win +
+        '<p class="lv-muted">' + esc(r.games) + ' games played. Thanks for coming.</p>' +
+      '</section>';
+    }
+    return '<section class="lv-card lv-recap" aria-labelledby="lvRecap">' +
+      '<span class="lv-cap">Game ' + esc(r.last.no) + ' final</span>' +
+      '<h2 class="lv-h" id="lvRecap">Last result</h2>' +
+      '<p class="lv-final">' + recapLine(r.last) + '</p>' +
+    '</section>';
   }
 
   function nextUpHtml(nextUp) {
@@ -108,6 +145,7 @@
     '</section>';
   }
 
+  // Tonight's games with their times, from the night's game list.
   function upcomingHtml(list) {
     var rows = upcomingRows(list);
     if (!rows.length) return '';
@@ -122,6 +160,15 @@
       }).join('') + '</ol></section>';
   }
 
+  // The run's next date and start, read-only. Shown only when the organiser has set a date.
+  function scheduleHtml(nextRun) {
+    if (!nextRun) return '';
+    return '<section class="lv-card lv-sched" aria-labelledby="lvSched">' +
+      '<span class="lv-cap">Next run</span>' +
+      '<h2 class="lv-h" id="lvSched">' + esc(nextRun) + '</h2>' +
+    '</section>';
+  }
+
   function emptyHtml() {
     return '<section class="lv-card lv-empty"><h2 class="lv-h">No game on court</h2>' +
       '<p class="lv-muted">The organiser starts the first game. This page updates on its own.</p></section>';
@@ -132,32 +179,71 @@
     var s = summary(d);
     var me = s.yourTeam;
     var head = '<div class="lv-head"><h1>Live</h1>' +
-      (d.updatedAt ? '<span class="lv-cap" role="status">Updated ' + esc(d.updatedAt) + '</span>' : '') + '</div>';
+      (d.updatedAt ? '<span class="lv-cap" role="status">Updated ' + esc(d.updatedAt) + '</span>' : '') + '</div>' +
+      (d.offline ? '<p class="lv-offline" role="status">No signal. Showing the last update.</p>' : '');
     var body = '';
     if (s.mode === 'on') body += nowHtml(d.now, me);
+    if (s.mode === 'over' || s.mode === 'between') body += recapHtml(d);
     body += nextUpHtml(d.nextUp);
     if (s.mode === 'none' && !d.lineup) body += emptyHtml();
     body += lineupHtml(d.lineup, me);
     body += upcomingHtml(d.upcoming);
+    body += scheduleHtml(d.nextRun);
     return '<div class="lv">' + head + body + '</div>';
   }
 
+  // What changes only with the clock. Everything else is compared to decide whether to redraw.
+  function signature(d) {
+    var copy = JSON.parse(JSON.stringify(d || {}));
+    if (copy.now) { delete copy.now.clockMs; delete copy.now.clockText; }
+    delete copy.updatedAt;
+    return JSON.stringify(copy);
+  }
+
+  // Count the clock down in place (no redraw). Stops at zero.
+  function tickClock(el) {
+    var nodes = el.querySelectorAll('[data-clock]');
+    for (var i = 0; i < nodes.length; i++) {
+      var n = nodes[i];
+      if (n.getAttribute('data-run') !== '1') continue;
+      var left = Math.max(0, Number(n.getAttribute('data-ms')) - (Date.now() - Number(n.getAttribute('data-at'))));
+      var s = Math.ceil(left / 1000), m = Math.floor(s / 60), r = s % 60;
+      n.textContent = m + ':' + (r < 10 ? '0' + r : String(r));
+    }
+  }
+
   function mount(el, data, handlers) {
-    var state = { data: data || {}, handlers: handlers || {} };
-    function render() { el.innerHTML = html(state.data); }
+    var state = { data: data || {}, handlers: handlers || {}, sig: null };
+    function render() { el.innerHTML = html(state.data); state.sig = signature(state.data); }
     function onClick(e) {
       var btn = e.target && e.target.closest ? e.target.closest('[data-action="reveal"]') : null;
       if (btn && state.handlers.onReveal) state.handlers.onReveal();
     }
     el.addEventListener('click', onClick);
     render();
+    var timer = setInterval(function () { tickClock(el); }, TICK_MS);
     return {
-      update: function (next) { state.data = next || {}; render(); },
-      destroy: function () { el.removeEventListener('click', onClick); el.innerHTML = ''; }
+      update: function (next) {
+        state.data = next || {};
+        if (signature(state.data) !== state.sig) { render(); return; }
+        // Same content (only the clock moved): keep the DOM, restart the clock base and the Updated time.
+        var box = document.createElement('div');
+        box.innerHTML = html(state.data);
+        var nc = box.querySelector('[data-clock]'), oc = el.querySelector('[data-clock]');
+        if (nc && oc) {
+          oc.setAttribute('data-ms', nc.getAttribute('data-ms'));
+          oc.setAttribute('data-at', nc.getAttribute('data-at'));
+          oc.setAttribute('data-run', nc.getAttribute('data-run'));
+          tickClock(el);
+        }
+        var nh = box.querySelector('.lv-head'), oh = el.querySelector('.lv-head');
+        if (nh && oh) oh.innerHTML = nh.innerHTML;
+      },
+      destroy: function () { clearInterval(timer); el.removeEventListener('click', onClick); el.innerHTML = ''; }
     };
   }
 
-  var api = { mount: mount, html: html, summary: summary, orderLineup: orderLineup, upcomingRows: upcomingRows, STATE_LABEL: STATE_LABEL };
+  var api = { mount: mount, html: html, summary: summary, orderLineup: orderLineup, upcomingRows: upcomingRows, signature: signature, STATE_LABEL: STATE_LABEL };
   root.PlayerLive = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof self !== 'undefined' ? self : this);

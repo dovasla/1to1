@@ -1,0 +1,19 @@
+/* Season leaderboards: season and board buttons, pinned "your place" row. Own file: screens/seasons/seasons.css.
+   Tokens from ../../app-tokens.css. Buttons 48px tall, text 14px minimum, same layout at 360 and 390 wide. */
+
+.sl-toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 8px; }
+.sl-chip { flex: 1 1 0; min-height: 48px; min-width: 0; padding: 0 10px; border-radius: var(--radius, 12px);
+  border: 1px solid var(--line, #2A2E38); background: var(--card, #16181E); color: var(--ink, #F4F1EA);
+  font: inherit; font-size: 14px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; cursor: pointer; }
+.sl-chip.sl-on { background: var(--yellow, #FFD21F); color: var(--on-yellow, #0E0E0E); border-color: var(--yellow, #FFD21F); }
+
+.sl-pin { display: grid; grid-template-columns: 40px 1fr auto; align-items: center; column-gap: 10px; row-gap: 2px;
+  box-sizing: border-box; width: 100%; margin: 10px 0 0; padding: 12px 14px; border-radius: var(--radius, 12px);
+  background: var(--card, #16181E); border: 1px solid var(--yellow, #FFD21F); color: var(--ink, #F4F1EA); }
+.sl-rank { font-size: 20px; font-weight: 700; color: var(--yellow, #FFD21F); }
+.sl-name { font-size: 16px; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sl-lvl { font-size: 14px; color: var(--muted, #B9BDC8); font-weight: 400; }
+.sl-val { font-size: 20px; font-weight: 700; }
+.sl-gap { grid-column: 2 / 4; margin: 0; font-size: 14px; color: var(--muted, #B9BDC8); }
+
+@media (prefers-reduced-motion: reduce) { .sl-chip { transition: none; } }

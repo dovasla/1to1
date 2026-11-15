@@ -1,0 +1,41 @@
+/* Recap card (Home slot) and recap sheet (player app). Package N3. Uses the tokens from app-tokens.css.
+   Dark base, yellow headings and the one main button, bold caps, big-number cards, slide-up sheet, 48px taps, 14px minimum text. */
+.rc-card { display:flex; flex-direction:column; gap:8px; width:100%; min-height:48px; margin:0; padding:14px; text-align:left;
+  font:inherit; color:var(--ink); background:var(--card); border:2px solid var(--line); border-radius:var(--radius); cursor:pointer; }
+.rc-card.is-new { border-color:var(--yellow-text); }
+.rc-card:focus-visible, .rc-btn:focus-visible, .rc-close:focus-visible { outline:3px solid var(--blue); outline-offset:3px; }
+.rc-cap { font-size:14px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); }
+.rc-title { font-family:var(--font-head); font-size:24px; font-weight:700; line-height:1.1; text-transform:uppercase; color:var(--gold-text); }
+.rc-row { display:flex; flex-wrap:wrap; gap:6px 14px; }
+.rc-mini { font-size:14px; color:var(--muted); }
+.rc-mini b { font-size:18px; color:var(--ink); font-weight:900; }
+.rc-go { font-size:16px; font-weight:800; color:var(--blue-text); text-transform:uppercase; letter-spacing:.04em; }
+
+/* Sheet */
+.rc-overlay { position:fixed; inset:0; z-index:50; display:flex; align-items:flex-end; justify-content:center;
+  background:rgba(0,0,0,.6); padding:0; }
+.rc-sheet { width:100%; max-width:520px; max-height:92vh; overflow-y:auto; box-sizing:border-box; padding:20px 16px 24px;
+  background:var(--card); color:var(--ink); border-radius:var(--radius) var(--radius) 0 0; border-top:3px solid var(--yellow);
+  animation:rc-up .2s var(--ease); }
+@keyframes rc-up { from { transform:translateY(24px); opacity:.6; } to { transform:none; opacity:1; } }
+@media (prefers-reduced-motion: reduce) { .rc-sheet { animation:none; } }
+.rc-h2 { font-family:var(--font-head); font-size:32px; line-height:1; margin:0; text-transform:uppercase; color:var(--gold-text); }
+.rc-date { font-size:16px; color:var(--muted); margin:6px 0 14px; }
+.rc-h3 { font-family:var(--font-head); font-size:20px; line-height:1.1; margin:18px 0 8px; text-transform:uppercase; color:var(--gold-text); }
+.rc-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.rc-big { display:flex; flex-direction:column; align-items:center; gap:2px; padding:12px 6px; border-radius:12px; background:var(--raised); }
+.rc-big b { font-size:32px; font-weight:900; line-height:1; color:var(--ink); }
+.rc-big span { font-size:14px; font-weight:700; text-transform:uppercase; color:var(--muted); letter-spacing:.06em; }
+.rc-xp { margin:0; }
+.rc-xp b { font-size:44px; font-weight:900; line-height:1; color:var(--ink); }
+.rc-lines, .rc-top { list-style:none; margin:0; padding:0; }
+.rc-line { display:flex; justify-content:space-between; gap:12px; align-items:center; min-height:48px; padding:8px 0; border-bottom:1px solid var(--line); font-size:16px; }
+.rc-line b { font-weight:800; }
+.rc-sub { font-size:14px; color:var(--muted); }
+.rc-level { font-size:18px; font-weight:800; margin:14px 0 0; }
+.rc-level.is-up { color:var(--green); }
+.rc-note { font-size:14px; color:var(--muted); margin:8px 0 0; }
+.rc-btn { display:block; width:100%; min-height:48px; margin-top:10px; padding:12px; border:0; border-radius:var(--radius-btn);
+  background:var(--yellow); color:var(--on-yellow); font:inherit; font-size:18px; font-weight:900; text-transform:uppercase; letter-spacing:.04em; cursor:pointer; }
+.rc-close { display:block; width:100%; min-height:48px; margin-top:18px; padding:12px; border:2px solid var(--yellow); border-radius:var(--radius-btn);
+  background:transparent; color:var(--gold-text); font:inherit; font-size:18px; font-weight:900; text-transform:uppercase; letter-spacing:.04em; cursor:pointer; }

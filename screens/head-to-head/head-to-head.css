@@ -1,0 +1,16 @@
+/* Head-to-head blocks (N12). Dark base, yellow headings, 48px rows, 14px minimum text. */
+.hh-card, .hh-log { background: #111; color: #fff; border-radius: 16px; padding: 16px; margin: 12px 0; }
+.hh-name, .hh-title { color: #FFD400; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; margin: 0 0 8px; font-size: 14px; }
+.hh-rows { margin: 0; display: grid; gap: 8px; }
+.hh-rows div { display: flex; justify-content: space-between; gap: 12px; min-height: 48px; align-items: center; }
+.hh-rows dt { color: #bbb; font-size: 14px; }
+.hh-rows dd { margin: 0; font-size: 16px; font-weight: 700; text-align: right; }
+.hh-empty { color: #bbb; font-size: 14px; margin: 4px 0; }
+.hh-games, .hh-colours { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 6px; }
+.hh-games li, .hh-colours li, .hh-line { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; min-height: 48px; justify-content: space-between; }
+.hh-game b { font-size: 18px; }
+.hh-game.is-win b { color: #FFD400; }
+.hh-sub { color: #bbb; font-size: 14px; }
+.hh-line { margin: 4px 0; font-size: 14px; }
+.hh-line b { font-size: 16px; }
+@media (max-width: 360px) { .hh-rows dd { font-size: 14px; } }

@@ -18,15 +18,17 @@
      history:  [ { nightId, label, amount, status } ]        newest first
      cfg:      window.PLAYER_APP_CONFIG (for squarePayLink)
      version:  text shown at the bottom
+     skillDone: true once the skill questions are answered. Anything else shows the yellow warning under Settings.
 
    handlers (each optional; the shell supplies them):
      claimPaid(nightId)          -> Promise { ok, reason }   sends the "I've paid" claim (shell holds the PIN)
      saveProfile({ nickname, teamPref }) -> Promise { ok, reason }
+     saveSkill(answers)          -> Promise { ok, reason }   the skill questions, asked once (shell holds the token)
      setBright(bool)
      setAlerts(bool)
      logOut()
 
-   Pay rules: a claim is NOT a payment. Only Jord marks a night paid.
+   Pay rules: a claim is NOT a payment. Only the organiser marks a night paid.
 */
 (function (root, factory) {
   var api = factory();
@@ -39,12 +41,76 @@
   var VERSION = '0.2 (More tab)';
   var NICK_MIN = 2;
   var NICK_MAX = 12;
-  var PANELS = ['pay', 'details', 'alerts', 'rules', 'help'];
-  var PANEL_TITLE = { pay: 'Payments', details: 'My details', alerts: 'Alerts', rules: 'How it works', help: 'Get help' };
+  var PANELS = ['pay', 'details', 'alerts', 'reminders', 'account', 'rules', 'help', 'settings'];
+  var PANEL_TITLE = { pay: 'Payments', details: 'My details', alerts: 'Alerts', reminders: 'Reminders', account: 'My account', rules: 'How it works', help: 'Get help', settings: 'Settings' };
+
+  // Skill questions. Asked once, from Settings. Wording as in off-rating.js (Fable 23:14, the organiser 8 Nov).
+  // Each option has a hidden value (1 to 10) that feeds the 1 to 1000 score on the server.
+  var SKILL_QUESTIONS = [
+    { key: 'exp', title: 'Experience', q: 'Which of these is closest to you?', opts: [
+      { label: 'I have played at county, national or pro level', v: 10 },
+      { label: 'I have played for a club or league team', v: 8 },
+      { label: 'I have played for my school or a local team', v: 6 },
+      { label: 'I have played a few games with mates, not in a team', v: 4 },
+      { label: 'I have only messed about on a court or in PE', v: 2 },
+      { label: 'I have never really played', v: 1 }
+    ] },
+    { key: 'shoot', title: 'Shooting', q: 'How well can you shoot from behind the three-point line?', opts: [
+      { label: 'I make it almost always (90%+)', v: 10 },
+      { label: 'I make it most of the time, not always (75-80%)', v: 8 },
+      { label: 'I often make it, better than half (60-70%)', v: 7 },
+      { label: 'Hit and miss, about half (40-60%)', v: 5 },
+      { label: 'I usually miss, but I make it sometimes (20-40%)', v: 3 },
+      { label: 'I almost always miss, I would not shoot even if open (0-20%)', v: 1 }
+    ] },
+    { key: 'dribble', title: 'Dribbling', q: 'How often can you get past someone who is guarding you?', opts: [
+      { label: 'I get past almost anyone guarding me (90%+)', v: 10 },
+      { label: 'I get past most people guarding me (75-80%)', v: 8 },
+      { label: 'I get past people at my level, often (60-70%)', v: 7 },
+      { label: 'Around half the time, hit and miss (40-60%)', v: 5 },
+      { label: 'I usually lose the ball, but I get past sometimes (20-40%)', v: 3 },
+      { label: 'I almost never get past anyone (0-20%)', v: 1 }
+    ] },
+    { key: 'run', title: 'Stamina', q: 'How much of a game can you go hard for?', opts: [
+      { label: 'I can go hard for the whole game and still be quick (90%+)', v: 10 },
+      { label: 'I can go hard for most of the game (75-80%)', v: 8 },
+      { label: 'I can go hard for about two-thirds of the game (60-70%)', v: 7 },
+      { label: 'I can go hard for about half the game (40-60%)', v: 5 },
+      { label: 'I can go hard for a short spell, then I need a rest (20-40%)', v: 3 },
+      { label: 'I tire almost straight away (0-20%)', v: 1 }
+    ] }
+  ];
+  var SKILL_BEST = ['I am best at scoring', 'I am best at passing and setting up others', 'I am best at dribbling and handling the ball',
+    'I am best at defending', 'I am best at rebounding', 'I am best at working hard and running the floor'];
+  var HEIGHT_MIN = 53, HEIGHT_MAX = 84, HEIGHT_DEFAULT = 69;   // inches: 4 ft 5 in to 7 ft 0 in, default 5 ft 9 in
+
+  // Checks the answers from the form. Returns { ok, answers } or { ok: false, missing: [keys] }.
+  // best is optional and is not scored.
+  function validateSkill(raw) {
+    raw = raw || {};
+    var missing = [], answers = {};
+    SKILL_QUESTIONS.forEach(function (q) {
+      var v = Number(raw[q.key]);
+      var valid = q.opts.some(function (o) { return o.v === v; });
+      if (!valid) missing.push(q.key); else answers[q.key] = v;
+    });
+    var h = Number(raw.height);
+    if (!Number.isInteger(h) || h < HEIGHT_MIN || h > HEIGHT_MAX) missing.push('height'); else answers.height = h;
+    if (missing.length) return { ok: false, missing: missing };
+    if (raw.best != null && raw.best !== '') {
+      var bi = Number(raw.best);
+      if (Number.isInteger(bi) && bi >= 0 && bi < SKILL_BEST.length) answers.best = SKILL_BEST[bi];
+    }
+    return { ok: true, answers: answers };
+  }
+
+  function settingsSummary(d) {
+    return d && d.skillDone === true ? 'Skill questions done' : 'Skill questions to answer';
+  }
 
   var PAY_STATUS = {
     due:     { text: 'To pay',                       tone: 'due' },
-    claimed: { text: 'Sent. Jord will check Square', tone: 'wait' },
+    claimed: { text: 'Sent. The organiser will check Square', tone: 'wait' },
     paid:    { text: 'Paid',                         tone: 'paid' }
   };
 
@@ -60,7 +126,7 @@
     'If a team is one player short, the bench fills the gap. Fewest games first.',
     'Team fouls reset every time either team scores.',
     'You earn XP for points, wins and turning up each week. Fouls earn nothing.',
-    'Pay on the night, in cash or on Square. Tap I’ve paid so Jord knows to check.'
+    'Pay on the night, in cash or on Square. Tap I’ve paid so the organiser knows to check.'
   ];
 
   // ---------- helpers (pure) ----------
@@ -100,7 +166,7 @@
   // The short line under "Pay and history" on the More list.
   function paySummary(tonight) {
     if (!tonight) return 'No night set yet';
-    return tonight.status === 'paid' ? 'Tonight: paid' : (tonight.status === 'claimed' ? 'Tonight: sent to Jord' : 'Tonight: ' + (tonight.amount || 'to pay'));
+    return tonight.status === 'paid' ? 'Tonight: paid' : (tonight.status === 'claimed' ? 'Tonight: sent to the organiser' : 'Tonight: ' + (tonight.amount || 'to pay'));
   }
 
   function detailsSummary(me) {
@@ -126,16 +192,20 @@
   function listHtml(d) {
     d = d || {};
     var version = d.version || VERSION;
+    var owed = d.skillDone !== true;
     return '<h1 id="moreH">More</h1>' +
       '<div class="more-group">' +
-        rowHtml('pay', 'Pay and history', paySummary(d.tonight)) +
         rowHtml('details', 'My details', detailsSummary(d.me)) +
         switchHtml('bright', !!d.bright, 'Bright hall', 'Light colours for daytime') +
       '</div>' +
       '<div class="more-group">' +
         rowHtml('alerts', 'Alerts', d.alertsOn ? 'On' : 'Off') +
+        rowHtml('reminders', 'Reminders', 'Off until you switch one on') +
+        rowHtml('account', 'My account', 'PIN, name, my data, delete') +
         rowHtml('rules', 'How it works', 'The rules in short') +
-        rowHtml('help', 'Get help', 'Ask Jord at the desk') +
+        rowHtml('help', 'Get help', 'Ask the organiser at the desk') +
+        rowHtml('settings', 'Settings', settingsSummary(d)) +
+        (owed ? '<p class="more-warn" role="status"><span aria-hidden="true">⚠</span> Skill questions still to answer</p>' : '') +
       '</div>' +
       '<button class="btn ghost more-logout" type="button" data-act="logout">Log out</button>' +
       '<p class="muted centre more-version">1TO1 Basketball · ' + esc(version) + '</p>';
@@ -182,7 +252,7 @@
         '<input id="moreNick" type="text" maxlength="' + NICK_MAX + '" autocomplete="nickname" value="' + esc(nick) + '" placeholder="' + esc(me.first || '') + '">' +
         '<p class="muted">The name other players see. Leave it empty to use your first name. Letters only, 2 to 12.</p>' +
         '<fieldset class="more-team"><legend class="label">Team I like to play for</legend>' + radios + '</fieldset>' +
-        '<p class="muted">This is a wish, not a rule. Jord still sets the teams on the night.</p>' +
+        '<p class="muted">This is a wish, not a rule. The organiser still sets the teams on the night.</p>' +
         '<p class="more-msg" id="moreMsg" role="status" aria-live="polite">' + esc(msg || '') + '</p>' +
         '<button class="btn yellow more-save" type="button" data-act="save-details">Save</button>' +
       '</div>' + backHtml();
@@ -199,6 +269,11 @@
       '</div>' + backHtml();
   }
 
+  function remindersPanelHtml() {
+    return '<h1>' + PANEL_TITLE.reminders + '</h1>' +
+      '<div class="card" id="morePushBox"></div>' + backHtml();
+  }
+
   function rulesPanelHtml() {
     return '<h1>' + PANEL_TITLE.rules + '</h1>' +
       '<div class="card"><ul class="more-rules">' + RULES.map(function (r) { return '<li>' + esc(r) + '</li>'; }).join('') + '</ul></div>' +
@@ -208,19 +283,64 @@
   function helpPanelHtml(d) {
     return '<h1>' + PANEL_TITLE.help + '</h1>' +
       '<div class="card">' +
-        '<p><b>Forgot your PIN?</b> Ask Jord at the desk.</p>' +
-        '<p><b>Wrong team or payment?</b> Tell Jord on the night.</p>' +
+        '<p><b>Forgot your PIN?</b> Ask the organiser at the desk.</p>' +
+        '<p><b>Wrong team or payment?</b> Tell the organiser on the night.</p>' +
         '<p class="muted">Version ' + esc(d.version || VERSION) + '</p>' +
       '</div>' + backHtml();
   }
+
+  function skillFormHtml(msg) {
+    var blocks = SKILL_QUESTIONS.map(function (q) {
+      return '<fieldset class="more-skill"><legend class="more-skill-title">' + esc(q.title) + '</legend>' +
+        '<p class="muted">' + esc(q.q) + '</p>' +
+        q.opts.map(function (o) {
+          return '<label class="more-radio more-answer"><input type="radio" name="skill-' + q.key + '" value="' + o.v + '">' +
+            '<span>' + esc(o.label) + '</span></label>';
+        }).join('') +
+        '</fieldset>';
+    }).join('');
+    var height = '<fieldset class="more-skill"><legend class="more-skill-title">Height</legend>' +
+      '<p class="muted">Slide to your height in feet and inches.</p>' +
+      '<label class="more-range"><span id="moreHeightOut">' + esc(feetInches(HEIGHT_DEFAULT)) + '</span>' +
+      '<input id="moreHeight" type="range" name="skill-height" min="' + HEIGHT_MIN + '" max="' + HEIGHT_MAX + '" step="1" value="' + HEIGHT_DEFAULT + '"></label>' +
+      '</fieldset>';
+    var best = '<fieldset class="more-skill"><legend class="more-skill-title">Best at</legend>' +
+      '<p class="muted">Optional. Helps the organiser spread the team. Not scored.</p>' +
+      SKILL_BEST.map(function (text, i) {
+        return '<label class="more-radio more-answer"><input type="radio" name="skill-best" value="' + i + '"><span>' + esc(text) + '</span></label>';
+      }).join('') +
+      '</fieldset>';
+    return '<h1>' + PANEL_TITLE.settings + '</h1>' +
+      '<div class="card">' +
+        '<p class="more-skill-note"><b>Answer honestly.</b> It saves time on the night: teams are built from these answers. ' +
+        'The organiser checks every number. You can answer once only.</p>' +
+        blocks + height + best +
+        '<p class="more-msg" id="moreSkillMsg" role="status" aria-live="polite">' + esc(msg || '') + '</p>' +
+        '<button class="btn yellow more-save" type="button" data-act="save-skill">Save my answers</button>' +
+      '</div>' + backHtml();
+  }
+
+  function settingsPanelHtml(d, msg) {
+    if (d.skillDone === true) {
+      return '<h1>' + PANEL_TITLE.settings + '</h1>' +
+        '<div class="card"><p><b>Skill questions done.</b></p>' +
+        '<p class="muted">Your answers are saved. They can’t be changed. The organiser checks your number.</p></div>' + backHtml();
+    }
+    return skillFormHtml(msg);
+  }
+
+  function feetInches(n) { return Math.floor(n / 12) + ' ft ' + (n % 12) + ' in'; }
 
   function panelHtml(panel, d, msg) {
     d = d || {};
     if (panel === 'pay') return payPanelHtml(d);
     if (panel === 'details') return detailsPanelHtml(d, msg);
     if (panel === 'alerts') return alertsPanelHtml(d);
+    if (panel === 'reminders') return remindersPanelHtml();
+    if (panel === 'account') return '<h1>' + PANEL_TITLE.account + '</h1>' + (window.PlayerMyAccount ? PlayerMyAccount.buildPanel() : '<p class="muted">Not available.</p>') + backHtml();
     if (panel === 'rules') return rulesPanelHtml();
     if (panel === 'help') return helpPanelHtml(d);
+    if (panel === 'settings') return settingsPanelHtml(d, msg);
     return listHtml(d);
   }
 
@@ -242,16 +362,23 @@
         // The shell sends the claim with the sign-in token it holds. The token passed here is only a marker.
         backend: { claimPaid: function (token, nightId) { return h.claimPaid ? h.claimPaid(nightId) : Promise.resolve({ ok: false, reason: 'no-night' }); } },
         nightId: t.nightId,
-        night: { price: t.amount },
+        night: { price: t.amount, games: t.startsAt ? [{ startsAt: t.startsAt }] : [] },
         me: st.data.me,
         pin: 'session',
         token: 'shell'
       });
     }
 
+    function pushBox() {
+      var box = el.querySelector('#morePushBox');
+      if (!box || !G.PlayerPush || !h.pushController) return;
+      G.PlayerPush.render(box, h.pushController);
+    }
+
     function paint() {
       el.innerHTML = st.panel ? panelHtml(st.panel, st.data, st.msg) : listHtml(st.data);
       if (st.panel === 'pay') payBox();
+      if (st.panel === 'reminders') pushBox();
       if (st.focus) {
         var h1 = el.querySelector('h1');
         if (h1) { h1.setAttribute('tabindex', '-1'); h1.focus(); }
@@ -290,12 +417,42 @@
       });
     }
 
+    function saveSkill() {
+      var raw = {};
+      SKILL_QUESTIONS.forEach(function (q) {
+        var picked = el.querySelector('input[name="skill-' + q.key + '"]:checked');
+        raw[q.key] = picked ? picked.value : '';
+      });
+      var hi = el.querySelector('#moreHeight');
+      raw.height = hi ? hi.value : '';
+      var pb = el.querySelector('input[name="skill-best"]:checked');
+      raw.best = pb ? pb.value : '';
+      var check = validateSkill(raw);
+      // Messages go into the form's status line only, so the answers picked so far stay on screen.
+      var line = el.querySelector('#moreSkillMsg');
+      function say(text) { if (line) line.textContent = text; }
+      if (!check.ok) { say('Answer every question first.'); return; }
+      say('Saving…');
+      Promise.resolve(h.saveSkill ? h.saveSkill(check.answers) : { ok: false, reason: 'error' }).then(function (r) {
+        if ((r && r.ok) || (r && r.reason === 'already-done')) {
+          st.data.skillDone = true;
+          st.msg = '';
+          paint();
+        } else {
+          say('Could not save. Check your connection and try again.');
+        }
+      }).catch(function () {
+        say('Could not save. Check your connection and try again.');
+      });
+    }
+
     function onClick(e) {
       var t = e.target && e.target.closest ? e.target.closest('[data-go],[data-act]') : null;
       if (!t) return;
       if (t.hasAttribute('data-go')) return go(t.getAttribute('data-go'));
       var act = t.getAttribute('data-act');
       if (act === 'back') return go('');
+      if (act === 'save-skill') return saveSkill();
       if (act === 'bright') {
         st.data.bright = !st.data.bright;
         if (h.setBright) h.setBright(st.data.bright);
@@ -310,13 +467,21 @@
       if (act === 'logout') { if (h.logOut) h.logOut(); return; }
     }
 
+    function onInput(e) {
+      if (e.target && e.target.id === 'moreHeight') {
+        var out = el.querySelector('#moreHeightOut');
+        if (out) out.textContent = feetInches(Number(e.target.value));
+      }
+    }
+
     el.addEventListener('click', onClick);
+    el.addEventListener('input', onInput);
     paint();
 
     return {
       update: function (next) { st.data = Object.assign({}, st.data, next || {}); paint(); },
       show: function (panel) { go(panel); },
-      destroy: function () { el.removeEventListener('click', onClick); el.innerHTML = ''; }
+      destroy: function () { el.removeEventListener('click', onClick); el.removeEventListener('input', onInput); el.innerHTML = ''; }
     };
   }
 
@@ -334,6 +499,9 @@
     teamLabel: teamLabel,
     listHtml: listHtml,
     panelHtml: panelHtml,
+    SKILL_QUESTIONS: SKILL_QUESTIONS,
+    validateSkill: validateSkill,
+    settingsSummary: settingsSummary,
     mount: mount
   };
 });

@@ -83,7 +83,7 @@
   letter-spacing: .04em;
   cursor: pointer;
 }
-.lb-seg button[aria-pressed="true"] { background: var(--yellow); border-color: var(--yellow); color: var(--on-yellow); }
+.lb-seg button[aria-pressed="true"] { background: var(--yellow); border-color:var(--yellow-text); color: var(--on-yellow); }
 .lb-seg button:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
 
 .lb-empty {

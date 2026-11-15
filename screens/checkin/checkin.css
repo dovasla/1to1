@@ -1,0 +1,16 @@
+/* "I'm here" card (D3). 48px taps, 14px minimum text, one yellow button (Check in). */
+.ci-card { margin: 0 0 12px; padding: 16px; background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--yellow); border-radius: var(--radius); color: var(--ink); font-family: var(--font-body); }
+.ci-card h2 { margin: 0 0 6px; font: 700 20px/1.2 var(--font-head); text-transform: uppercase; letter-spacing: .02em; color: var(--gold-text); }
+.ci-card p { margin: 0 0 10px; font-size: 16px; line-height: 1.4; }
+.ci-muted { color: var(--muted, #9AA0AA); }
+.ci-digits { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 0 0 12px; }
+.ci-box { min-height: 56px; display: flex; align-items: center; justify-content: center; border: 2px solid var(--line); border-radius: 12px; font: 800 28px/1 var(--font-head); background: var(--raised); color: var(--ink); }
+.ci-box.ci-full { border-color:var(--yellow-text); }
+.ci-pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.ci-key { min-height: 48px; min-width: 48px; border: 2px solid var(--line); border-radius: 12px; background: var(--raised); color: var(--ink); font: 800 20px/1 var(--font-head); cursor: pointer; }
+.ci-key:disabled { opacity: .5; cursor: default; }
+.ci-back { font-size: 16px; }
+.ci-go { background: var(--yellow); border-color:var(--yellow-text); color: var(--on-yellow); font-size: 16px; }
+.ci-err { min-height: 22px; margin: 10px 0 0; font-size: 16px; font-weight: 700; color: var(--red, #FF6B6B); }
+.ci-done h2 { color: var(--green, #3DDC84); }
+@media (prefers-reduced-motion: reduce) { .ci-key { transition: none; } }

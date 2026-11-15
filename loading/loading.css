@@ -106,7 +106,7 @@
   line-height: 1;
   font-weight: 700;
   text-transform: uppercase;
-  color: var(--yellow);
+  color:var(--yellow-text);
 }
 .pl-sub {
   margin: 0 16px 16px;

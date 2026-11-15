@@ -1,0 +1,12 @@
+/* MVP pick card (player app). Uses the app's existing tokens (--ink, --yellow, --blue, --muted, --line). 48px tap targets. */
+.mvp-list { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 8px; }
+.mvp-pick {
+  display: block; width: 100%; min-height: 48px; padding: 12px 14px;
+  font: 700 16px/1.2 var(--font-cond, 'Barlow Condensed', sans-serif); text-transform: uppercase; letter-spacing: .02em;
+  color: inherit; background: transparent; border: 2px solid var(--line, #3a3a3a); border-radius: 10px; text-align: left; cursor: pointer;
+}
+.mvp-pick:focus-visible { outline: 3px solid var(--yellow, #FFD400); outline-offset: 2px; }
+.mvp-pick.on { border-color: var(--yellow, #FFD400); background: var(--yellow, #FFD400); color: #0E0E0E; }
+.mvp-msg { min-height: 1.4em; margin: 10px 0 0; }
+.mvp-msg:empty { display: none; }
+@media (prefers-reduced-motion: reduce) { .mvp-pick { transition: none; } }

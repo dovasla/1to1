@@ -1,0 +1,19 @@
+/* Pay-first block on Home. Uses the Courtside tokens from app-tokens.css (dark default, Bright hall light).
+   Buttons 48px or taller, labels 14px or bigger, one yellow action per block. */
+.pf { margin-top:14px; display:grid; gap:10px; background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:16px; box-sizing:border-box; }
+.pf[hidden] { display:none; }
+.pf-top { display:flex; align-items:center; }
+.pf-pill { display:inline-block; font-size:14px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; padding:4px 10px; border-radius:99px; border:2px solid; }
+.pf-pill--due { color:var(--red); border-color:var(--red); }
+.pf-pill--paid { color:var(--green); border-color:var(--green); }
+.pf-head { font-family:var(--font-head); font-weight:700; text-transform:uppercase; font-size:28px; line-height:1.1; color:var(--yellow-text); margin:0; }
+:root[data-theme="light"] .pf-head { color:var(--blue-text); }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .pf-head { color:var(--blue-text); } }
+.pf-amount { font-family:var(--font-head); font-weight:700; font-size:48px; line-height:1; color:var(--blue-text); margin:0; }
+.pf-text { margin:0; font-size:16px; color:var(--ink); }
+.pf-note { margin:0; font-size:14px; color:var(--muted); }
+.pf-err { margin:0; font-size:14px; color:var(--red); }
+.pf-btn { display:flex; align-items:center; justify-content:center; width:100%; min-height:56px; margin:0; padding:12px 16px; box-sizing:border-box; border:0; border-radius:var(--radius-btn); background:var(--yellow); color:var(--on-yellow); font:inherit; font-size:18px; font-weight:900; text-transform:uppercase; letter-spacing:.04em; text-align:center; text-decoration:none; cursor:pointer; }
+.pf-btn--ghost { background:transparent; color:var(--ink); border:2px solid var(--yellow); min-height:52px; font-size:16px; }
+.pf-btn[disabled] { opacity:.6; cursor:default; }
+.pf-btn:focus-visible { outline:3px solid var(--blue); outline-offset:2px; }

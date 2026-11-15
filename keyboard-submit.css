@@ -1,0 +1,2 @@
+/* Keyboard patch: keep the main button on screen while a name field is typed in. */
+#send.btn, #loginBtn.btn { position: sticky; bottom: 0; z-index: 5; box-shadow: 0 -10px 12px var(--bg, #0E0E0E); }

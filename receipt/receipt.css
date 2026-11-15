@@ -1,0 +1,22 @@
+/* Player app: payment receipt card on Home. Uses the app tokens only (app-tokens.css). No motion. */
+.rc-card {
+  margin: 12px 0;
+  padding: 14px 16px;
+  border-radius: var(--radius, 16px);
+  border: 2px solid var(--green, #2BD67B);
+  background: var(--card, #1A1C22);
+  color: var(--ink, #F4F5F7);
+}
+.rc-line {
+  margin: 0;
+  font-family: var(--font-body, system-ui, sans-serif);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.rc-sub {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: var(--muted, #AEB4C0);
+}

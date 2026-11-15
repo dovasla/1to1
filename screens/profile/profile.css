@@ -39,7 +39,7 @@
 
 /* Level block. */
 .lvl { display: flex; align-items: center; gap: 14px; }
-.lvl-num { font-size: 64px; font-weight: 900; line-height: .9; color: var(--yellow); }
+.lvl-num { font-size: 64px; font-weight: 900; line-height: .9; color:var(--yellow-text); }
 .lvl-word { display: block; font-size: 14px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
 .badge {
   display: inline-block; margin-top: 6px; padding: 4px 10px; border-radius: 999px; background: var(--blue);
@@ -48,7 +48,7 @@
 .bar { height: 14px; background: var(--line); border-radius: 999px; overflow: hidden; margin: 14px 0 8px; }
 .bar i { display: block; height: 100%; background: var(--yellow); border-radius: 999px; transition: width .6s ease; }
 .stars-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
-.stars { font-size: 22px; letter-spacing: 3px; color: var(--yellow); }
+.stars { font-size: 22px; letter-spacing: 3px; color:var(--yellow-text); }
 .stars .off { color: var(--line); }
 .prestige { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
 .prestige p { margin: 0 0 4px; }
@@ -66,7 +66,7 @@
 /* Skill rating. */
 .skill-num { margin: 0; font-size: 40px; font-weight: 900; line-height: 1; color: var(--ink); }
 .skill-num small { font-size: 16px; font-weight: 800; color: var(--muted); }
-.skill-name { margin: 6px 0 8px; font-size: 20px; font-weight: 900; text-transform: uppercase; color: var(--yellow); }
+.skill-name { margin: 6px 0 8px; font-size: 20px; font-weight: 900; text-transform: uppercase; color:var(--yellow-text); }
 
 /* Equipped look. */
 .profile .list li { min-height: 48px; align-items: center; }
