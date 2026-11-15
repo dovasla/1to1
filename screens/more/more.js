@@ -82,6 +82,8 @@
   ];
   var SKILL_BEST = ['I am best at scoring', 'I am best at passing and setting up others', 'I am best at dribbling and handling the ball',
     'I am best at defending', 'I am best at rebounding', 'I am best at working hard and running the floor'];
+  // Short keys sent to the server. The server accepts at most 20 characters here (migration-6), so the long text above is never sent.
+  var SKILL_BEST_KEY = ['scoring', 'passing', 'dribbling', 'defending', 'rebounding', 'hard work'];
   var HEIGHT_MIN = 53, HEIGHT_MAX = 84, HEIGHT_DEFAULT = 69;   // inches: 4 ft 5 in to 7 ft 0 in, default 5 ft 9 in
 
   // Checks the answers from the form. Returns { ok, answers } or { ok: false, missing: [keys] }.
@@ -99,7 +101,7 @@
     if (missing.length) return { ok: false, missing: missing };
     if (raw.best != null && raw.best !== '') {
       var bi = Number(raw.best);
-      if (Number.isInteger(bi) && bi >= 0 && bi < SKILL_BEST.length) answers.best = SKILL_BEST[bi];
+      if (Number.isInteger(bi) && bi >= 0 && bi < SKILL_BEST_KEY.length) answers.best = SKILL_BEST_KEY[bi];
     }
     return { ok: true, answers: answers };
   }

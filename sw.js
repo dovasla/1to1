@@ -4,7 +4,7 @@
 // Only same-origin GET requests are handled and saved. The online database and any other
 // cross-origin call go straight to the network and are never saved.
 importScripts('./push-sw.js');
-const CACHE = 'player-shell-1-next36';
+const CACHE = 'player-shell-1-next37';
 // Weak signal (F7): a slow network answer is replaced by the saved copy after 3.5 seconds.
 const NET_WAIT_MS = 3500;
 const SHELL = [

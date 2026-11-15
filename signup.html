@@ -47,13 +47,6 @@
         <p class="err" id="e-extra" hidden></p>
       </div>
 
-      <div id="doorRow">
-      <label for="door">4-digit code</label>
-      <p class="muted">It's on the organiser's screen.</p>
-      <input id="door" name="door" type="text" autocomplete="off" autocapitalize="characters" maxlength="8">
-      <p class="err" id="e-door" hidden></p>
-      </div>
-
       <label for="pin">Your 4-digit PIN</label>
       <p class="muted">You use this with your name to log in later. Pick four digits you will remember. Don't use your birthday or anything obvious.</p>
       <input id="pin" name="pin" type="password" inputmode="numeric" autocomplete="new-password" pattern="[0-9]*" maxlength="4" required>
@@ -140,9 +133,8 @@
     if (!v.ok || !pin.ok) return;
     $('send').disabled = true;
     v.clean.extra = $('extra').value.replace(/[^A-Za-z]/g, '').toLowerCase();
-    var doorOn = !(window.PLAYER_APP_CONFIG && PLAYER_APP_CONFIG.doorCodeAtSignUp === false);
-    $('doorRow').hidden = !doorOn;
-    be.signUp(v.clean, pin.pin, doorOn ? $('door').value : '', inviteCode).then(function (r) {
+    // R18: sign-up never asks for a door code. The 4-digit code is only entered later, on Join a run.
+    be.signUp(v.clean, pin.pin, '', inviteCode).then(function (r) {
       if (!r.ok) {
         $('send').disabled = false;
         if (r.reason === 'name-taken') {
