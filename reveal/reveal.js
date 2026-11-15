@@ -37,7 +37,7 @@
     flags = flags || {};
     return {
       first: p.first || '', lastInitial: p.lastInitial || '',
-      level: p.level || 1,
+      level: p.level || 0,   // next-34: no level for names the phone does not hold (0 = no level shown)
       tier: p.tier || '',               // tier word (Rookie, Regular, Veteran). Never the skill title.
       standIn: !!p.standIn, prestige: !!p.prestige,
       stars: p.prestige ? (p.stars || 0) : 0,    // prestige stars only; a level-60 non-prestige shows the level only

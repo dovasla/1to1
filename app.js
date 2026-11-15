@@ -106,6 +106,27 @@
     var raw = S.night && Array.isArray(S.night.standings) ? S.night.standings : [];
     return raw.filter(function (t) { return t && t.name; }).slice().sort(function (a, b) { return (b.points || 0) - (a.points || 0); });
   }
+  // next-34 (R55, Brief J): the lineup counts as published when the organiser's flag is set, or when a game
+  // has two teams and this player is in one. Teams alone are enough, so no extra Publish is needed.
+  function lineupPublished() {
+    if (!S.night) return false;
+    if (S.night.lineup && S.night.lineup.published === true) return true;
+    return (S.night.games || []).some(function (g) { return (g.teams || []).length === 2 && !!myTeamIn(g); });
+  }
+  // next-34 privacy (R55): counts only until teams exist. A player in tonight sees first name and last initial of
+  // the players in their own game (both teams). Other games, ratings and any other field never reach the phone.
+  function tonightFor(payload) {
+    if (!payload || !Array.isArray(payload.games)) return payload;
+    var pick = function (p) { return { first: p.first || '', lastInitial: p.lastInitial || '' }; };
+    var games = payload.games.map(function (g) {
+      var inIt = !!myTeamIn(g);
+      var teams = (g.teams || []).map(function (t) {
+        return { name: t.name, players: inIt ? (t.players || []).map(pick) : [] };
+      });
+      return Object.assign({}, g, { teams: teams, bench: inIt ? (g.bench || []).map(pick) : [] });
+    });
+    return Object.assign({}, payload, { games: games });
+  }
   // The XP run for the level the server holds (same curve as lib/xp.js totalForLevel). No demo numbers.
   function myRun() {
     var server = window.PlayerXpServer ? PlayerXpServer.runFromSummary(S.xpSummary) : null;
@@ -303,8 +324,9 @@
       tonight: {
         rsvp: (S.rsvp && S.rsvp.ok && S.rsvp.me) ? S.rsvp.me : 'none',   // I'm in (N2), from player_rsvp_list
         rsvpUnknown: !!(S.rsvp && !S.rsvp.ok), // next-22: a failed RSVP read must not block Pay
-        lineupReady: !!(S.night && S.night.lineup && S.night.lineup.published === true),   // provisional contract: payload.lineup.published (organiser publish)
+        lineupReady: lineupPublished(),   // next-34 (R55): the organiser's flag (payload.lineup.published), or teams with this player in one
         checkedIn: !!S.checkedIn,
+        ended: !!S.runEnded,
         payMsg: (pf && pf._state) ? pf._state().err : '',   // pay-first's plain message (code first, link failed, etc.)
         runClosed: !!S.runClosed || !!(S.night && (S.night.runClosed === true || S.night.codeClosed === true || S.night.status === 'closed')),   // R43: the real closed state (server "run-closed" or night flag)
         pulledIn: !!(S.me && S.night && Array.isArray(S.night.pulledIn) && S.night.pulledIn.indexOf(S.me.id) > -1),   // provisional contract: payload.pulledIn = [signup ids]
@@ -409,7 +431,8 @@
     var game = nextGame(Date.now());
     var soon = game && (Date.parse(game.startsAt) - Date.now()) <= 60000 ? game : null;
     var lineup = null;
-    if (soon) {
+    // next-34 privacy: the live lineup names players only for a game this player is in.
+    if (soon && myTeamIn(soon)) {
       var mine = myTeamIn(soon), theirs = oppIn(soon);
       var pl = function (t) {
         return (t ? t.players : []).map(function (p) {
@@ -437,9 +460,8 @@
     };
   }
 
-  function renderLive() {
-    if (!S.liveScreen) S.liveScreen = PlayerLive.mount($('live'), liveData(), { onReveal: openLineup });
-    else S.liveScreen.update(liveData());
+  // next-34: the standings block is hidden when there are no standings, so no empty table shows.
+  function renderStandings() {
     var ul = $('standings');
     ul.innerHTML = '';
     var st = standingsOf();
@@ -450,6 +472,12 @@
       li.appendChild(a); li.appendChild(b); ul.appendChild(li);
     });
     $('standNote').textContent = st.length ? 'Standings after tonight’s games.' : 'Standings show here after the first game.';
+    $('standBlock').hidden = st.length === 0;
+  }
+  function renderLive() {
+    if (!S.liveScreen) S.liveScreen = PlayerLive.mount($('live'), liveData(), { onReveal: openLineup });
+    else S.liveScreen.update(liveData());
+    renderStandings();
     loadMvp();
   }
 
@@ -486,6 +514,23 @@
       liveBusy = false;
       if (S.liveScreen) S.liveScreen.update(liveData());
     });
+  }
+  // next-34: the night is read again every 30 s while the app is open, and at once when the phone comes back to it.
+  var nightTimer = null;
+  function refreshNight() {
+    if (!S.me || !be.getNight) return Promise.resolve();
+    return be.getNight(NIGHT_ID).then(function (nt) {
+      if (nt && nt.payload) applyNight(nt.payload, nt);
+    }).catch(function () { /* no signal: keep the last night on screen */ });
+  }
+  function startNightRefresh() {
+    if (nightTimer) return;
+    nightTimer = setInterval(function () { if (!document.hidden) refreshNight(); }, 30000);
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) refreshNight(); });
+  }
+  function stopNightRefresh() {
+    if (nightTimer) clearInterval(nightTimer);
+    nightTimer = null;
   }
   function startLivePoll() {
     if (liveOn) return;
@@ -821,7 +866,8 @@
   // Keeps tonight in step with the server while the app is open: a cancel hides the night, a new game shows at once.
   function applyNight(payload, row) {
     window.__pwaNight = payload || null; // next-23: pwa.js reads this to hold updates during a run
-    var next = liveNight(payload);
+    S.nightRaw = liveNight(payload);     // next-34: kept whole, so the night can be cut again once the player is known
+    var next = tonightFor(S.nightRaw);
     var ns = window.PlayerNightStatus ? PlayerNightStatus.fromRow(row) : null;
     var nsChanged = JSON.stringify(ns) !== JSON.stringify(S.nightStatus);
     S.nightStatus = ns;
@@ -831,6 +877,7 @@
     S.night = next;
     if (S.home) S.home.update(homeData(Date.now()));
     if (S.liveScreen) S.liveScreen.update(liveData());
+    renderStandings();
   }
   // The lineup reveal reads tonight through this wrapper, so a cancelled night never opens a reveal.
   function nightWatchBackend() {
@@ -840,7 +887,7 @@
           applyNight(nt && nt.payload, nt);
           var p = nt && nt.payload;
           var cancelled = !p || !!p.cancelled || (nt && nt.status === 'cancelled');
-          return (liveNight(p) && !cancelled) ? nt : null;
+          return (liveNight(p) && !cancelled) ? Object.assign({}, nt, { payload: tonightFor(p) }) : null;
         });
       }
     };
@@ -848,7 +895,7 @@
 
   // "I'm here" (R18, D3). Home owns the code sheet. These helpers send the code and keep a #in/1234 or ?code= link on the phone.
   // Server reasons (migration-25 player_check_in): signin, no-code, closed, too-early, locked, wrong-code.
-  var CHECKIN_ERR = { 'wrong-code': 'wrong-code', 'too-early': 'too-early', 'no-code': 'too-early', 'closed': 'run-closed', 'run-closed': 'run-closed', 'locked': 'locked', 'too-many-tries': 'locked' };
+  var CHECKIN_ERR = { 'wrong-code': 'wrong-code', 'too-early': 'no-session', 'no-code': 'no-session', 'no-session': 'no-session', 'closed': 'run-closed', 'run-closed': 'run-closed', 'locked': 'locked', 'too-many-tries': 'locked' };
   // Real state for Home's "I'm in", "Pay" and "See my lineup" rows (mock mode answers 'none' and no payment).
   function refreshTonight() {
     var tok = readToken();
@@ -876,10 +923,33 @@
   }
 
   // Sign-in state is set at once (boot checks it); the screen scripts load first, then the rest of the start runs.
+  // next-33 (R52): the server is the truth. When tonight's run has ended or been cancelled, the phone forgets the join, the payment and the claim.
+  var runWatchOn = false;
+  function wipeTonight() {
+    S.checkedIn = false; S.claimed = false; S.paidNow = false; S.payErr = false; S.runEnded = true;
+    try { if (window.PlayerPay && S.night) localStorage.removeItem(PlayerPay.sentKey({ nightId: NIGHT_ID, night: S.night })); } catch (e) { /* nothing stored */ }
+    if (S.home) S.home.update(homeData(Date.now()));
+  }
+  function checkRunEnded() {
+    var tok = readToken();
+    if (!tok || !S.me || !be.runStatus) return Promise.resolve();
+    return be.runStatus(tok, NIGHT_ID).then(function (r) {
+      if (!r || !r.ok) return;
+      if (r.state === 'ended' || r.state === 'cancelled') wipeTonight();
+      else if (r.state === 'open') S.runEnded = false;
+    }).catch(function () { /* no signal: keep the last state */ });
+  }
+
   function startApp(player, pin) {
     S.me = { id: player.id, first: player.first, lastInitial: player.lastInitial, status: player.status, level: player.level, xpLevel: player.xpLevel };
     S.pin = pin;
     if (player.checkedIn) S.checkedIn = true;   // next-31: server says this player is already checked in tonight
+    checkRunEnded();
+    if (!runWatchOn) {
+      runWatchOn = true;
+      setInterval(checkRunEnded, 60000);
+      document.addEventListener('visibilitychange', function () { if (!document.hidden) checkRunEnded(); });
+    }
     // next-31: the kept QR code is tried at start, before the lazy screens load (it needs no screen code).
     if (window.PlayerSignup3Box) {
       var pendingCode = PlayerSignup3Box.pendingRunCode(window.localStorage);
@@ -895,6 +965,7 @@
   function startAppNow(player, pin) {
     S.me = { id: player.id, first: player.first, lastInitial: player.lastInitial, status: player.status, level: player.level, xpLevel: player.xpLevel };
     S.pin = pin;
+    if (S.nightRaw) S.night = tonightFor(S.nightRaw);   // next-34: cut the night to this player now the player is known
     pushController = makePushController();
     wireMyAccount();
     registerHomeSlots();
@@ -931,6 +1002,7 @@
     if (getPf()) getPf().start();
     if (!S.moreScreen && window.PlayerMore) S.moreScreen = PlayerMore.mount($('more'), moreData(), moreHandlers);
     startLivePoll();
+    startNightRefresh();
     if (S.reveal) S.reveal.stop();
     if (typeof LineupReveal !== 'undefined') {
       S.reveal = LineupReveal.watch({ backend: nightWatchBackend(), nightId: NIGHT_ID, me: { first: S.me.first, lastInitial: S.me.lastInitial } });
@@ -984,6 +1056,8 @@
     if (S.moreScreen) { S.moreScreen.destroy(); S.moreScreen = null; }
     if (S.liveScreen) { S.liveScreen.destroy(); S.liveScreen = null; }
     stopLivePoll();
+    stopNightRefresh();
+    S.nightRaw = null;
     $('lPin').value = '';
     history.replaceState(null, '', location.pathname + location.search);
     showLogin();

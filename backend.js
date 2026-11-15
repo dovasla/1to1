@@ -222,7 +222,12 @@
         });
       },
       getNight: function (id) {
-        return Promise.resolve().then(function () { var rec = load().nights[id]; return rec ? Object.assign({}, rec, { status: rec.status || 'on', message: rec.message || '' }) : null; });
+        return Promise.resolve().then(function () {
+          var rec = load().nights[id];
+          // next-34 test hook (mock only): a browser test sets window.__MOCK_NIGHT__ to change the night while the app runs.
+          if (typeof window !== 'undefined' && window.__MOCK_NIGHT__) rec = { id: id, payload: window.__MOCK_NIGHT__, updatedAt: null };
+          return rec ? Object.assign({}, rec, { status: rec.status || 'on', message: rec.message || '' }) : null;
+        });
       },
       // Live feed (organiser row). Mock: only what a test sets on window; no data is kept.
       getLive: function () {
@@ -306,6 +311,11 @@
           }, function () { return { ok: false, reason: 'error' }; });
       },
       // paymentStatus -> { ok: true, paid: true|false } or { ok: false, reason }. Only the webhook sets paid.
+      // next-33 (R52): the server says whether tonight's run is open, ended or cancelled. Needs migration-36.
+      runStatus: function (token, nightId) {
+        return call('POST', '/rest/v1/rpc/player_run_status', { p_token: token, p_night: nightId })
+          .then(function (j) { return j && j.ok ? { ok: true, state: String(j.state || '') } : { ok: false }; });
+      },
       paymentStatus: function (token, nightId) {
         return call('POST', '/rest/v1/rpc/player_payment_status', { p_token: token, p_night: nightId })
           .then(function (j) {

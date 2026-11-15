@@ -10,9 +10,9 @@ window.PLAYER_APP_CONFIG = {
   supabaseAnonKey: 'sb_publishable_jgsxcwtILjkf9nv9y_waBA_g7PTdUZU',
   squarePayLink: 'https://square.link/u/lpqCGb6Y',
   payAuto: true,
-  // Door code at sign-up (H3/H4). Keep true until migration-25 (run-code) is live on Supabase.
-  // Then set false: the door box hides and sign-up no longer asks for it.
-  doorCodeAtSignUp: true,
+  // next-32: sign-up never asks for a code. The 4-digit code is only the Join a session step.
+  // Set true only to bring back the old door box on sign-up (H3/H4).
+  doorCodeAtSignUp: false,
   // Push reminders (N11). Public key only, from the organiser's VAPID steps. Empty = switches show an error, nothing is sent.
   VAPID_PUBLIC_KEY: '',
   nightPublic: true,

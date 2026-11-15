@@ -62,12 +62,14 @@
     <section class="view" id="v-live" data-view="live" aria-label="Live" hidden>
       <div id="live"></div>
       <div id="mvpBox"></div>
-      <h2>Standings</h2>
-      <div class="card">
-        <ul class="list" id="standings"></ul>
-        <p class="muted" id="standNote"></p>
-        <p class="muted"><a href="#live/leaderboard" class="link tap">See the leaderboard</a></p>
+      <div id="standBlock" hidden>
+        <h2>Standings</h2>
+        <div class="card">
+          <ul class="list" id="standings"></ul>
+          <p class="muted" id="standNote"></p>
+        </div>
       </div>
+      <p class="muted"><a href="#live/leaderboard" class="link tap">See the leaderboard</a></p>
     </section>
 
     <section class="view" id="v-profile" data-view="profile" aria-label="Profile" hidden>

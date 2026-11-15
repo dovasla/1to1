@@ -13,7 +13,7 @@
   var CODE_LEN = 4;
   var MSG = {
     'wrong-code': 'That code isn’t right. Check the organiser’s screen.',
-    'too-early': 'Too early. Check-in opens 2 hours before the run.',
+    'too-early': 'No session is open yet. Ask the organiser to start it.',
     'no-session': 'No session is open yet. Ask the organiser to start it.',
     'run-closed': 'This session has ended.',
     'too-many-tries': 'Too many tries. Wait 10 minutes or see the organiser.',
@@ -65,8 +65,8 @@
     var err = s.reason ? '<p class="ci-err" role="alert">' + esc(messageFor(s.reason)) + '</p>' : '<p class="ci-err" role="status"></p>';
     return '' +
       '<div class="ci-card" aria-busy="' + (busy ? 'true' : 'false') + '">' +
-        '<h2>I am here</h2>' +
-        '<p class="ci-muted">Type the 4 digits on the screen at the hall door.</p>' +
+        '<h2>Enter the 4-digit code</h2>' +
+        '<p class="ci-muted">It’s on the organiser’s screen.</p>' +
         '<div class="ci-digits" aria-label="Code, ' + code.length + ' of 4 digits">' + boxes + '</div>' +
         '<div class="ci-pad">' + keys +
           '<button type="button" class="ci-key ci-back" data-ci-key="back">Back</button>' +

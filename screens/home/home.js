@@ -58,11 +58,11 @@
   var PN = root.PlayerName;
   var XP = root.PlayerXp;
   var ON_COURT_MS = 7 * 60 * 1000;   // a game is "on" for 7 minutes after tip-off
-  var CODE_LEAD_MS = 2 * 60 * 60 * 1000; // door code works from 2 hours before start
   var LONDON = 'Europe/London';
   var CODE_ERR = {
     'wrong-code': 'Wrong code',
-    'too-early': 'Too early',
+    'too-early': 'No session is open yet. Ask the organiser to start it.',
+    'no-session': 'No session is open yet. Ask the organiser to start it.',
     'run-closed': 'Run closed',
     'locked': 'Wait 10 minutes'
   };
@@ -112,7 +112,7 @@
   function inCodeWindow(d, now) {
     var t = Date.parse(d.next && d.next.startsAt);
     if (isNaN(t)) return false;
-    return !tonightOf(d).runClosed && now >= t - CODE_LEAD_MS;
+    return !tonightOf(d).runClosed;
   }
 
   // Only Europe/London clock times are shown to players.
@@ -134,6 +134,7 @@
       lineupReady: !!t.lineupReady,
       pulledIn: !!t.pulledIn,
       checkedIn: !!t.checkedIn,
+      ended: !!t.ended,
       runClosed: !!t.runClosed,
       rsvp: t.rsvp === 'in' ? 'in' : 'none',
       rsvpUnknown: !!t.rsvpUnknown,
@@ -151,6 +152,7 @@
   // What the night is, for the empty states and banners. Uses the night-status module when it is there.
   // Returns: none, normal, cancelled, full, finished, moved, spots, note.
   function nightKind(d, now) {
+    if (tonightOf(d).ended) return 'finished';   // next-33 (R52): the run has ended on the server
     var n = d.night || null;
     var helper = ns();
     if (helper && n) {
@@ -210,12 +212,12 @@
     // next-23: without "I'm in", the main button shows Pay while a payment is due (so Pay never waits on RSVP),
     // then "I'm here" in the code window, and only then "I'm in".
     if (t.rsvp !== 'in' && !t.rsvpUnknown) {
-      if (payDue(t)) return { kind: 'pay', label: 'Pay ' + t.amount, go: 'pay', href: t.payLink };
-      if (needsCode(t, d, now)) return { kind: 'here', label: 'Join a session', go: 'here' };
+      if (payDue(t)) return { kind: 'pay', label: 'Pay ' + t.amount + ' by card', go: 'pay', href: t.payLink };
+      if (needsCode(t, d, now)) return { kind: 'here', label: 'Join a run', go: 'here' };
       return { kind: 'in', label: 'I’m in', go: 'imIn' };
     }
-    if (payDue(t)) return { kind: 'pay', label: 'Pay ' + t.amount, go: 'pay', href: t.payLink };
-    if (needsCode(t, d, now)) return { kind: 'here', label: 'Join a session', go: 'here' };
+    if (payDue(t)) return { kind: 'pay', label: 'Pay ' + t.amount + ' by card', go: 'pay', href: t.payLink };
+    if (needsCode(t, d, now)) return { kind: 'here', label: 'Join a run', go: 'here' };
     if (t.lineupReady && (t.paid || t.pulledIn)) return { kind: 'lineup', label: 'See my lineup', go: 'lineup' };
     return { kind: 'set', label: t.paid ? 'Paid. You’re in.' : (t.pulledIn ? 'You’re in tonight' : 'You’re set'), go: 'live' };
   }
@@ -241,31 +243,24 @@
     var t = tonightOf(d);
     var out = '';
     // One Pay path (R43): with card pay on, Pay is the only pay action (no separate "I've paid" claim).
-    var cardOnly = (window.PLAYER_APP_CONFIG || {}).payAuto === true;
     if (a && a.kind === 'pay') {
-      if (!cardOnly) {
-        out += t.claimed
+      out += t.claimed
           ? '<p class="ph-note">Sent. The organiser will check Square.</p>'
-          : '<button class="ph-btn ph-btn--ghost" type="button" data-go="paid">I’ve paid</button>';
-      }
+          : '<button class="ph-btn ph-btn--ghost" type="button" data-go="paid">Pay at the desk</button>';
       if (t.error) out += '<p class="ph-note" role="alert">Could not send. Try again.</p>';
       if (t.payMsg) out += '<p class="ph-note" role="alert">' + esc(t.payMsg) + '</p>';
-      if (t.checkedIn) out += '<p class="ph-note ph-tick">' + ICON.tick + ' You’re here</p>';
-      if (t.checkedIn && !t.paid) out += '<p class="ph-note">You’re in. Pay ' + esc(String(t.amount)) + ' at the door.</p>';
+      if (t.checkedIn && !t.paid) out += '<p class="ph-note">You’re here. Pay ' + esc(String(t.amount)) + ' to play tonight.</p>';
     }
     // next-31: "I'm here" shows in the code window whenever the player is not checked in, beside any other main
     // button (Pay first, then here). Before the window it is hidden.
     if (a && a.kind !== 'here' && needsCode(t, d, now)) {
-      out += '<button class="ph-btn ph-btn--ghost" type="button" data-go="here">Join a session</button>';
+      out += '<button class="ph-btn ph-btn--ghost" type="button" data-go="here">Join a run</button>';
     }
     if (a && !t.paid && !t.pulledIn && !!t.amount && !payButtonOk(t)) {
-      out += '<p class="ph-note">Pay at the door</p>';
+      out += '<p class="ph-note">Pay at the desk</p>';
     }
     // next-30: in the code window "I'm here" is the main button; "I'm in" still shows beside it.
     // next-31 (R39): pay is never a block, so "I'm in" also shows beside a Pay button.
-    if (a && (a.kind === 'here' || a.kind === 'pay') && t.rsvp !== 'in' && !t.rsvpUnknown) {
-      out += '<button class="ph-btn ph-btn--ghost" type="button" data-go="imIn">I’m in</button>';
-    }
     if (flash) out += '<p class="ph-note" role="alert">' + esc(flash) + '</p>';
     return out;
   }
@@ -284,12 +279,14 @@
       none: { cap: 'Next night', title: 'No night yet', body: '' },
       cancelled: { cap: 'Tonight', title: 'Cancelled', body: msg || 'Not on tonight.' },
       full: { cap: 'Tonight', title: 'Night full', body: 'No spots left.' },
-      finished: { cap: 'Tonight', title: 'Night over', body: 'Thanks for coming.' }
+      finished: { cap: 'Tonight', title: 'This session has ended.', body: 'Thanks for playing.' }
     }[k];
     var when = d.next && k !== 'none' ? '<p class="ph-muted">' + esc(d.next.dayLabel || timeLabel(d.next.startsAt)) + '</p>' : '';
     var body = E.body ? '<p class="ph-muted">' + esc(E.body) + '</p>' : '';
     var nextRun = '<p class="ph-muted">Next run: <b class="ph-ink">' + esc(d.nextRunLabel || 'soon') + '</b></p>';
-    var action = d.lastNight
+    var action = tonightOf(d).ended
+      ? '<button class="ph-btn" type="button" data-go="here">Join a run</button>'
+      : d.lastNight
       ? '<button class="ph-btn ph-btn--ghost" type="button" data-go="night">See last night</button>'
       : '<button class="ph-btn ph-btn--ghost" type="button" data-go="card">Open my profile</button>';
     return '<section class="ph-next ph-next--empty" role="status" aria-label="' + esc(E.cap + ' ' + E.title) + '">' +
@@ -475,8 +472,8 @@
     wrap.innerHTML =
       '<div class="ph-sheet-back" data-sheet-close></div>' +
       '<div class="ph-sheet" role="dialog" aria-modal="true" aria-labelledby="phSheetH" tabindex="-1">' +
-        '<h2 id="phSheetH">Door code</h2>' +
-        '<p class="ph-muted">Ask at the door for the 4 digits.</p>' +
+        '<h2 id="phSheetH">Enter the 4-digit code</h2>' +
+        '<p class="ph-muted">It’s on the organiser’s screen.</p>' +
         '<div class="ph-digits" data-digits role="group" aria-label="Door code, 0 of 4 digits entered">' +
           '<span class="ph-box" data-box>&nbsp;</span><span class="ph-box" data-box>&nbsp;</span>' +
           '<span class="ph-box" data-box>&nbsp;</span><span class="ph-box" data-box>&nbsp;</span>' +
