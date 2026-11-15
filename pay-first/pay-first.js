@@ -47,6 +47,7 @@
   var CODE_FIRST_MSG = 'Join the session first. Enter the 4-digit code on the organiser’s screen.';   // R43
   var PAID_LINE = 'Paid. You’re in.';   // R42/R43 confirmed-payment line
   var PAY_LINK_ERR = 'Card payment isn’t working. Pay cash at the door.';
+  var NO_SIGNAL_ERR = 'No signal. Try again when you have signal.';   // next-35
 
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
@@ -177,13 +178,14 @@
         } else {
           if (win) win.close();
           if (r && r.reason === 'already-paid') return check().then(function () { emit(); });
-          st.err = REASON_MSG[r && r.reason] || PAY_LINK_ERR;
+          // next-35: a network failure comes back as reason 'error': say no signal, not card trouble.
+          st.err = REASON_MSG[r && r.reason] || (r && r.reason === 'error' ? NO_SIGNAL_ERR : PAY_LINK_ERR);
         }
         emit();
       }, function () {
         st.busy = false;
         if (win) win.close();
-        st.err = 'Could not make your payment link. Check your connection and try again.';
+        st.err = NO_SIGNAL_ERR;
         emit();
       });
     }
@@ -211,7 +213,7 @@
       var state = stateOf(night, st.paid, st.sent);
       return {
         state: state,
-        amount: night && night.price ? String(night.price) : '',
+        amount: night && night.price ? (/^\d+(\.\d+)?$/.test(String(night.price)) ? '£' + night.price : String(night.price)) : '',
         link: payUrl(o.cfg),
         auto: autoOn(o.cfg),
         busy: st.busy,

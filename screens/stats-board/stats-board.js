@@ -118,7 +118,7 @@
 
     function paint() { el.innerHTML = render(st); }
     function loadBoard() {
-      return o.rpc('player_leaderboard', { p_token: o.token, p_board: st.board, p_limit: 20 }).then(function (j) {
+      return o.rpc('player_leaderboard', { p_token: o.token, p_board: st.board, p_limit: 20, p_season: 'all' }).then(function (j) {
         if (!j || j.ok === false) throw new Error('board');
         st.data = j;
       });

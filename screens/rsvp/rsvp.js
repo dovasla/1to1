@@ -73,8 +73,8 @@
     } else if (ph === 'closed') {
       body = '<p class="rs-note">The night has started, so changes are closed.</p>';
     } else {
-      var need = needLine(d);
-      body = (need ? '<p class="rs-need">' + esc(need) + '</p>' : '') +
+      // next-36: no headcount line ('Needs N to run', 'N more to go'). Players see only their own button.
+      body = ''  +
         '<div class="rs-btns">' + buttons(d).map(function (b) {
           return '<button type="button" class="rs-btn ' + (b.primary ? 'rs-btn--in' : 'rs-btn--ghost') +
             '" data-rsvp="' + b.state + '" aria-pressed="' + b.pressed + '">' + esc(b.label) + '</button>';

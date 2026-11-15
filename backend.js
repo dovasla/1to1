@@ -319,7 +319,7 @@
       paymentStatus: function (token, nightId) {
         return call('POST', '/rest/v1/rpc/player_payment_status', { p_token: token, p_night: nightId })
           .then(function (j) {
-            if (j && j.ok) return { ok: true, paid: j.paid === true };
+            if (j && j.ok) return { ok: true, paid: j.paid === true, pass: j.pass === true };   // R59: a pass (migration-40) counts like paid, word 'Pass'
             return { ok: false, reason: (j && j.reason) || 'error' };
           }, function () { return { ok: false, reason: 'error' }; });
       },

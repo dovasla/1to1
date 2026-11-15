@@ -330,10 +330,13 @@
         payMsg: (pf && pf._state) ? pf._state().err : '',   // pay-first's plain message (code first, link failed, etc.)
         runClosed: !!S.runClosed || !!(S.night && (S.night.runClosed === true || S.night.codeClosed === true || S.night.status === 'closed')),   // R43: the real closed state (server "run-closed" or night flag)
         pulledIn: !!(S.me && S.night && Array.isArray(S.night.pulledIn) && S.night.pulledIn.indexOf(S.me.id) > -1),   // provisional contract: payload.pulledIn = [signup ids]
-        count: (S.rsvp && S.rsvp.ok) ? S.rsvp.inCount : null,
-        needed: (S.rsvp && S.rsvp.ok) ? S.rsvp.needed : null,
-        paidCount: (S.rsvp && S.rsvp.ok) ? S.rsvp.paidCount : null,
+        runOn: !!S.runOn,   // next-36: server says a run is open now
+        // next-36: no headcount or paid count is passed to the phone's screens (players see only their own status)
+        count: null,
+        needed: null,
+        paidCount: null,
         paid: !!S.paidNow,
+        pass: !!S.passNow,   // R59
         claimed: !!S.claimed,
         amount: payData().amount,
         payLink: payData().link,
@@ -344,10 +347,16 @@
   }
 
   // The one Pay line (Home). A claim is only "I've paid" for the organiser to check on Square.
+  // next-35: the price always shows with £ (the night payload stores it as a plain number).
+  function moneyText(v) {
+    var s = String(v == null ? '' : v).trim();
+    if (!s || /^£/.test(s)) return s;
+    return /^\d+(\.\d+)?$/.test(s) ? '£' + s : s;
+  }
   function payData() {
     var cfg = window.PLAYER_APP_CONFIG || {};
     return {
-      amount: S.night && S.night.price ? S.night.price : '',
+      amount: moneyText(S.night && S.night.price),
       status: S.claimed ? 'claimed' : 'due',
       link: cfg.payAuto === true ? '' : (cfg.squarePayLink || ''), // next-30: auto pay asks the server for the link on tap
       error: !!S.payErr
@@ -895,7 +904,7 @@
 
   // "I'm here" (R18, D3). Home owns the code sheet. These helpers send the code and keep a #in/1234 or ?code= link on the phone.
   // Server reasons (migration-25 player_check_in): signin, no-code, closed, too-early, locked, wrong-code.
-  var CHECKIN_ERR = { 'wrong-code': 'wrong-code', 'too-early': 'no-session', 'no-code': 'no-session', 'no-session': 'no-session', 'closed': 'run-closed', 'run-closed': 'run-closed', 'locked': 'locked', 'too-many-tries': 'locked' };
+  var CHECKIN_ERR = { 'wrong-code': 'wrong-code', 'too-early': 'no-session', 'no-code': 'no-session', 'no-session': 'no-session', 'closed': 'run-closed', 'run-closed': 'run-closed', 'locked': 'locked', 'too-many-tries': 'locked', 'signin': 'signin' };
   // Real state for Home's "I'm in", "Pay" and "See my lineup" rows (mock mode answers 'none' and no payment).
   function refreshTonight() {
     var tok = readToken();
@@ -905,6 +914,7 @@
     return Promise.all([rs.catch(function () { return { ok: false }; }), ps.catch(function () { return { ok: false }; })]).then(function (r) {
       S.rsvp = r[0];
       S.paidNow = !!(r[1] && r[1].ok && r[1].paid);
+      S.passNow = !!(r[1] && r[1].ok && r[1].pass);   // R59: pass holder: no Pay step, ever
       S.paidRef = (r[1] && r[1].ref) || '';
       if (S.home) S.home.update(homeData(Date.now()));
     });
@@ -913,8 +923,8 @@
     return be.checkIn(readToken(), code).then(function (r) {
       if (r && r.reason === 'closed' || r && r.reason === 'run-closed') S.runClosed = true;   // R43: Pay hides once the session has ended
       if (r && r.ok === true) { S.checkedIn = true; return { ok: true }; }
-      return { ok: false, error: CHECKIN_ERR[r && r.reason] || 'busy' };
-    }, function () { return { ok: false, error: 'busy' }; });
+      return { ok: false, error: CHECKIN_ERR[r && r.reason] || (r && r.reason === 'error' ? 'no-signal' : 'busy') };
+    }, function () { return { ok: false, error: 'no-signal' }; });
   }
   function readRunCodeFromLink() {
     var fromHash = /^#in\/(\d{4})$/.exec(location.hash || '');
@@ -935,8 +945,9 @@
     if (!tok || !S.me || !be.runStatus) return Promise.resolve();
     return be.runStatus(tok, NIGHT_ID).then(function (r) {
       if (!r || !r.ok) return;
-      if (r.state === 'ended' || r.state === 'cancelled') wipeTonight();
-      else if (r.state === 'open') S.runEnded = false;
+      if (r.state === 'ended' || r.state === 'cancelled') { S.runOn = false; wipeTonight(); }
+      else if (r.state === 'open') { S.runEnded = false; S.runOn = true; }
+      else S.runOn = false;   // next-36: no open run right now
     }).catch(function () { /* no signal: keep the last state */ });
   }
 
