@@ -44,65 +44,51 @@
   var PANELS = ['pay', 'details', 'alerts', 'reminders', 'account', 'rules', 'help', 'settings'];
   var PANEL_TITLE = { pay: 'Payments', details: 'My details', alerts: 'Alerts', reminders: 'Reminders', account: 'My account', rules: 'How it works', help: 'Get help', settings: 'Settings' };
 
-  // Skill questions. Asked once, from Settings. Wording as in off-rating.js (Fable 23:14, the organiser 8 Nov).
-  // Each option has a hidden value (1 to 10) that feeds the 1 to 1000 score on the server.
+  // Skill questions: four taps, one question per screen (Fable R60, 15 Nov). Each tap has a whole-number hidden value
+  // (doubled, so no halves). Same maths as skillScoreFromAnswers in rules.js and skill_score_from_answers in migration-41.
   var SKILL_QUESTIONS = [
-    { key: 'exp', title: 'Experience', q: 'Which of these is closest to you?', opts: [
-      { label: 'I have played at county, national or pro level', v: 10 },
-      { label: 'I have played for a club or league team', v: 8 },
-      { label: 'I have played for my school or a local team', v: 6 },
-      { label: 'I have played a few games with mates, not in a team', v: 4 },
-      { label: 'I have only messed about on a court or in PE', v: 2 },
-      { label: 'I have never really played', v: 1 }
+    { key: 'exp', title: 'Level', q: 'What is the highest level you have played?', opts: [
+      { label: 'Never really played', v: 0 },
+      { label: 'PE, or with mates, never on a team', v: 5 },
+      { label: 'School or local team', v: 10 },
+      { label: 'Club or league team', v: 15 },
+      { label: 'County, university, national league or higher', v: 20 }
     ] },
-    { key: 'shoot', title: 'Shooting', q: 'How well can you shoot from behind the three-point line?', opts: [
-      { label: 'I make it almost always (90%+)', v: 10 },
-      { label: 'I make it most of the time, not always (75-80%)', v: 8 },
-      { label: 'I often make it, better than half (60-70%)', v: 7 },
-      { label: 'Hit and miss, about half (40-60%)', v: 5 },
-      { label: 'I usually miss, but I make it sometimes (20-40%)', v: 3 },
-      { label: 'I almost always miss, I would not shoot even if open (0-20%)', v: 1 }
+    { key: 'play', title: 'How often', q: 'How often do you play now?', opts: [
+      { label: 'Not for over a year', v: 0 },
+      { label: 'A few times a year', v: 6 },
+      { label: 'About once a month', v: 10 },
+      { label: 'About once a week', v: 16 },
+      { label: 'Twice a week or more', v: 20 }
     ] },
-    { key: 'dribble', title: 'Dribbling', q: 'How often can you get past someone who is guarding you?', opts: [
-      { label: 'I get past almost anyone guarding me (90%+)', v: 10 },
-      { label: 'I get past most people guarding me (75-80%)', v: 8 },
-      { label: 'I get past people at my level, often (60-70%)', v: 7 },
-      { label: 'Around half the time, hit and miss (40-60%)', v: 5 },
-      { label: 'I usually lose the ball, but I get past sometimes (20-40%)', v: 3 },
-      { label: 'I almost never get past anyone (0-20%)', v: 1 }
+    { key: 'place', title: 'Where you sit', q: 'In a normal pickup game, you are usually…', opts: [
+      { label: 'One of the weakest', v: 2 },
+      { label: 'Below the middle', v: 7 },
+      { label: 'About the middle', v: 11 },
+      { label: 'One of the better players', v: 16 },
+      { label: 'The best on court', v: 20 }
     ] },
-    { key: 'run', title: 'Stamina', q: 'How much of a game can you go hard for?', opts: [
-      { label: 'I can go hard for the whole game and still be quick (90%+)', v: 10 },
-      { label: 'I can go hard for most of the game (75-80%)', v: 8 },
-      { label: 'I can go hard for about two-thirds of the game (60-70%)', v: 7 },
-      { label: 'I can go hard for about half the game (40-60%)', v: 5 },
-      { label: 'I can go hard for a short spell, then I need a rest (20-40%)', v: 3 },
-      { label: 'I tire almost straight away (0-20%)', v: 1 }
+    { key: 'height', title: 'Height', q: 'How tall are you?', opts: [
+      { label: 'Under 5 ft 6 (under 168 cm)', v: 4 },
+      { label: '5 ft 6 to 5 ft 9 (168 to 177 cm)', v: 8 },
+      { label: '5 ft 10 to 6 ft 1 (178 to 186 cm)', v: 12 },
+      { label: '6 ft 2 to 6 ft 5 (187 to 196 cm)', v: 16 },
+      { label: '6 ft 6 or over (197 cm or more)', v: 20 }
     ] }
   ];
-  var SKILL_BEST = ['I am best at scoring', 'I am best at passing and setting up others', 'I am best at dribbling and handling the ball',
-    'I am best at defending', 'I am best at rebounding', 'I am best at working hard and running the floor'];
-  // Short keys sent to the server. The server accepts at most 20 characters here (migration-6), so the long text above is never sent.
-  var SKILL_BEST_KEY = ['scoring', 'passing', 'dribbling', 'defending', 'rebounding', 'hard work'];
-  var HEIGHT_MIN = 53, HEIGHT_MAX = 84, HEIGHT_DEFAULT = 69;   // inches: 4 ft 5 in to 7 ft 0 in, default 5 ft 9 in
 
-  // Checks the answers from the form. Returns { ok, answers } or { ok: false, missing: [keys] }.
-  // best is optional and is not scored.
+  // Checks the four taps. raw = { exp, play, place, height } (the chosen v values).
+  // Returns { ok, answers: { v: 2, exp, play, place, height } } or { ok: false, missing: [keys] }.
   function validateSkill(raw) {
     raw = raw || {};
-    var missing = [], answers = {};
+    var missing = [], answers = { v: 2 };
     SKILL_QUESTIONS.forEach(function (q) {
-      var v = Number(raw[q.key]);
-      var valid = q.opts.some(function (o) { return o.v === v; });
+      var given = raw[q.key];
+      var v = Number(given);
+      var valid = given !== '' && given != null && q.opts.some(function (o) { return o.v === v; });
       if (!valid) missing.push(q.key); else answers[q.key] = v;
     });
-    var h = Number(raw.height);
-    if (!Number.isInteger(h) || h < HEIGHT_MIN || h > HEIGHT_MAX) missing.push('height'); else answers.height = h;
     if (missing.length) return { ok: false, missing: missing };
-    if (raw.best != null && raw.best !== '') {
-      var bi = Number(raw.best);
-      if (Number.isInteger(bi) && bi >= 0 && bi < SKILL_BEST_KEY.length) answers.best = SKILL_BEST_KEY[bi];
-    }
     return { ok: true, answers: answers };
   }
 
@@ -291,49 +277,51 @@
       '</div>' + backHtml();
   }
 
-  function skillFormHtml(msg) {
-    var blocks = SKILL_QUESTIONS.map(function (q) {
-      return '<fieldset class="more-skill"><legend class="more-skill-title">' + esc(q.title) + '</legend>' +
-        '<p class="muted">' + esc(q.q) + '</p>' +
+  // Skill screens. st.skill = { step: -1 intro, 0 to 3 questions, 4 check screen, picks: { exp, play, place, height } }.
+  function skillFormHtml(msg, sk) {
+    sk = sk || { step: -1, picks: {} };
+    var body;
+    if (sk.step < 0) {
+      body = '<h2 class="more-skill-title">4 quick questions</h2>' +
+        '<p class="muted">So teams are fair. Be honest: rate yourself too high and you get harder games.</p>' +
+        '<p class="muted">You can only answer once.</p>' +
+        '<button class="btn yellow more-save" type="button" data-act="skill-start">Start</button>';
+    } else if (sk.step < SKILL_QUESTIONS.length) {
+      var q = SKILL_QUESTIONS[sk.step];
+      body = '<p class="muted">' + (sk.step + 1) + ' of ' + SKILL_QUESTIONS.length + '</p>' +
+        '<h2 class="more-skill-title">' + esc(q.q) + '</h2>' +
         q.opts.map(function (o) {
-          return '<label class="more-radio more-answer"><input type="radio" name="skill-' + q.key + '" value="' + o.v + '">' +
-            '<span>' + esc(o.label) + '</span></label>';
+          return '<button class="more-skill-pick" type="button" data-pick="' + q.key + '" data-v="' + o.v + '">' + esc(o.label) + '</button>';
         }).join('') +
-        '</fieldset>';
-    }).join('');
-    var height = '<fieldset class="more-skill"><legend class="more-skill-title">Height</legend>' +
-      '<p class="muted">Slide to your height in feet and inches.</p>' +
-      '<label class="more-range"><span id="moreHeightOut">' + esc(feetInches(HEIGHT_DEFAULT)) + '</span>' +
-      '<input id="moreHeight" type="range" name="skill-height" min="' + HEIGHT_MIN + '" max="' + HEIGHT_MAX + '" step="1" value="' + HEIGHT_DEFAULT + '"></label>' +
-      '</fieldset>';
-    var best = '<fieldset class="more-skill"><legend class="more-skill-title">Best at</legend>' +
-      '<p class="muted">Optional. Helps the organiser spread the team. Not scored.</p>' +
-      SKILL_BEST.map(function (text, i) {
-        return '<label class="more-radio more-answer"><input type="radio" name="skill-best" value="' + i + '"><span>' + esc(text) + '</span></label>';
-      }).join('') +
-      '</fieldset>';
+        (sk.step > 0 ? '<button class="more-skill-back" type="button" data-act="skill-back">Back</button>' : '');
+    } else {
+      body = '<h2 class="more-skill-title">Check your answers</h2>' +
+        '<p class="muted">Tap any answer to change it.</p>' +
+        SKILL_QUESTIONS.map(function (q, i) {
+          var picked = q.opts.filter(function (o) { return o.v === sk.picks[q.key]; })[0];
+          return '<button class="more-skill-pick" type="button" data-review="' + i + '">' +
+            '<span class="more-skill-k">' + esc(q.title) + '</span> ' + esc(picked ? picked.label : '') + '</button>';
+        }).join('') +
+        '<button class="btn yellow more-save" type="button" data-act="save-skill">Lock in</button>';
+    }
     return '<h1>' + PANEL_TITLE.settings + '</h1>' +
-      '<div class="card">' +
-        '<p class="more-skill-note"><b>Answer honestly.</b> It saves time on the night: teams are built from these answers. ' +
-        'The organiser checks every number. You can answer once only.</p>' +
-        blocks + height + best +
-        '<p class="more-msg" id="moreSkillMsg" role="status" aria-live="polite">' + esc(msg || '') + '</p>' +
-        '<button class="btn yellow more-save" type="button" data-act="save-skill">Save my answers</button>' +
+      '<div class="card">' + body +
+      '<p class="more-msg" id="moreSkillMsg" role="status" aria-live="polite">' + esc(msg || '') + '</p>' +
       '</div>' + backHtml();
   }
 
-  function settingsPanelHtml(d, msg) {
+  function settingsPanelHtml(d, msg, sk) {
     if (d.skillDone === true) {
       return '<h1>' + PANEL_TITLE.settings + '</h1>' +
         '<div class="card"><p><b>Skill questions done.</b></p>' +
         '<p class="muted">Your answers are saved. They can’t be changed. The organiser checks your number.</p></div>' + backHtml();
     }
-    return skillFormHtml(msg);
+    return skillFormHtml(msg, sk);
   }
 
   function feetInches(n) { return Math.floor(n / 12) + ' ft ' + (n % 12) + ' in'; }
 
-  function panelHtml(panel, d, msg) {
+  function panelHtml(panel, d, msg, sk) {
     d = d || {};
     if (panel === 'pay') return payPanelHtml(d);
     if (panel === 'details') return detailsPanelHtml(d, msg);
@@ -342,13 +330,13 @@
     if (panel === 'account') return '<h1>' + PANEL_TITLE.account + '</h1>' + (window.PlayerMyAccount ? PlayerMyAccount.buildPanel() : '<p class="muted">Not available.</p>') + backHtml();
     if (panel === 'rules') return rulesPanelHtml();
     if (panel === 'help') return helpPanelHtml(d);
-    if (panel === 'settings') return settingsPanelHtml(d, msg);
+    if (panel === 'settings') return settingsPanelHtml(d, msg, sk);
     return listHtml(d);
   }
 
   // ---------- mount (browser) ----------
   function mount(el, data, handlers) {
-    var st = { data: data || {}, panel: '', msg: '', focus: false };
+    var st = { data: data || {}, panel: '', msg: '', focus: false, skill: { step: -1, picks: {} }, skillBusy: false };
     var h = handlers || {};
 
     function payBox() {
@@ -378,7 +366,7 @@
     }
 
     function paint() {
-      el.innerHTML = st.panel ? panelHtml(st.panel, st.data, st.msg) : listHtml(st.data);
+      el.innerHTML = st.panel ? panelHtml(st.panel, st.data, st.msg, st.skill) : listHtml(st.data);
       if (st.panel === 'pay') payBox();
       if (st.panel === 'reminders') pushBox();
       if (st.focus) {
@@ -390,6 +378,7 @@
 
     function go(panel) {
       st.panel = PANELS.indexOf(panel) > -1 ? panel : '';
+      if (st.panel === 'settings') st.skill = { step: -1, picks: {} };
       st.msg = '';
       st.focus = !!st.panel;
       paint();
@@ -420,22 +409,16 @@
     }
 
     function saveSkill() {
-      var raw = {};
-      SKILL_QUESTIONS.forEach(function (q) {
-        var picked = el.querySelector('input[name="skill-' + q.key + '"]:checked');
-        raw[q.key] = picked ? picked.value : '';
-      });
-      var hi = el.querySelector('#moreHeight');
-      raw.height = hi ? hi.value : '';
-      var pb = el.querySelector('input[name="skill-best"]:checked');
-      raw.best = pb ? pb.value : '';
-      var check = validateSkill(raw);
-      // Messages go into the form's status line only, so the answers picked so far stay on screen.
+      if (st.skillBusy) return;
+      var check = validateSkill(st.skill.picks);
+      // Messages go into the status line only, so the picks stay on screen.
       var line = el.querySelector('#moreSkillMsg');
       function say(text) { if (line) line.textContent = text; }
       if (!check.ok) { say('Answer every question first.'); return; }
+      st.skillBusy = true;
       say('Saving…');
       Promise.resolve(h.saveSkill ? h.saveSkill(check.answers) : { ok: false, reason: 'error' }).then(function (r) {
+        st.skillBusy = false;
         if ((r && r.ok) || (r && r.reason === 'already-done')) {
           st.data.skillDone = true;
           st.msg = '';
@@ -444,16 +427,26 @@
           say('Could not save. Check your connection and try again.');
         }
       }).catch(function () {
+        st.skillBusy = false;
         say('Could not save. Check your connection and try again.');
       });
     }
 
     function onClick(e) {
-      var t = e.target && e.target.closest ? e.target.closest('[data-go],[data-act]') : null;
+      var t = e.target && e.target.closest ? e.target.closest('[data-go],[data-act],[data-pick],[data-review]') : null;
       if (!t) return;
       if (t.hasAttribute('data-go')) return go(t.getAttribute('data-go'));
+      if (t.hasAttribute('data-pick')) {
+        st.skill.picks[t.getAttribute('data-pick')] = Number(t.getAttribute('data-v'));
+        st.skill.step = st.skill.step + 1;
+        st.msg = '';
+        return paint();
+      }
+      if (t.hasAttribute('data-review')) { st.skill.step = Number(t.getAttribute('data-review')); return paint(); }
       var act = t.getAttribute('data-act');
       if (act === 'back') return go('');
+      if (act === 'skill-start') { st.skill.step = 0; return paint(); }
+      if (act === 'skill-back') { st.skill.step = Math.max(0, st.skill.step - 1); return paint(); }
       if (act === 'save-skill') return saveSkill();
       if (act === 'bright') {
         st.data.bright = !st.data.bright;

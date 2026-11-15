@@ -119,8 +119,18 @@
   // value of the card picked) and height (inches, 53 to 84). Weights 40/20/15/15/10 (Fable 23:14), as in
   // off-rating.js. Same maths as skill_score_from_answers() in supabase/migration-6-skill.sql (the server copy wins).
   var SKILL_WEIGHTS = { exp: 0.40, shoot: 0.20, dribble: 0.15, run: 0.15, height: 0.10 };
+  // Version 2 (Fable R60): four taps, whole-number values (doubled). Integer maths, so phone and server agree.
+  // sum = 36*exp + 27*min(place, exp+8) + 18*play + 9*height; score = 100 + round-half-up(sum/2), kept 100 to 1000.
+  function skillScoreV2(a) {
+    var e = Number(a.exp), p = Number(a.play), pl = Number(a.place), h = Number(a.height);
+    if (![e, p, pl, h].every(isFinite)) return null;
+    var sum = 36 * e + 27 * Math.min(pl, e + 8) + 18 * p + 9 * h;
+    return Math.min(1000, Math.max(100, 100 + Math.floor(sum / 2 + 0.5)));
+  }
+
   function skillScoreFromAnswers(a) {
     if (!a) return null;
+    if (String(a.v) === '2') return skillScoreV2(a);
     var keys = ['exp', 'shoot', 'dribble', 'run', 'height'];
     for (var i = 0; i < keys.length; i++) if (!isFinite(Number(a[keys[i]]))) return null;
     var h = Math.min(84, Math.max(53, Number(a.height)));
@@ -209,6 +219,7 @@
     ratingFromLevel: ratingFromLevel,
     skillScoreFromLevel: skillScoreFromLevel,
     skillScoreFromAnswers: skillScoreFromAnswers,
+    skillScoreV2: skillScoreV2,
     toRegular: toRegular,
     toRegularsCsv: toRegularsCsv,
     mergeApproved: mergeApproved,

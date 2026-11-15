@@ -17,6 +17,10 @@
 .ph-coins .ph-cap { font-size:14px; }
 .ph-coins .ph-ic { color:var(--gold-text); }  /* gold-text is dark gold in Bright hall */
 
+/* Door code card: the first thing on Home (next-38). Yellow border because it is the one main action. */
+.ph-door { border-color:var(--yellow); }
+.ph-door h2 { font-size:30px; }
+
 /* Next night card (top card) */
 .ph-next { margin-top:12px; padding:16px; border-radius:var(--radius); border:2px solid var(--blue); background:var(--card); }
 .ph-next h2 { font-size:26px; line-height:1.05; margin:6px 0 0; font-family:var(--font-head); text-transform:uppercase; }

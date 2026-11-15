@@ -67,3 +67,10 @@ h1[tabindex="-1"]:focus { outline: none; }
 
 /* pay.css draws the hint in light grey, which is hard to read on Bright hall. Use the theme's muted ink here. */
 #morePayBox .pay-hint { color: var(--muted); }
+
+/* Skill questions (R60): one tap per screen, big buttons */
+.more-skill-title { font-size: 22px; margin: 4px 0 8px; }
+.more-skill-pick { display: block; width: 100%; min-height: 56px; margin: 10px 0; padding: 12px 14px; border: 2px solid var(--line); border-radius: 12px; background: transparent; color: var(--ink); font: inherit; font-size: 16px; line-height: 1.3; text-align: left; cursor: pointer; }
+.more-skill-pick:focus-visible, .more-skill-back:focus-visible { outline: 3px solid #FFD60A; outline-offset: 2px; }
+.more-skill-k { font-weight: 700; display: block; font-size: 14px; opacity: .8; }
+.more-skill-back { min-height: 48px; margin-top: 8px; padding: 0 12px; background: transparent; border: 0; color: var(--ink); font: inherit; text-decoration: underline; cursor: pointer; }

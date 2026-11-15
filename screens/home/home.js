@@ -265,9 +265,6 @@
     }
     // next-31: "I'm here" shows in the code window whenever the player is not checked in, beside any other main
     // button (Pay first, then here). Before the window it is hidden.
-    if (a && a.kind !== 'here' && needsCode(t, d, now)) {
-      out += '<button class="ph-btn ph-btn--ghost" type="button" data-go="here">Join a run</button>';
-    }
     if (a && !t.paid && !t.pulledIn && !!t.amount && !payButtonOk(t)) {
       out += '<p class="ph-note">Pay cash at the door</p>';
     }
@@ -307,17 +304,34 @@
     return '';
   }
 
-  // next-36 (Jord, 15 Nov): a run is on now and this player is not in yet. One Join button, no code shown.
+  // next-38 (Jord, 15 Nov): a run is on now. The door code card at the top already has the button, so this is one line.
   function runOnCardHtml(d) {
-    return '<section class="ph-next" role="status" aria-label="A run is on now">' +
-      '<span class="ph-cap">Tonight</span>' +
-      '<h2>A run is on now</h2>' +
-      '<p class="ph-muted">Join with the 4-digit code on the organiser\'s screen.</p>' +
-      '<button class="ph-btn" type="button" data-go="here">Join a run</button>' +
+    return '<p class="ph-note" role="status">A run is on now. Enter the door code above.</p>';
+  }
+
+  // next-38 (Jord, 15 Nov): the door code is the first thing on Home, always there, even with no run on.
+  // It opens the same 4-digit sheet. Once this phone is checked in (or paid or passed), the card says so.
+  function doorHtml(d, flash) {
+    var t = tonightOf(d);
+    var inNow = !!(t.checkedIn || t.paid || t.pass || t.pulledIn);
+    var msg = flash ? '<p class="ph-note" role="alert">' + esc(flash) + '</p>' : '';
+    if (inNow) {
+      return '<section class="ph-next ph-door ph-door--in" aria-labelledby="phDoorH">' +
+        '<span class="ph-cap">Door</span>' +
+        '<h2 id="phDoorH">You’re checked in</h2>' +
+        '<p class="ph-muted">Nothing more to do here.</p>' +
+      '</section>';
+    }
+    return '<section class="ph-next ph-door" aria-labelledby="phDoorH">' +
+      '<span class="ph-cap">Door</span>' +
+      '<h2 id="phDoorH">Door code</h2>' +
+      '<p class="ph-muted">Type the 4-digit code from the organiser’s screen.</p>' +
+      '<button class="ph-btn" type="button" data-go="here">Enter door code</button>' +
+      msg +
     '</section>';
   }
 
-  // The Next night card. This is the "Today" panel.
+  // The Next night card. This is the "Today" panel. Its button is never "Join a run" (the door card does that).
   function nextCardHtml(d, now, flash) {
     var nk = nightKind(d, now);
     var inNow = !!(d.tonight && d.tonight.rsvp === 'in');
@@ -327,7 +341,8 @@
     var n = d.next;
     var t = Date.parse(n.startsAt);
     var kind = tonightKind(n, now);
-    var a = mainAction(d, now);
+    var a0 = mainAction(d, now);
+    var a = a0 && a0.kind === 'here' ? null : a0;
     var tn = tonightOf(d);
     var when = n.dayLabel || timeLabel(n.startsAt) || 'Tonight';
     var court = d.court ? '<p class="ph-muted">' + esc(d.court) + '</p>' : '';
@@ -345,7 +360,7 @@
       noteHtml(d, nk) +
       (tn.runOn && needsCode(tn, d, now) ? '<p class="ph-note" role="status">A run is on now.</p>' : '') +
       mainButtonHtml(a) +
-      sideHtml(d, a, now, flash) +
+      sideHtml(d, a0, now, '') +
     '</section>';
   }
 
@@ -458,8 +473,8 @@
     return '' +
       top +
       '<header class="ph-top"><h1>Home</h1>' + coins + '</header>' +
+      doorHtml(d, flash) +
       nextCardHtml(d, now, flash) +
-      youHtml(d) +
       '<div class="ph-slots">' + slotsHtml(d, now) + '</div>' +
       ''; // next-27: no "Last updated" line on Home
   }
