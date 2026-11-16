@@ -41,11 +41,11 @@
   }
 
   var REASON_TEXT = {
-    'no-night': 'There is no night to vote for yet.',
-    'closed': 'The MVP for this night is already picked.',
+    'no-night': 'There is no run to vote for yet.',
+    'closed': 'The MVP for this run is already picked.',
     'not-signed-in': 'Log in again to vote.',
     'self': 'You can’t vote for yourself.',
-    'not-played': 'Only players who played tonight can get a vote.'
+    'not-played': 'Only players who played in this run can get a vote.'
   };
 
   // Everything the card shows, worked out from the data. Pure, so tests can check it.
@@ -67,10 +67,10 @@
         return { id: p.id, name: nameOf(p), selected: p.id === mine };
       }),
       winnerName: winner ? nameOf(winner) : '',
-      headline: status === 'confirmed' ? 'MVP picked' : 'Who was MVP tonight?',
+      headline: status === 'confirmed' ? 'MVP picked' : 'Who was MVP this run?',
       note: status === 'open' ? 'One vote each. Tap a name.'
         : status === 'voted' ? 'Vote saved. You can change it until the MVP is picked.'
-        : status === 'confirmed' ? (winner ? nameOf(winner) + ' is MVP tonight. +25 XP.' : 'MVP picked for tonight.')
+        : status === 'confirmed' ? (winner ? nameOf(winner) + ' is MVP this run. +25 XP.' : 'MVP picked for this run.')
         : ''
     };
   }
@@ -89,7 +89,7 @@
       });
       h += '</ul>';
     } else if (v.status !== 'confirmed') {
-      h += '<p class="muted">Only players who played tonight can get a vote.</p>';
+      h += '<p class="muted">Only players who played in this run can get a vote.</p>';
     }
     h += '<p class="muted mvp-msg" data-mvp-msg role="status"></p></section>';
     return h;

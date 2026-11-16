@@ -1,0 +1,16 @@
+/* Pull to refresh bar (P9). Load after app-shell.css. Text 14px minimum, no animation under reduced motion. */
+.ptr {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 900;
+  height: 48px; display: flex; align-items: center; justify-content: center;
+  background: var(--card, #1A1C22); border-bottom: 2px solid var(--yellow, #FFD21F);
+  color: var(--gold-text, var(--yellow, #FFD21F));
+  font: 700 14px/1 var(--font-head, Barlow, sans-serif); letter-spacing: .08em; text-transform: uppercase;
+  transform: translate3d(0, calc(var(--ptr-pull, 0px) - 100%), 0);
+  opacity: 0; pointer-events: none;
+}
+.ptr.is-visible { opacity: 1; }
+.ptr.is-busy { transform: translate3d(0, 0, 0); }
+.ptr-text { min-height: 48px; display: inline-flex; align-items: center; }
+@media (prefers-reduced-motion: no-preference) {
+  .ptr { transition: transform 150ms ease, opacity 150ms ease; }
+}

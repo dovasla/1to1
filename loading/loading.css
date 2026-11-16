@@ -52,23 +52,23 @@
   letter-spacing: 0.08em;
   cursor: pointer;
 }
-.pl-skip:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+.pl-skip:focus-visible { outline:px solid var(--focus); outline-offset: 2px; }
 
 /* The map card stays dark in both themes so the yellow heading always reads. */
 .pl-card {
   margin-top: 16px;
   flex: 0 1 auto;
-  background: var(--card-dark, #1A1C22);
-  border: 2px solid #2C2F38;
+  background: var(--card);
+  border: 2px solid var(--line);
   border-radius: 18px;
   overflow: hidden;
-  color: #F4F5F7;
+  color: var(--ink);
 }
 
 .pl-court {
   position: relative;
   height: clamp(150px, 34vh, 210px);
-  background: linear-gradient(160deg, var(--blue), #0747C2);
+  background: linear-gradient(160deg, var(--brand), var(--heat));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -91,8 +91,8 @@
   top: 12px;
   padding: 4px 10px;
   border-radius: 6px;
-  background: var(--yellow);
-  color: var(--on-yellow);
+  background: var(--brand);
+  color: var(--on-brand);
   font-family: var(--font-head);
   font-size: 14px;
   font-weight: 700;
@@ -106,14 +106,14 @@
   line-height: 1;
   font-weight: 700;
   text-transform: uppercase;
-  color:var(--yellow-text);
+  color: var(--brand-text);
 }
 .pl-sub {
   margin: 0 16px 16px;
   font-size: 14px;
   font-weight: 600;
   letter-spacing: 0.08em;
-  color: #AEB4C0;
+  color: var(--muted);
 }
 
 .pl-foot {
@@ -140,13 +140,13 @@
   display: block;
   height: 100%;
   width: 0;
-  background: var(--yellow);
+  background: var(--brand);
   transition: width 60ms linear;
 }
 /* Bright hall: blue fill on the light track (yellow on white is too faint). */
-:root[data-theme="light"] .pl-bar i { background: var(--blue); }
+:root[data-theme="light"] .pl-bar i { background: var(--brand); }
 @media (prefers-color-scheme: light) {
-  :root:not([data-theme="dark"]) .pl-bar i { background: var(--blue); }
+  :root:not([data-theme="dark"]) .pl-bar i { background: var(--brand); }
 }
 .pl-tips {
   position: relative;
@@ -174,3 +174,79 @@
   .pl-load, .pl-bar i, .pl-tips p { transition: none; }
   .pl-blink { animation: none; }
 }
+
+/* "No signal" card (R75): full screen, over the loading screen if the server has not answered in 8 s.
+   Both themes follow the tokens. Text 14px and up, Try again 48px and up. */
+.pl-nosig {
+  position: fixed;
+  inset: 0;
+  z-index: 9100;
+  display: flex;
+  justify-content: center;
+  overflow-y: auto;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+}
+.pl-nosig-wrap {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 390px;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+}
+.pl-nosig-body {
+  margin: auto 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.pl-nosig h1 {
+  margin: 0;
+  font-family: var(--font-head);
+  font-size: clamp(30px, 10vw, 40px);
+  line-height: 1;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--brand-text);
+}
+.pl-nosig-msg {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.pl-nosig-last {
+  margin: 8px 0 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.pl-nosig-sub {
+  margin: 0;
+  font-size: 15px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.pl-retry {
+  width: 100%;
+  min-height: 52px;
+  margin-top: 8px;
+  padding: 12px 16px;
+  border: 0;
+  border-radius: var(--radius-btn);
+  background: var(--brand);
+  color: var(--on-brand);
+  font-family: var(--font-head);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.pl-retry:disabled { opacity: 0.6; cursor: wait; }
+.pl-retry:focus-visible { outline:px solid var(--focus); outline-offset: 2px; }

@@ -1,5 +1,5 @@
-/* 1TO1 player app: push reminder switches (N11). Three switches in More, all off until the player says yes.
-   Global: window.PlayerPush = { KINDS, LABELS, create, render }. Node: module.exports.
+/* Check Ball player app: reminder switches in More (P4, was N11). Three switches in More, all off until the player says yes.
+   Global: window.PlayerReminders = { KINDS, LABELS, create, render }. Node: module.exports.
    - create(deps) returns a controller. Nothing is asked or sent until a switch is turned on.
    - Permission is asked only after a switch is turned on, and only after the app is on the Home Screen on iPhone.
    - deps (all injected, so this file has no network):
@@ -12,18 +12,18 @@
 (function (root, factory) {
   var api = factory();
   if (typeof module === 'object' && module.exports) module.exports = api;
-  else root.PlayerPush = api;
+  else root.PlayerReminders = api;
 })(typeof self !== 'undefined' ? self : this, function () {
   'use strict';
 
   var KINDS = ['tonight', 'pay', 'recap'];
   var LABELS = {
-    tonight: 'Morning of the night',
+    tonight: 'Morning of the run',
     pay: 'Two hours before, if you are not paid',
     recap: 'When your recap is ready'
   };
   var REASON_TEXT = {
-    'needs-install': 'On iPhone, add 1TO1 to your Home Screen first. Then switch this on.',
+    'needs-install': 'On iPhone, add Check Ball to your Home Screen first. Then switch this on.',
     'unsupported': 'This phone cannot show reminders.',
     'denied': 'Notifications are blocked. Turn them on in your phone settings.',
     'save-failed': 'Could not save. Try again.'

@@ -1,0 +1,68 @@
+/* Device fixes (R75, patch D). Load LAST, after app-shell.css (see HOOKS.md).
+   1. Bottom padding under the tab bar on every scrolling page.
+   2. 200% zoom and largest text: all four tabs stay tappable at 48px; the player card numbers stay in two rows.
+   Only this file changes the tab bar and the card numbers. Colours come from app.css tokens. */
+
+:root { --tabs-h: 72px; } /* tab bar height: 56px tabs + padding + top border, measured in the proof */
+
+/* 1. Scrolling pages clear the tab bar and the phone's bottom safe area. */
+.shell-main {
+  padding-bottom: calc(var(--tabs-h) + env(safe-area-inset-bottom) + 16px);
+}
+
+/* 2a. Tabs: a 48px tap target per tab, and labels that cannot push the bar wider. */
+.tabs a {
+  min-width: 48px;
+  min-height: 48px;
+}
+.tabs a span {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 2b. Narrow bar (200% zoom on a 390 px phone is 195 CSS px): icons with their names kept for
+   screen readers, one column per tab at 48px. Under about 200 CSS px the bar scrolls sideways
+   inside itself (never the page), so the last tab is still one swipe away and still 48px. */
+@media (max-width: 240px) {
+  .tabs {
+    display: flex;
+    gap: 0;
+    padding: 6px 0 calc(6px + env(safe-area-inset-bottom));
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tabs a {
+    flex: 1 0 48px;
+    width: 48px;
+    padding: 0;
+    gap: 0;
+  }
+  .tabs a span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+}
+
+/* 2c. Player card numbers: two rows of two at every width, and the numbers shrink before they wrap. */
+.grid4 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.stat {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.stat b {
+  font-size: clamp(26px, 8.5vw, 34px);
+}

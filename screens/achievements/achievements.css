@@ -1,4 +1,4 @@
-/* Achievements grid. Own file: player/screens/achievements/achievements.css. Uses tokens from ../../app.css (player-app root).
+/* Achievements grid. Own file: player/screens/achievements/achievements.css. Uses tokens from brand/tokens.css.
    Two columns at 390 and 360 wide, one when the text will not fit. 48px rows, 15px minimum text. No motion. */
 .ach-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .ach {
@@ -6,11 +6,14 @@
   border-radius: 12px; border: 2px solid var(--line, #2C2F38); background: var(--card, #1A1C22);
   color: var(--ink, #F4F5F7); min-width: 0;
 }
-.ach--earned { border-color: var(--yellow, #FFD21F); }
+.ach--earned { border-color: var(--brand, #FFD21F); }
 .ach--locked { opacity: .78; }
-.ach-title { font-size: 18px; font-weight: 900; text-transform: uppercase; letter-spacing: .02em; color: var(--yellow, #FFD21F); overflow-wrap: anywhere; }
+.ach-title { font-size: 18px; font-weight: 900; text-transform: uppercase; letter-spacing: .02em; color: var(--brand-text, #FFD21F); overflow-wrap: anywhere; }
 .ach--locked .ach-title { color: var(--ink, #F4F5F7); }
 .ach-goal { font-size: 15px; font-weight: 700; color: var(--ink, #F4F5F7); overflow-wrap: anywhere; }
 .ach-meta { font-size: 15px; font-weight: 600; color: var(--muted, #AEB4C0); }
 .ach-empty { font-size: 16px; color: var(--muted, #AEB4C0); margin: 8px 0; }
 @media (max-width: 340px) { .ach-grid { grid-template-columns: 1fr; } }
+/* P7 badges page inside More: summary line and the grid. Same card as the rest of More. */
+.ach-sum { margin: 0 0 10px; font-size: 16px; color: var(--ink, #F4F5F7); }
+.ach-sum b { font-size: 20px; color: var(--brand-text, #FFD21F); }

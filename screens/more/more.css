@@ -9,6 +9,8 @@
   border: 1px solid var(--line); border-radius: var(--radius); background: var(--card);
   color: var(--ink); font: inherit; text-align: left; cursor: pointer;
 }
+.more-head { margin: 6px 0 8px; }
+a.more-row { text-decoration: none; }
 .more-row .more-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .more-row .muted { font-size: 14px; }
 .more-title { font-size: 18px; font-weight: 800; line-height: 1.2; }
@@ -23,8 +25,8 @@
 .more-label { margin: 0; font-size: 14px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
 .more-big { margin: 2px 0 2px; font-family: var(--font-head); font-size: 48px; font-weight: 700; line-height: 1; color: var(--ink); }
 .more-tone { margin: 0; font-size: 16px; font-weight: 800; }
-.tone-due { color: var(--gold-text); }
-.tone-wait { color: var(--blue-text); }
+.tone-due { color: var(--brand-text); }
+.tone-wait { color: var(--link-text); }
 .tone-paid { color: var(--green); }
 .more-hist li { font-size: 16px; }
 .more-hist .more-tone { font-size: 14px; white-space: nowrap; }
@@ -36,7 +38,7 @@
 .more-team { margin: 14px 0 6px; padding: 0; border: 0; }
 .more-team legend { padding: 0; margin-bottom: 6px; }
 .more-radio { display: flex; align-items: center; gap: 12px; min-height: 48px; margin: 0; font-size: 18px; font-weight: 700; text-transform: none; letter-spacing: 0; cursor: pointer; }
-.more-radio input[type="radio"] { width: 24px; height: 24px; margin: 0; accent-color:var(--yellow-text); }
+.more-radio input[type="radio"] { width: 24px; height: 24px; margin: 0; accent-color: var(--brand); }
 .more-msg { min-height: 20px; margin: 10px 0 0; font-size: 15px; font-weight: 700; color: var(--ink); }
 .more-save { margin-top: 12px; }
 
@@ -46,7 +48,7 @@
 /* Settings: skill questions. Answer once, honestly. */
 .more-warn {
   display: flex; align-items: center; gap: 8px; margin: -4px 0 0; padding: 10px 14px; box-sizing: border-box;
-  border-radius: var(--radius); background: var(--yellow); color: #0E0E0E;
+  border-radius: var(--radius); background: var(--brand); color: var(--on-brand);
   font-size: 16px; font-weight: 800; line-height: 1.3;
   animation: more-warn-flash 1.2s ease-in-out infinite;
 }
@@ -57,7 +59,7 @@
 .more-skill-note { margin: 0 0 4px; font-size: 16px; }
 .more-answer { min-height: 48px; font-size: 16px; padding: 6px 0; }
 .more-range { display: flex; flex-direction: column; gap: 8px; font-size: 18px; font-weight: 800; text-transform: none; letter-spacing: 0; }
-.more-range input[type="range"] { width: 100%; height: 48px; accent-color:var(--yellow-text); }
+.more-range input[type="range"] { width: 100%; height: 48px; accent-color: var(--brand); }
 
 /* Keep wide text inside the phone width */
 .more-row, .more-title, .more-text, .more-hist li span { overflow-wrap: anywhere; }
@@ -67,10 +69,3 @@ h1[tabindex="-1"]:focus { outline: none; }
 
 /* pay.css draws the hint in light grey, which is hard to read on Bright hall. Use the theme's muted ink here. */
 #morePayBox .pay-hint { color: var(--muted); }
-
-/* Skill questions (R60): one tap per screen, big buttons */
-.more-skill-title { font-size: 22px; margin: 4px 0 8px; }
-.more-skill-pick { display: block; width: 100%; min-height: 56px; margin: 10px 0; padding: 12px 14px; border: 2px solid var(--line); border-radius: 12px; background: transparent; color: var(--ink); font: inherit; font-size: 16px; line-height: 1.3; text-align: left; cursor: pointer; }
-.more-skill-pick:focus-visible, .more-skill-back:focus-visible { outline: 3px solid #FFD60A; outline-offset: 2px; }
-.more-skill-k { font-weight: 700; display: block; font-size: 14px; opacity: .8; }
-.more-skill-back { min-height: 48px; margin-top: 8px; padding: 0 12px; background: transparent; border: 0; color: var(--ink); font: inherit; text-decoration: underline; cursor: pointer; }

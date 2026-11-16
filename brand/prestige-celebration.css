@@ -1,0 +1,29 @@
+/* Prestige celebration (player app, P12). Black and yellow look: the moment is always dark, like the lineup reveal.
+   Loads after app-tokens.css. Reduced motion: the moment is off (prestige-celebration.js), so no keyframes run. */
+.pc-overlay { position:fixed; inset:0; z-index:90; display:flex; align-items:center; justify-content:center; padding:24px 16px; cursor:pointer; animation:pc-in .15s ease-out both; }
+.pc-overlay.pc-out { animation:pc-fade-out .3s ease-in both; }
+.pc-scrim { position:absolute; inset:0; background:#0E0E0E; opacity:.94; }
+.pc-card { position:relative; width:100%; max-width:360px; text-align:center; color:#fff; outline:none; font-family:var(--font-body, system-ui, sans-serif); }
+.pc-star { width:168px; height:168px; margin:0 auto 14px; border-radius:50%; background:radial-gradient(circle, rgba(255,210,31,.35) 0%, rgba(255,210,31,0) 70%); display:flex; align-items:center; justify-content:center; animation:pc-slam .6s cubic-bezier(.2,.7,.2,1) both; }
+.pc-star svg { width:132px; height:132px; fill:var(--brand, #FFD21F); filter:drop-shadow(0 0 24px rgba(255,210,31,.35)); }
+.pc-kicker { margin:0 0 6px; font-family:var(--font-head, "Barlow Condensed", sans-serif); font-weight:700; font-size:20px; letter-spacing:.06em; text-transform:uppercase; color:#fff; }
+.pc-overlay .pc-title { margin:0 0 10px; font-family:var(--font-head, "Barlow Condensed", sans-serif); font-weight:700; font-size:44px; line-height:1; letter-spacing:.02em; text-transform:uppercase; color:var(--brand, #FFD21F); }
+.pc-line { margin:0 0 22px; font-size:18px; line-height:1.4; color:#fff; }
+.pc-tap { margin:0; font-size:14px; letter-spacing:.06em; text-transform:uppercase; color:#c9ccd4; }
+
+/* Reduced motion: the plain line that replaces the moment. Readable in both themes. */
+.pc-plain { position:fixed; left:16px; right:16px; bottom:16px; z-index:90; margin:0; padding:14px 16px; border-radius:var(--radius-card, 12px); background:var(--card); color:var(--ink); border:2px solid var(--brand); font-size:16px; font-weight:700; text-align:center; }
+.pc-plain[hidden] { display:none; }
+
+@keyframes pc-in { from { opacity:0; } to { opacity:1; } }
+@keyframes pc-fade-out { from { opacity:1; } to { opacity:0; } }
+@keyframes pc-slam {
+  0%   { transform:scale(2.6); opacity:0; }
+  55%  { transform:scale(.92); opacity:1; }
+  80%  { transform:scale(1.05); }
+  100% { transform:scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pc-overlay, .pc-overlay.pc-out, .pc-star { animation:none !important; }
+}

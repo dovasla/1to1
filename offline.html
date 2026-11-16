@@ -4,15 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0E0E0E">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="1TO1">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon-180-v2.png">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon-180-v2.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png">
 <title>No signal</title>
-<link rel="icon" href="icons/icon-32-v2.png" sizes="32x32" type="image/png">
+<script>try { var t = localStorage.getItem('1to1-theme'); if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); } catch (e) { /* private window: dark */ }</script>
+<link rel="icon" href="icons/icon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="brand/tokens.css">
 <link rel="stylesheet" href="app.css">
 <link rel="stylesheet" href="pwa.css">
 </head>
@@ -22,7 +19,7 @@
   <p class="muted">This screen has not been saved on this phone yet. Open it once when you have signal, and it will open next time, even with no signal.</p>
   <p class="muted">Screens you have opened before still show.</p>
   <button class="btn yellow" type="button" id="retry">Try again</button>
-  <p class="muted centre"><a href="app.html" class="link">Go to the app</a></p>
+  <p class="muted centre"><a href="app.html" class="btn yellow" style="min-height:44px">Go to the app</a></p>
 </main>
 <script src="pwa.js"></script>
 <script>

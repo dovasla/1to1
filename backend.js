@@ -1,4 +1,4 @@
-/* Player app backend (player-only build). Same methods for two adapters:
+/* Player app backend. Same methods for two adapters:
    - 'mock': keeps everything in one storage object (localStorage in the browser, memory in tests). One device only.
              Test mode only. Its PIN hash is a simple salted hash, NOT secure. The live adapter is the real one.
    - 'supabase': the real online database (free tier). The PIN is hashed on the server (bcrypt, in schema.sql).
@@ -6,12 +6,11 @@
    Methods:
      signUp(clean, pin, door)      -> { ok: true, pin } or { ok: false, reason }   pin is the PIN the player keeps (can differ from the one typed); reasons: bad-door, busy, bad-name, bad-initial, bad-pin, bad-skill
      resume(token) / logout(token) -> stay signed in on a phone for 90 days (token kept on the phone, only its hash on the server)
-     login(first, lastInitial, pin)-> { ok: true, player } or { ok: false, reason }   reasons: wrong-pin (also for an unknown name), locked
-     claimPaid(token, nightId)     -> { ok: true } or { ok: false, reason }   "I've paid" claim only, using the sign-in token. Not a payment. Reasons: signed-out, not-approved, no-night, error.
-     pushSave(token, sub, kinds)   -> { ok: true }   push reminder switches (N11). pushRemove(token, endpoint) -> { ok: true }.
+      login(first, lastInitial, pin)-> { ok: true, player } or { ok: false, reason }   reasons: wrong-pin (also for an unknown name), locked
+      claimPaid(token, nightId)     -> { ok: true } or { ok: false, reason }   "I've paid" claim only, using the sign-in token. Not a payment. Reasons: signed-out, not-approved, no-night, error.
      skillAnswer(token, answers)   -> { ok: true, done: true } or { ok: false, reason }   skill questions, asked once. Reasons: signed-out, already-done, bad-answers, error.
      skillStatus(token)            -> { ok: true, done: true|false } or { ok: false }   the player never sees the 1 to 1000 number.
-     getNight(id), getLive() -> { payload, updatedAt } or null (live score row, read only). mockSeedNight(id, payload) is mock test seeding only.
+     getNight(id), nightVersion(id) (players read the published night; the write is organiser-only, not here).
    No paid state here. Players never mark themselves paid; the organiser takes payment and records it in the organiser.
    Global: window.PlayerBackend = { create(kind, opts) }. Node: module.exports.
 */
@@ -60,12 +59,11 @@
     function pinMatches(r, pin) { return r.pinHash === mockHash(r.pinSalt, pin); }
     return {
       kind: 'mock',
-      signUp: function (clean, pin, door, invite) {
+      signUp: function (clean, pin, door) {
         return Promise.resolve().then(function () {
           var db = load();
           var code = db.settings && db.settings.doorCode;
-          var doorOn = !(typeof window !== 'undefined' && window.PLAYER_APP_CONFIG && PLAYER_APP_CONFIG.doorCodeAtSignUp === false);
-          if (doorOn && code && String(door || '').trim().toUpperCase() !== code) return { ok: false, reason: 'bad-door' };
+          if (code && String(door || '').trim().toUpperCase() !== code) return { ok: false, reason: 'bad-door' };
           // A clash is never reported. The new player gets another free PIN, and it is shown to them.
           var usedPins = db.signups.filter(function (r) { return sameName(r, clean.first, clean.lastInitial); });
           var finalPin = String(pin);
@@ -76,7 +74,8 @@
           db.signups.push({ id: 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
             first: clean.first, lastInitial: clean.lastInitial, pinSalt: salt, pinHash: mockHash(salt, finalPin),
             level: clean.level, xpLevel: 1, under18: clean.under18 === true, status: 'approved',
-            badTries: 0, lockedUntil: 0, createdAt: new Date().toISOString() });
+            badTries: 0, lockedUntil: 0, createdAt: new Date().toISOString(),
+            username: rulesApi() ? rulesApi().defaultUsername(clean.first, clean.lastInitial, clean.extra) : '' });
           save(db);
           return { ok: true, pin: finalPin };
         });
@@ -87,8 +86,7 @@
           var rows = db.signups.filter(function (r) { return sameName(r, first, li); });
           if (!rows.length) return { ok: false, reason: 'wrong-pin' };   // same answer as a wrong PIN
           var now = Date.now();
-          var lockEnds = rows.reduce(function (m, r) { return r.lockedUntil > m ? r.lockedUntil : m; }, 0);
-          if (lockEnds > now) return { ok: false, reason: 'locked', until: new Date(lockEnds).toISOString() };
+          if (rows.some(function (r) { return r.lockedUntil > now; })) return { ok: false, reason: 'locked' };
           var hit = rows.filter(function (r) { return pinMatches(r, String(pin || '')); })[0];
           if (hit) {
             rows.forEach(function (r) { r.badTries = 0; r.lockCount = 0; r.lockedUntil = 0; });
@@ -112,10 +110,6 @@
         });
       },
       // Pay with card (Square). A claim is not a payment: it only flags the night for the organiser to check Square.
-      pushSave: function () { return Promise.resolve({ ok: true }); },
-      pushRemove: function () { return Promise.resolve({ ok: true }); },
-      pushSave: function (token, sub, kinds) { return call('POST', '/rest/v1/rpc/player_push_save', { p_token: token, p_sub: sub, p_kinds: kinds }); },
-      pushRemove: function (token, endpoint) { return call('POST', '/rest/v1/rpc/player_push_remove', { p_token: token, p_endpoint: endpoint }); },
       claimPaid: function (token, nightId) {
         return Promise.resolve().then(function () {
           var db = load();
@@ -133,6 +127,11 @@
           return { ok: true };
         });
       },
+      // Run alerts (migration 43). The mock keeps nothing: one test device cannot receive real pushes.
+      savePush: function () { return Promise.resolve({ ok: true }); },
+      pushSave: function (token, sub, kinds) { return Promise.resolve({ ok: true, kinds: kinds || [] }); },
+      pushRemove: function () { return Promise.resolve({ ok: true }); },
+      pushStatus: function () { return Promise.resolve({ ok: true, kinds: [] }); },
       // Skill questions (asked once). The mock keeps the answers only; the 1 to 1000 number is set on the server.
       skillAnswer: function (token, answers) {
         return Promise.resolve().then(function () {
@@ -151,44 +150,6 @@
           return { ok: true, done: true };
         });
       },
-      // Mock RSVP (I'm in) so the chaos run can exercise it. Other RPCs stay unavailable in mock.
-      rpc: function (name, body) {
-        // Test-only fault injection: db.faults = { rpcName: 404 } makes that call fail like a missing server function.
-        var fdb = load();
-        if (fdb.faults && fdb.faults[name]) return Promise.reject(new Error('http-' + fdb.faults[name]));
-        return Promise.resolve().then(function () {
-          if (name !== 'player_rsvp_list' && name !== 'player_rsvp_set') return { ok: false, reason: 'mock' };
-          var db = load();
-          var b = body || {};
-          var s = db.sessions && db.sessions[String(b.p_token || '')];
-          var r = s && s.expires > Date.now() && db.signups.filter(function (x) { return x.id === s.id; })[0];
-          if (!r) return { ok: false, reason: 'signed-out' };
-          db.rsvps = db.rsvps && typeof db.rsvps === 'object' ? db.rsvps : {};
-          var night = db.rsvps[String(b.p_night)] = db.rsvps[String(b.p_night)] || {};
-          if (name === 'player_rsvp_set') {
-            var st = String(b.p_state || '');
-            if (st === 'in' || st === 'out' || st === 'maybe') night[r.id] = st; else delete night[r.id];
-            save(db);
-          }
-          var ids = Object.keys(night);
-          var inCount = ids.filter(function (k) { return night[k] === 'in'; }).length;
-          var needed = 12;
-          save(db);
-          return { ok: true, closed: false, cancelled: false, needed: needed, inCount: inCount, paidCount: 0,
-            toBreakEven: Math.max(0, needed - inCount), me: night[r.id] || null };
-        });
-      },
-      xpSummary: function () { return Promise.resolve({ ok: false }); },
-      playerHeadToHead: function () { return Promise.resolve({ ok: true, enough: false, games: 0, player: null, with: null, against: null }); },
-      playerGameLog: function () { return Promise.resolve({ ok: true, games: [], by_colour: [], best_teammate: null, rival: null }); },
-      streakSummary: function (token, nextWeek) { return Promise.resolve({ ok: false, nextWeek: nextWeek || 0 }); },
-      playerLeaderboard: function () { return Promise.resolve({ ok: false, reason: 'mock' }); },
-      playerChangePin: function (token, oldPin) { return Promise.resolve(String(oldPin) === '0000' ? { ok: false, reason: 'wrong-pin' } : { ok: true }); },
-      playerChangeName: function () { return Promise.resolve({ ok: true }); },
-      playerDeleteMe: function () { return Promise.resolve({ ok: true }); },
-      playerMyData: function () { return Promise.resolve({ ok: true, data: { note: 'mock data' } }); },
-      inviteInfo: function () { return Promise.resolve({ ok: true, code: '', joined: 0, rewarded: 0, coins: 0, badge: false }); },
-      checkIn: function () { return Promise.resolve({ ok: false, reason: 'wrong-code' }); },
       skillStatus: function (token) {
         return Promise.resolve().then(function () {
           var db = load();
@@ -213,7 +174,53 @@
           return true;
         });
       },
-      mockSeedNight: function (id, payload) {
+      // Username and character (test mode, this device only). Same answers as the server.
+      // R226 My account: PIN change and delete. Mock backend: always answers ok (no server).
+      playerChangePin: function (token, oldPin, newPin) { return Promise.resolve({ ok: true }); },
+      playerDeleteMe: function (token, pin) { return Promise.resolve({ ok: true }); },
+      playerChangeName: function () { return Promise.resolve({ ok: true }); },
+      playerMyData: function () { return Promise.resolve({ ok: true, data: { note: 'mock data' } }); },
+      setUsername: function (token, name) {
+        return Promise.resolve().then(function () {
+          var db = load();
+          var s = db.sessions && db.sessions[String(token || '')];
+          var row = s && db.signups.filter(function (x) { return x.id === s.id; })[0];
+          if (!row) return { ok: false, reason: 'not-signed-in' };
+          var v = rulesApi() ? rulesApi().validateUsername(name) : { ok: false };
+          if (!v.ok) return { ok: false, reason: 'bad-name' };
+          var same = String(row.username || '').toLowerCase() === v.value.toLowerCase();
+          if (db.signups.some(function (x) { return x.id !== row.id && String(x.username || '').toLowerCase() === v.value.toLowerCase(); })) {
+            return { ok: false, reason: 'taken' };
+          }
+          if (!same && row.usernameChangedAt && Date.now() - row.usernameChangedAt < 30 * 24 * 3600 * 1000) {
+            return { ok: false, reason: 'too-soon' };
+          }
+          row.username = v.value;
+          if (!same) row.usernameChangedAt = Date.now();
+          save(db);
+          return { ok: true, username: v.value };
+        });
+      },
+      setIcon: function (token, id) {
+        return Promise.resolve().then(function () {
+          var db = load();
+          var s = db.sessions && db.sessions[String(token || '')];
+          var row = s && db.signups.filter(function (x) { return x.id === s.id; })[0];
+          if (!row) return { ok: false, reason: 'not-signed-in' };
+          if (!/^[ia]\d{2,3}$/.test(String(id || ''))) return { ok: false, reason: 'bad-icon' };
+          row.icon = String(id);
+          save(db);
+          return { ok: true, icon: row.icon };
+        });
+      },
+      checkIn: function (token, nightId, code) {
+        return Promise.resolve(String(code) === '1234' ? { ok: true, here: true } : { ok: false, reason: 'wrong-code', triesLeft: 4 });
+      },
+      // Run status for this phone (player_run_status). Mock: open, with a fixed code time.
+      runStatus: function (token, nightId) {
+        return Promise.resolve({ ok: true, state: 'open', nightId: nightId, codeMadeAt: 'mock-code' });
+      },
+      publishNight: function (id, payload) {
         return Promise.resolve().then(function () {
           var db = load();
           db.nights[id] = { id: id, payload: payload, updatedAt: new Date().toISOString() };
@@ -221,24 +228,11 @@
           return true;
         });
       },
+      // Live feed (P9): the mock has no live row, so the Live tab keeps its own data.
+      getLive: function () { return Promise.resolve(null); },
       getNight: function (id) {
-        return Promise.resolve().then(function () {
-          var rec = load().nights[id];
-          // next-34 test hook (mock only): a browser test sets window.__MOCK_NIGHT__ to change the night while the app runs.
-          if (typeof window !== 'undefined' && window.__MOCK_NIGHT__) rec = { id: id, payload: window.__MOCK_NIGHT__, updatedAt: null };
-          return rec ? Object.assign({}, rec, { status: rec.status || 'on', message: rec.message || '' }) : null;
-        });
-      },
-      // Live feed (organiser row). Mock: only what a test sets on window; no data is kept.
-      getLive: function () {
-        var lf = load();
-        if (lf.faults && lf.faults.live_state) return Promise.reject(new Error('http-' + lf.faults.live_state));
-        return Promise.resolve().then(function () {
-          var w = typeof window !== 'undefined' ? window : {};
-          if (w.__MOCK_LIVE_DOWN__) throw new Error('no-signal');
-          return w.__MOCK_LIVE__ ? { payload: w.__MOCK_LIVE__, updatedAt: null } : null;
-        });
-      },
+        return Promise.resolve().then(function () { return load().nights[id] || null; });
+      }
     };
   }
 
@@ -248,7 +242,7 @@
     var fetchFn = opts.fetch || (typeof fetch !== 'undefined' ? fetch : null);
 
     function headers(extra) {
-      // Players send only the apikey. A publishable key is not a JWT, so it is never sent as a Bearer.
+      // Players send only the public apikey. No sign-in, so no Bearer token.
       var h = { apikey: anon, 'Content-Type': 'application/json' };
       Object.keys(extra || {}).forEach(function (k) { h[k] = extra[k]; });
       return h;
@@ -267,17 +261,18 @@
       return { id: r.id, first: r.first, lastInitial: r.last_initial, status: r.status,
         under18: r.under18, level: r.skill_level, xpLevel: r.xp_level || 1, createdAt: r.created_at };
     }
-    var SIGNUP_REASONS = ['busy', 'bad-door', 'bad-name', 'bad-initial', 'bad-pin', 'bad-skill', 'name-taken'];
-    var LOGIN_REASONS = ['wrong-pin', 'locked'];
+    var SIGNUP_REASONS = ['busy', 'bad-door', 'bad-name', 'bad-initial', 'bad-pin', 'bad-skill', 'name-taken', 'name-reserved'];
+    var LOGIN_REASONS = ['wrong-pin', 'locked', 'hard-stop'];
     return {
       kind: 'supabase',
+      inviteInfo: function (token) { return call('POST', '/rest/v1/rpc/player_invite_info', { p_token: token }); },
       signUp: function (clean, pin, door, invite) {
         return call('POST', invite ? '/rest/v1/rpc/player_sign_up_invited' : '/rest/v1/rpc/player_sign_up', Object.assign({
           p_first: clean.first, p_last_initial: clean.lastInitial, p_pin: pin, p_skill: clean.level,
           p_door: String(door || ''), p_extra: String(clean.extra || '')
         }, invite ? { p_invite: String(invite) } : {})).then(function (j) { return { ok: true, pin: j && j.pin }; }, function (e) {
           var hit = SIGNUP_REASONS.filter(function (r) { return String(e.body || '').indexOf(r) > -1; })[0];
-          if (hit) return { ok: false, reason: hit };
+          if (hit) return { ok: false, reason: hit, hint: /first-name/.test(String(e.body || '')) ? 'first-name' : (/extra-letters/.test(String(e.body || '')) ? 'extra-letters' : '') };
           throw e;
         });
       },
@@ -285,12 +280,9 @@
         return call('POST', '/rest/v1/rpc/player_login', { p_first: first, p_last_initial: li, p_pin: pin }).then(function (j) {
           if (j && j.ok) {
             return { ok: true, token: j.token, player: { id: j.id, status: j.status, first: j.first, lastInitial: j.last_initial,
-              level: j.skill_level, xpLevel: j.xp_level || 1, checkedIn: !!j.checked_in } };
+              level: j.skill_level, xpLevel: j.xp_level || 1, icon: j.icon || '' } };
           }
-          // R46: a lock passes the server's end time (until) so the app can say how long to wait.
-          var out = { ok: false, reason: (j && LOGIN_REASONS.indexOf(j.reason) > -1) ? j.reason : 'wrong-pin' };
-          if (j && j.until) out.until = String(j.until);
-          return out;
+          return { ok: false, reason: (j && LOGIN_REASONS.indexOf(j.reason) > -1) ? j.reason : 'wrong-pin' };
         });
       },
       // Pay with card (Square). Server checks the PIN (same lock rules as login) and records a claim only.
@@ -311,17 +303,36 @@
           }, function () { return { ok: false, reason: 'error' }; });
       },
       // paymentStatus -> { ok: true, paid: true|false } or { ok: false, reason }. Only the webhook sets paid.
-      // next-33 (R52): the server says whether tonight's run is open, ended or cancelled. Needs migration-36.
-      runStatus: function (token, nightId) {
-        return call('POST', '/rest/v1/rpc/player_run_status', { p_token: token, p_night: nightId })
-          .then(function (j) { return j && j.ok ? { ok: true, state: String(j.state || '') } : { ok: false }; });
-      },
       paymentStatus: function (token, nightId) {
         return call('POST', '/rest/v1/rpc/player_payment_status', { p_token: token, p_night: nightId })
           .then(function (j) {
-            if (j && j.ok) return { ok: true, paid: j.paid === true, pass: j.pass === true };   // R59: a pass (migration-40) counts like paid, word 'Pass'
+            if (j && j.ok) return { ok: true, paid: j.paid === true };
             return { ok: false, reason: (j && j.reason) || 'error' };
           }, function () { return { ok: false, reason: 'error' }; });
+      },
+      // Run alerts (migration 43). Saves this phone's push subscription for the signed-in player.
+      // P4: uses the live player_push_save (kinds: tonight, pay, recap). Legacy savePush keeps the old call shape.
+      savePush: function (token, sub) {
+        var keys = (sub && sub.keys) || {};
+        return call('POST', '/rest/v1/rpc/player_push_save', {
+          p_token: token, p_sub: { endpoint: sub && sub.endpoint, keys: { p256dh: keys.p256dh, auth: keys.auth } }, p_kinds: ['tonight', 'pay', 'recap']
+        }).then(function (j) { return { ok: !!(j && j.ok) }; }, function () { return { ok: false }; });
+      },
+      // Reminder switches (P4). kinds: any subset of tonight, pay, recap. Empty kinds saves nothing new.
+      pushSave: function (token, sub, kinds) {
+        var keys = (sub && sub.keys) || {};
+        return call('POST', '/rest/v1/rpc/player_push_save', {
+          p_token: token, p_sub: { endpoint: sub && sub.endpoint, keys: { p256dh: keys.p256dh, auth: keys.auth } }, p_kinds: kinds || []
+        }).then(function (j) { return { ok: !!(j && j.ok), kinds: (j && j.kinds) || [] }; }, function () { return { ok: false }; });
+      },
+      pushRemove: function (token, endpoint) {
+        return call('POST', '/rest/v1/rpc/player_push_remove', { p_token: token, p_endpoint: endpoint })
+          .then(function (j) { return { ok: !!(j && j.ok) }; }, function () { return { ok: false }; });
+      },
+      // Reads which reminder switches this phone has saved (player_push_status, P4). Returns { ok, kinds }.
+      pushStatus: function (token, endpoint) {
+        return call('POST', '/rest/v1/rpc/player_push_status', { p_token: token, p_endpoint: endpoint })
+          .then(function (j) { return { ok: !!(j && j.ok), kinds: (j && j.kinds) || [] }; }, function () { return { ok: false, kinds: [] }; });
       },
       // Skill questions (migration 6). Once answered, they are locked. The server also keeps any number the organiser set.
       skillAnswer: function (token, answers) {
@@ -334,19 +345,64 @@
             return { ok: false, reason: body.indexOf('already-done') > -1 ? 'already-done' : 'error' };
           });
       },
-      rpc: function (name, body) { return call('POST', '/rest/v1/rpc/' + name, body); },
-      xpSummary: function (token) { return call('POST', '/rest/v1/rpc/player_xp_summary', { p_token: token }); },
-      playerHeadToHead: function (token, otherId) { return call('POST', '/rest/v1/rpc/player_head_to_head', { p_token: token, p_other: otherId }); },
-      playerGameLog: function (token) { return call('POST', '/rest/v1/rpc/player_game_log', { p_token: token }); },
-      streakSummary: function (token, nextWeek) { return call('POST', '/rest/v1/rpc/player_streak_summary', { p_token: token, p_next_week: nextWeek || 0 }); },
-      inviteInfo: function (token) { return call('POST', '/rest/v1/rpc/player_invite_info', { p_token: token }); },
-      // "I'm here" (D3/H5): the run code. Needs migration-25 (player_check_in) to work live.
-      checkIn: function (token, code) { return call('POST', '/rest/v1/rpc/player_check_in', { p_token: token, p_night: 'tonight', p_code: String(code || '') }); },
-      playerChangePin: function (token, oldPin, newPin) { return call('POST', '/rest/v1/rpc/player_change_pin', { p_token: token, p_old_pin: oldPin, p_new_pin: newPin }); },
-      playerChangeName: function (token, first, lastInitial) { return call('POST', '/rest/v1/rpc/player_change_name', { p_token: token, p_first: first, p_last_initial: lastInitial }); },
-      playerDeleteMe: function (token, pin) { return call('POST', '/rest/v1/rpc/player_delete_me', { p_token: token, p_pin: pin }); },
-      playerMyData: function (token) { return call('POST', '/rest/v1/rpc/player_my_data', { p_token: token }); },
-      playerLeaderboard: function (token, board, limit, season) { return call('POST', '/rest/v1/rpc/player_leaderboard', { p_token: token, p_board: board || 'xp', p_limit: limit || 20, p_season: season || 'all' }); },
+      // P13 (R198/R216): my own spot in the upcoming runs. Room lists never reach the app (upcomingShape).
+      upcomingList: function (token) {
+        return call('POST', '/rest/v1/rpc/upcoming_list', { p_token: token }).then(function (j) {
+          return { ok: true, runs: upcomingShape(j.runs) };
+        }, function () { return { ok: false, runs: [] }; });
+      },
+      // P13: live scoreboard (player_live_scoreboard). Team names and scores only; no scorer names reach the app.
+      // Not live is a normal answer (live: false), not an error.
+      scoreboard: function (token, night) {
+        return call('POST', '/rest/v1/rpc/player_live_scoreboard', { p_token: token, p_night: night }).then(function (j) {
+          if (!j || j.ok === false) {
+            if (j && j.reason === 'not-live') return { ok: true, live: false, events: [] };
+            return { ok: false, reason: (j && j.reason) || 'error' };
+          }
+          return { ok: true, live: true, game: j.game, teamAName: j.teamAName || '', teamBName: j.teamBName || '',
+            scoreA: Number(j.teamA) || 0, scoreB: Number(j.teamB) || 0,
+            events: (Array.isArray(j.events) ? j.events : []).map(function (e) {
+              return { at: e.at, side: e.side, points: e.points, teamA: e.teamA, teamB: e.teamB };
+            }) };
+        }, function () { return { ok: false, reason: 'error' }; });
+      },
+      // I'm in / Can't make it (R74, R88): only player_get_in and player_set_in (file 50).
+      rsvpList: function (token) {
+        return call('POST', '/rest/v1/rpc/player_get_in', { p_token: token }).then(function (j) {
+          if (!j || !j.ok) return { ok: false, reason: (j && j.reason) || 'error' };
+          if (!j.session) return { ok: true, closed: true, cancelled: false, me: null, fillingUp: false };
+          return { ok: true, closed: false, cancelled: false, me: j.me || null, fillingUp: j.filling === true };
+        }, function () { return { ok: false, reason: 'error' }; });
+      },
+      rsvpSet: function (token, nightId, state) {
+        return call('POST', '/rest/v1/rpc/player_set_in', { p_token: token, p_answer: state }).then(function (j) {
+          return { ok: !!(j && j.ok === true), reason: (j && j.reason) || undefined };
+        }, function () { return { ok: false, reason: 'error' }; });
+      },
+      // Read-only RPC for the stats and history screens (P6). Failure gives { ok: false }, never a throw.
+      rpc: function (name, body) {
+        return call('POST', '/rest/v1/rpc/' + name, body).then(function (j) { return j; }, function () { return { ok: false }; });
+      },
+      // Board (R87 a): player_leaderboard with all six arguments. Hidden rows come back as "Player" with no value.
+      // P6c: season is 'current' (default), 'last' or 'all'. Anything else falls back to 'current'.
+      leaderboard: function (token, season) {
+        var sid = (season === 'last' || season === 'all') ? season : 'current';
+        return call('POST', '/rest/v1/rpc/player_leaderboard', { p_token: token || null, p_board: 'xp', p_limit: 50, p_season: sid, p_search: null, p_offset: 0 }).then(function (j) {
+          if (!j || !j.ok) return { ok: false, players: [] };
+          return { ok: true, players: (j.rows || []).map(function (r) {
+            var hidden = r.name === 'Player';
+            return { id: r.public_id || r.name, name: r.name, level: r.level, icon: r.icon || '', stars: 0, points: 0, wins: 0,
+              visible: !hidden, under18: false, look: {}, me: r.me === true };
+          }) };
+        }, function () { return { ok: false, players: [] }; });
+      },
+      // Badges and milestones (P7): player_achievements. Badges come back with progress; the phone draws them (screens/achievements).
+      achievements: function (token) {
+        return call('POST', '/rest/v1/rpc/player_achievements', { p_token: token }).then(function (j) {
+          if (!j || !j.ok) return { ok: false };
+          return { ok: true, badges: j.badges || [], coinsFromBadges: Number(j.coinsFromBadges) || 0 };
+        }, function () { return { ok: false }; });
+      },
       skillStatus: function (token) {
         return call('POST', '/rest/v1/rpc/player_skill_status', { p_token: token })
           .then(function (j) { return (j && j.ok) ? { ok: true, done: j.done === true } : { ok: false }; }, function () { return { ok: false }; });
@@ -355,34 +411,115 @@
         return call('POST', '/rest/v1/rpc/player_resume', { p_token: tok }).then(function (j) {
           if (!j || !j.ok) return { ok: false };
           return { ok: true, player: { id: j.id, status: j.status, first: j.first, lastInitial: j.last_initial,
-            level: j.skill_level, xpLevel: j.xp_level || 1, checkedIn: !!j.checked_in } };
+            level: j.skill_level, xpLevel: j.xp_level || 1, icon: j.icon || '' } };
         });
       },
       logout: function (tok) {
         return call('POST', '/rest/v1/rpc/player_logout', { p_token: tok }).then(function () { return true; });
       },
-      // Gives up after 8 seconds, so a dead connection shows log in or "No signal" instead of a blank app.
-      getNight: function (id) {
-        var req = call('GET', '/rest/v1/nights?select=*&id=eq.' + encodeURIComponent(id)).then(function (rows) {
-          var r = rows && rows[0];
-          return r ? { id: r.id, payload: r.payload, updatedAt: r.updated_at, status: r.status, message: r.message } : null;
-        });
-        var timer = null;
-        var timeout = new Promise(function (_, reject) {
-          timer = setTimeout(function () { reject(new Error('timeout')); }, 8000);
-        });
-        return Promise.race([req, timeout]).then(function (v) { clearTimeout(timer); return v; }, function (e) { clearTimeout(timer); throw e; });
+      // VIP icons (migration-48). The server returns pictures to VIP players only.
+      vipIcons: function (tok) {
+        return call('POST', '/rest/v1/rpc/player_vip_icons', { p_token: tok }).then(function (j) {
+          return (j && j.ok) ? { ok: true, icons: j.icons || [] } : { ok: false, icons: [] };
+        }, function () { return { ok: false, icons: [] }; });
       },
-      // One small value (migration 3, night_version). Fetch the full night only when it changes (Fable A9).
-      // Live score row (migration 11, live_state). Read only with the anon key. Rejects on no signal.
+      setVipIcon: function (tok, id) {
+        return call('POST', '/rest/v1/rpc/player_set_icon', { p_token: tok, p_icon: id }).then(function (j) {
+          return (j && j.ok) ? { ok: true } : { ok: false, reason: (j && j.reason) || 'error' };
+        }, function () { return { ok: false, reason: 'error' }; });
+      },
+      // Character (R70): any i, a or v id. Same server call as setVipIcon (migration-47/48 check the shape).
+      setIcon: function (tok, id) {
+        return call('POST', '/rest/v1/rpc/player_set_icon', { p_token: tok, p_icon: id }).then(function (j) {
+          return (j && j.ok) ? { ok: true } : { ok: false, reason: (j && j.reason) || 'error' };
+        }, function () { return { ok: false, reason: 'error' }; });
+      },
+      // Username (migration-44): 3 to 14 letters, digits or _, changed once every 30 days.
+      // R226 My account: PIN change and delete (player_change_pin, player_delete_me).
+      playerChangePin: function (token, oldPin, newPin) { return call('POST', '/rest/v1/rpc/player_change_pin', { p_token: token, p_old_pin: oldPin, p_new_pin: newPin }).then(function (j) { return (j && j.ok) ? { ok: true } : { ok: false, reason: (j && j.reason) || 'error' }; }, function () { return { ok: false, reason: 'error' }; }); },
+      playerDeleteMe: function (token, pin) { return call('POST', '/rest/v1/rpc/player_delete_me', { p_token: token, p_pin: pin }).then(function (j) { return (j && j.ok) ? { ok: true } : { ok: false, reason: (j && j.reason) || 'error' }; }, function () { return { ok: false, reason: 'error' }; }); },
+      playerChangeName: function (token, first, lastInitial) { return call('POST', '/rest/v1/rpc/player_change_name', { p_token: token, p_first: first, p_last_initial: lastInitial }); },
+      playerMyData: function (token) { return call('POST', '/rest/v1/rpc/player_my_data', { p_token: token }); },
+      setUsername: function (tok, name) {
+        return call('POST', '/rest/v1/rpc/player_set_username', { p_token: tok, p_name: name }).then(function (j) {
+          return (j && j.ok) ? { ok: true, username: j.username } : { ok: false, reason: (j && j.reason) || 'error' };
+        }, function () { return { ok: false, reason: 'error' }; });
+      },
+      // Patch A: show-me switch (migration-44) and the test alert (migration-46).
+      setVisible: function (tok, on) {
+        return call('POST', '/rest/v1/rpc/player_set_visible', { p_token: tok, p_on: !!on }).then(function (j) {
+          return (j && j.ok) ? { ok: true, visible: !!j.visible } : { ok: false, reason: (j && j.reason) || 'error' };
+        }, function () { return { ok: false, reason: 'error' }; });
+      },
+      sendTestAlert: function (tok) {
+        return call('POST', '/rest/v1/rpc/player_send_test_alert', { p_token: tok }).then(function (j) {
+          return (j && j.ok) ? { ok: true } : { ok: false, reason: (j && j.reason) || 'error' };
+        }, function () { return { ok: false, reason: 'error' }; });
+      },
+      // Join keypad (R113): player_check_in from migration 25. The answer passes through with its reason.
+      // Run status (player_run_status, live paste 58e): open / removed / ended / none / cancelled, with codeMadeAt.
+      runStatus: function (token, nightId) {
+        return call('POST', '/rest/v1/rpc/player_run_status', { p_token: token, p_night: nightId })
+          .then(function (j) {
+            if (!j || j.ok !== true) return { ok: false };
+            return { ok: true, state: j.state || '', nightId: j.nightId || nightId, codeMadeAt: j.codeMadeAt ? String(j.codeMadeAt) : '' };
+          }, function () { return { ok: false }; });
+      },
+      checkIn: function (token, nightId, code) {
+        return call('POST', '/rest/v1/rpc/player_check_in', { p_token: token, p_night: nightId, p_code: String(code || '') })
+          .then(function (j) {
+            if (j && j.ok === true) return { ok: true, here: true };
+            return { ok: false, reason: (j && j.reason) || 'error', triesLeft: j && j.triesLeft, until: j && j.until, opensAt: j && j.opensAt };
+          }, function () { return { ok: false, reason: 'error' }; });
+      },
+      // Live feed (P9): the organiser's live row, read only with the anon key. Holds the court, scores, fouls, the clock and the run date. Never who is in or who paid.
       getLive: function () {
         return call('GET', '/rest/v1/live_state?select=payload,updated_at&id=eq.tonight').then(function (rows) {
-          return rows && rows[0] ? { payload: rows[0].payload, updatedAt: rows[0].updated_at } : null;
+          var r = rows && rows[0];
+          return r ? { payload: r.payload, updatedAt: r.updated_at } : null;
         });
       },
+      getNight: function (id) {
+        return call('GET', '/rest/v1/nights?select=*&id=eq.' + encodeURIComponent(id)).then(function (rows) {
+          var r = rows && rows[0];
+          return r ? { id: r.id, payload: r.payload, updatedAt: r.updated_at } : null;
+        });
+      },
+      // One small value (migration 3, night_version). Fetch the full night only when it changes (Fable A9).
       nightVersion: function (id) {
         return call('POST', '/rest/v1/rpc/night_version', { p_id: id }).then(function (v) { return v || null; });
       },
+    };
+  }
+
+  // The rules helpers (rules.js). In the browser they are a global; in Node tests they may be set on globalThis.
+  function rulesApi() {
+    return (typeof PlayerRules !== 'undefined') ? PlayerRules : (globalThis.PlayerRules || null);
+  }
+
+  // P13: keep only the fields the Live waiting room needs. Room lists, notes and versions never reach the app.
+  function upcomingShape(runs) {
+    return (Array.isArray(runs) ? runs : []).filter(function (r) { return r && typeof r === 'object'; }).map(function (r) {
+      return { id: r.id, startsAt: r.startsAt, status: r.status, runOff: r.runOff === true,
+        me: { in: !!(r.me && r.me.in === true), paid: !!(r.me && r.me.paid === true) } };
+    });
+  }
+
+  // P13: one upcoming_list call a minute. reset() on sign-out and sign-in, so a new player never sees the old state.
+  function upcomingGate(be) {
+    var last = null, at = 0, gen = 0;
+    return {
+      load: function (token, now) {
+        now = now || Date.now();
+        if (last && now - at < 60000) return Promise.resolve(last);
+        at = now;
+        var my = gen;
+        return be.upcomingList(token).then(function (r) {
+          if (my !== gen) return { ok: true, runs: [], stale: true };   // a reset came while this was on the way
+          last = r; return r;
+        });
+      },
+      reset: function () { last = null; at = 0; gen++; }
     };
   }
 
@@ -401,5 +538,5 @@
       setItem: function (k, v) { m[k] = String(v); } };
   }
 
-  return { create: create, memoryStore: memoryStore };
+  return { create: create, memoryStore: memoryStore, upcomingShape: upcomingShape, upcomingGate: upcomingGate };
 });

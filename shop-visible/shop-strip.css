@@ -1,0 +1,17 @@
+/* Shop strip on Home (R149). Colours from brand/tokens.css only. 48px tap target, 14px minimum text. */
+.sv-strip {
+  display: flex; align-items: center; gap: 12px; box-sizing: border-box;
+  min-height: 56px; padding: 10px 14px; margin: 12px 0;
+  background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: var(--radius-card, 16px);
+  text-decoration: none;
+}
+.sv-strip:focus-visible { outline: 3px solid var(--link); outline-offset: 2px; }
+.sv-pic { flex: 0 1 auto; min-width: 0; max-width: 40%; overflow: hidden; display: flex; align-items: center; }
+.sv-pic .pn { max-width: 100%; }
+.sv-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 auto; }
+.sv-title { font-family: var(--font-head, "Barlow Condensed", sans-serif); font-weight: 700; font-size: 20px; line-height: 1.1; text-transform: uppercase; letter-spacing: .02em; color: var(--brand-text); }
+.sv-line { font-size: 14px; font-weight: 600; color: var(--ink); }
+.sv-coins { flex: 0 0 auto; font-size: 14px; color: var(--muted); white-space: nowrap; }
+.sv-coins b { font-size: 18px; color: var(--ink); font-variant-numeric: tabular-nums; }
+.sv-spend { color: var(--link-text); font-weight: 600; text-decoration: underline; min-height: 48px; display: inline-flex; align-items: center; }
+.sv-row { display: flex; gap: 10px; } .sv-row > * { flex: 1 1 0; min-width: 0; }

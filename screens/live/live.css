@@ -3,18 +3,19 @@
 .lv * { box-sizing:border-box; }
 .lv h1 { font-size:28px; line-height:1; margin:0; }
 .lv-head { display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:48px; }
-.lv-h { font-family:var(--font-head, "Barlow Condensed", "Barlow", system-ui, sans-serif); font-size:22px; font-weight:700; text-transform:uppercase; letter-spacing:.02em; color:var(--yellow-text); margin:10px 0 8px; line-height:1.1; }
+.lv-h { font-family:var(--font-head, "Barlow Condensed", "Barlow", system-ui, sans-serif); font-size:22px; font-weight:700; text-transform:uppercase; letter-spacing:.02em; color:var(--brand-text); margin:10px 0 8px; line-height:1.1; }
 .lv-h3 { font-family:var(--font-head, "Barlow Condensed", "Barlow", system-ui, sans-serif); font-size:18px; font-weight:700; text-transform:uppercase; margin:0 0 6px; color:var(--ink); }
 .lv-cap { font-size:14px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); }
 .lv-muted { color:var(--muted); font-size:16px; }
-.lv-you { display:inline-block; margin-left:4px; padding:2px 6px; border-radius:6px; background:var(--yellow); color:var(--on-yellow, #0E0E0E); font-size:14px; font-weight:900; letter-spacing:.04em; vertical-align:middle; }
+.lv-you { display:inline-block; margin-left:4px; padding:2px 6px; border-radius:6px; background:var(--brand); color:var(--on-brand); font-size:14px; font-weight:900; letter-spacing:.04em; vertical-align:middle; }
 .lv-card { margin-top:12px; padding:14px; border-radius:16px; border:1px solid var(--line); background:var(--card); }
 .lv-top { display:flex; align-items:center; justify-content:space-between; gap:10px; }
-.lv-card.is-mine, .lv-team-block.is-mine { border-color:var(--yellow-text); }
+.lv-card.is-mine, .lv-team-block.is-mine { border-color:var(--brand); }
 
 /* Live pill and dot */
-.lv-pill { display:inline-flex; align-items:center; gap:8px; min-height:32px; padding:4px 10px; border-radius:8px; background:var(--red); color:#0E0E0E; font-size:14px; font-weight:900; letter-spacing:.06em; text-transform:uppercase; }
-.lv-dot { width:8px; height:8px; border-radius:50%; background:#0E0E0E; animation:lv-pulse 1.2s ease-in-out infinite; }
+.lv-pill { display:inline-flex; align-items:center; gap:8px; min-height:32px; padding:4px 10px; border-radius:8px; background:var(--red); color:var(--on-brand); font-size:14px; font-weight:900; letter-spacing:.06em; text-transform:uppercase; }
+[data-theme="light"] .lv-pill { color:#FFFFFF; }
+.lv-dot { width:8px; height:8px; border-radius:50%; background:var(--bg); animation:lv-pulse 1.2s ease-in-out infinite; }
 @keyframes lv-pulse { 0%,100% { opacity:1; } 50% { opacity:.25; } }
 
 /* Score row: one line per side, big numbers */
@@ -23,7 +24,7 @@
 .lv-team { font-family:var(--font-head, "Barlow Condensed", "Barlow", system-ui, sans-serif); font-size:20px; font-weight:700; text-transform:uppercase; letter-spacing:.02em; }
 .lv-team .lv-you { font-size:14px; }
 .lv-score { font-size:56px; font-weight:900; line-height:1; font-variant-numeric:tabular-nums; }
-.lv-side.is-mine .lv-score { color:var(--yellow-text); }
+.lv-side.is-mine .lv-score { color:var(--brand-text); }
 .lv-vs { font-size:24px; color:var(--muted); font-weight:700; }
 .lv-meta { display:flex; justify-content:space-between; gap:10px; border-top:2px dashed var(--line); margin-top:10px; padding-top:8px; }
 .lv-clock { font-size:18px; font-weight:800; font-variant-numeric:tabular-nums; }
@@ -36,13 +37,13 @@
 .lv-teams { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:6px; }
 .lv-team-block { border:1px solid var(--line); border-radius:12px; padding:10px; min-width:0; }
 .lv-plist { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:4px; }
-.lv-player { display:flex; flex-wrap:wrap; align-items:center; gap:0 4px; min-width:0; overflow-wrap:anywhere; line-height:1.2; }
+.lv-player { display:flex; flex-wrap:wrap; align-items:center; gap:0 4px; min-width:0; overflow-wrap:break-word; line-height:1.2; }
 .lv-player .lv-capt { flex-basis:100%; margin-top:2px; }
-.lv-capt { color:var(--gold-text, var(--yellow)); font-size:14px; }
+.lv-capt { color:var(--brand, var(--brand)); font-size:14px; }
 
 /* Button */
-.lv-btn { display:flex; align-items:center; justify-content:center; width:100%; min-height:48px; margin-top:12px; padding:10px 14px; border:0; border-radius:12px; background:var(--yellow); color:var(--on-yellow, #0E0E0E); font:inherit; font-size:18px; font-weight:900; text-transform:uppercase; letter-spacing:.03em; cursor:pointer; }
-.lv-btn:focus-visible { outline:3px solid var(--blue); outline-offset:3px; }
+.lv-btn { display:flex; align-items:center; justify-content:center; width:100%; min-height:48px; margin-top:12px; padding:10px 14px; border:0; border-radius:12px; background:var(--brand); color:var(--on-brand); font:inherit; font-size:18px; font-weight:900; text-transform:uppercase; letter-spacing:.03em; cursor:pointer; }
+.lv-btn:focus-visible { outline:px solid var(--focus); outline-offset:3px; }
 
 /* Tonight list (mirrors the organiser's game rows) */
 .lv-games { list-style:none; margin:0; padding:0; border:1px solid var(--line); border-radius:16px; background:var(--card); overflow:hidden; }
@@ -52,16 +53,16 @@
 .lv-gbody { display:flex; flex-direction:column; min-width:0; flex:1; }
 .lv-gbody b { font-size:18px; text-transform:uppercase; }
 .lv-state { font-size:14px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); flex:none; }
-.lv-game.is-live .lv-no { background:var(--red); border-color:var(--red); color:#0E0E0E; }
+.lv-game.is-live .lv-no { background:var(--red); border-color:var(--red); color:var(--on-brand); }
 .lv-game.is-live .lv-state { color:var(--red); }
-.lv-game.is-next .lv-no { border-color:var(--yellow-text); color:var(--yellow-text); }
-.lv-game.is-next .lv-state { color:var(--yellow-text); }
+.lv-game.is-next .lv-no { border-color:var(--brand); color:var(--brand-text); }
+.lv-game.is-next .lv-state { color:var(--brand-text); }
 .lv-game.is-done { opacity:.7; }
 
 .lv-empty .lv-h { margin-top:0; }
 
 /* Focus and reduced motion */
-.lv a:focus-visible { outline:3px solid var(--blue); outline-offset:2px; }
+.lv a:focus-visible { outline:px solid var(--focus); outline-offset:2px; }
 @media (prefers-reduced-motion: reduce) {
   .lv * { transition:none !important; animation:none !important; }
 }
@@ -69,20 +70,76 @@
   .lv-score { font-size:44px; }
   .lv-teams { grid-template-columns:1fr; }
 }
-/* Live feed (live-schedule module): no-signal note and the next-run card. */
-.lv-offline { margin:10px 0 0; padding:8px 12px; border-radius:12px; border:1px dashed var(--yellow); color:var(--yellow-text); font-size:16px; }
-.lv-sched { display:grid; gap:4px; }
-.lv-sched .lv-h { margin:0; }
 
-/* v2 (live score with clock, fouls, recap). Calm: no flashing, one short fade on a changed score. */
-.lv-score { animation: lvIn .35s ease-out both; }
-@keyframes lvIn { from { opacity: .35; transform: translateY(3px); } to { opacity: 1; transform: none; } }
-.lv-fouls { display: block; font-size: 14px; opacity: .8; margin-top: 2px; }
-.lv-clock { font-variant-numeric: tabular-nums; font-size: 28px; font-weight: 800; letter-spacing: .02em; }
-.lv-clock.is-running { color: var(--lv-accent, #FFD400); }
-.lv-clock-end { color: var(--lv-accent, #FFD400); }
-.lv-clock-state { font-size: 14px; margin-left: 8px; opacity: .8; }
-.lv-recap .lv-final { font-size: 20px; margin: 6px 0; }
-.lv-recap .lv-final b { font-weight: 800; }
-.lv-recap .lv-muted { font-size: 14px; }
-@media (prefers-reduced-motion: reduce) { .lv-score { animation: none; } }
+/* Court (R64, R70): players on court, picture over name. Positions are for show. */
+.lv-court-box { display:flex; flex-direction:column; gap:12px; margin-top:8px; padding:12px; border:2px solid var(--line); border-radius:14px; }
+.lv-court-side + .lv-court-side { border-top:2px dashed var(--line); padding-top:12px; }
+.lv-ptiles { list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(auto-fill, minmax(92px, 1fr)); gap:10px; }
+.lv-pt { display:flex; flex-direction:column; align-items:center; gap:4px; min-width:0; }
+.lv-pic { display:block; width:64px; height:64px; border-radius:50%; overflow:hidden; border:3px solid var(--line); }
+.lv-court-side.is-mine .lv-pic { border-color:var(--brand); }
+.lv-pic img, .lv-pic svg { display:block; width:100%; height:100%; }
+.lv-pn { max-width:100%; font-size:16px; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.lv-court-note { margin:10px 0 0; font-size:14px; text-align:center; }
+
+/* Patch C: tap targets (names on court and in the lineup), the small card, the player sheet, results.
+   Hidden players are plain and do not respond to a tap. Everything is fluid: no fixed widths. */
+.cv-tap { display:flex; flex-direction:column; align-items:center; gap:4px; width:100%; min-height:48px; margin:0; padding:4px; border:0; border-radius:12px; background:none; color:inherit; font:inherit; text-align:center; cursor:pointer; }
+.cv-tap:focus-visible { outline:px solid var(--focus); outline-offset:2px; }
+.cv-tap--chip { display:block; min-height:48px; padding:6px; text-align:left; border-radius:10px; }
+.cv-tap--chip:focus-visible { outline:px solid var(--focus); outline-offset:2px; }
+.cv-pt { min-width:0; }
+.cv-static { display:flex; flex-direction:column; align-items:center; gap:4px; width:100%; padding:4px; }
+.cv-pt.is-hidden .lv-pn { color:var(--muted); }
+.cv-pt .lv-pn { max-width:100%; }
+
+.cv-layer { position:fixed; inset:0; z-index:60; display:flex; align-items:flex-end; justify-content:center; background:var(--scrim); }
+.cv-sheet { width:100%; max-width:520px; max-height:92vh; overflow-y:auto; padding:12px 16px calc(16px + env(safe-area-inset-bottom, 0px)); border:1px solid var(--line); border-radius:18px 18px 0 0; background:var(--card); color:var(--ink); box-shadow:0 -8px 30px color-mix(in srgb, var(--bg) 35%, transparent); animation:cv-up .22s ease-out; }
+@keyframes cv-up { from { transform:translateY(24px); opacity:0; } to { transform:none; opacity:1; } }
+.cv-grip { width:48px; height:6px; margin:0 auto 12px; border-radius:3px; background:var(--line); }
+.cv-who { display:flex; align-items:center; gap:14px; min-width:0; }
+.cv-who-text { min-width:0; flex:1; }
+.cv-cap { margin:0; font-size:14px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); }
+.cv-h { margin:2px 0 0; font-family:var(--font-head, "Barlow Condensed", "Barlow", system-ui, sans-serif); font-size:26px; font-weight:700; line-height:1.1; text-transform:uppercase; color:var(--brand-text); overflow-wrap:anywhere; }
+.cv-h--big { margin:12px 0 4px; font-size:34px; text-align:center; }
+.cv-pic-lg { flex:none; width:72px; height:72px; border-width:3px; }
+.cv-line { margin:12px 0 0; font-size:18px; font-weight:700; }
+.cv-actions { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:16px; }
+.cv-btn { min-height:48px; padding:10px 14px; border:2px solid var(--line); border-radius:12px; background:transparent; color:var(--ink); font:inherit; font-size:18px; font-weight:800; text-transform:uppercase; letter-spacing:.03em; cursor:pointer; }
+.cv-btn--main { border-color:var(--brand); background:var(--brand); color:var(--on-brand); }
+.cv-btn--small { min-height:48px; padding:8px 14px; font-size:16px; }
+.cv-btn:focus-visible { outline:px solid var(--focus); outline-offset:3px; }
+.cv-top { display:flex; align-items:center; justify-content:space-between; gap:10px; min-height:48px; }
+.cv-hero { display:flex; justify-content:center; margin-top:8px; }
+.cv-hero .cv-pic-lg { width:128px; height:128px; }
+.cv-stats { margin:16px 0 0; display:grid; gap:10px; }
+.cv-stat { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:0; padding:12px 14px; border:1px solid var(--line); border-radius:12px; }
+.cv-stat dt { font-size:16px; color:var(--muted); }
+.cv-stat dd { margin:0; font-size:24px; font-weight:900; font-variant-numeric:tabular-nums; }
+
+/* Results: finished games, newest first. The section is not drawn when there are none. */
+.lv-results { margin-top:0; }
+.lv-res { display:flex; align-items:center; gap:12px; min-height:56px; padding:10px 14px; border-bottom:1px solid var(--line); }
+.lv-res:last-child { border-bottom:0; }
+.lv-rline { display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 8px; font-size:18px; }
+.lv-rline b { font-size:18px; text-transform:uppercase; overflow-wrap:anywhere; }
+.lv-rs { font-size:24px; font-weight:900; font-variant-numeric:tabular-nums; }
+@media (max-width:359px) {
+  .cv-actions { grid-template-columns:1fr; }
+  .cv-h--big { font-size:28px; }
+}
+
+/* P13: live scoreboard and the score card (black and yellow, Bright hall via the page tokens) */
+.sb-score { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 8px 0 12px; }
+.sb-side { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; flex: 1; }
+.sb-num { font-size: 48px; font-weight: 800; line-height: 1; color: #FFD400; font-variant-numeric: tabular-nums; }
+.sb-moves { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.sb-move { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; padding: 10px 12px; border-radius: 12px; background: rgba(255, 212, 0, 0.08); }
+.sb-who { font-weight: 700; }
+.sb-after { grid-column: 1 / -1; font-size: 14px; }
+.sc-layer { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; opacity: 0; transition: opacity 200ms ease; z-index: 60; }
+.sc-layer.on { opacity: 1; }
+.sc-card { display: grid; justify-items: center; gap: 4px; padding: 20px 28px; border-radius: 18px; background: #000; color: #FFD400; border: 2px solid #FFD400; font-weight: 800; }
+.sc-pts { font-size: 72px; line-height: 1; font-variant-numeric: tabular-nums; }
+.sc-sub { font-size: 16px; letter-spacing: .08em; text-transform: uppercase; }
+@media (prefers-reduced-motion: reduce) { .sc-layer { transition: none; } }

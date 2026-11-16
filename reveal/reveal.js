@@ -31,13 +31,27 @@
     return typeof window !== 'undefined' && !!window.matchMedia &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   }
-  function same(a, b) { return !!a && !!b && a.first === b.first && a.lastInitial === b.lastInitial; }
-  function nameOf(p) { return ((p.first || '') + ' ' + (p.lastInitial || '')).toUpperCase(); }
+  // Same rule as Home (NightShape.memberKey): case and spaces do not matter, name-only players are split.
+  // Name-only players (the organiser's payload: { name: "Pia L" }) are split the same way as NightShape.splitName.
+  function parts(p) {
+    if (!p) return { first: '', lastInitial: '' };
+    if (p.first || !p.name) return { first: p.first || '', lastInitial: p.lastInitial || '' };
+    var words = String(p.name).trim().split(/\s+/).filter(Boolean);
+    if (!words.length) return { first: '', lastInitial: p.lastInitial || '' };
+    if (words.length === 1) return { first: words[0], lastInitial: p.lastInitial || '' };
+    return { first: words.slice(0, -1).join(' '), lastInitial: p.lastInitial || words[words.length - 1].charAt(0).toUpperCase() };
+  }
+  function keyOf(p) {
+    var q = parts(p);
+    return ((q.first || '') + (q.lastInitial || '')).toLowerCase().replace(/\s+/g, '');
+  }
+  function same(a, b) { var ka = keyOf(a); return !!ka && ka === keyOf(b); }
+  function nameOf(p) { var q = parts(p); return ((q.first || '') + ' ' + (q.lastInitial || '')).toUpperCase(); }
   function norm(p, flags) {
     flags = flags || {};
     return {
-      first: p.first || '', lastInitial: p.lastInitial || '',
-      level: p.level || 0,   // next-34: no level for names the phone does not hold (0 = no level shown)
+      first: parts(p).first, lastInitial: parts(p).lastInitial,
+      level: p.level || 1,
       tier: p.tier || '',               // tier word (Rookie, Regular, Veteran). Never the skill title.
       standIn: !!p.standIn, prestige: !!p.prestige,
       stars: p.prestige ? (p.stars || 0) : 0,    // prestige stars only; a level-60 non-prestige shows the level only
@@ -165,7 +179,7 @@
 
     var phone = el('div', 'lr-phone');
     var top = el('div', 'lr-top');
-    top.appendChild(el('span', null, '1TO1 · TONIGHT'));
+    top.appendChild(el('span', null, NAMES.brand + ' · THIS RUN'));
     top.appendChild(el('span', null, lineup.number ? 'GAME ' + lineup.number : 'LINEUP'));
     phone.appendChild(top);
 

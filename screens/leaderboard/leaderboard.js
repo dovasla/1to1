@@ -1,15 +1,24 @@
 /* Leaderboard screen: team standings and top players.
+   Patch B (next-66, R85): players show their picture and their equipped look on each row.
    Plain JS, no framework, no network. Every player name goes through PlayerName (lib/player-name.js),
-   so level, prestige stars, banner, clan tag and row effect show on each row.
+   which draws the stars, the banner strip, the name style and the row effect. That is the shop's renderer;
+   nothing is copied here.
    Spec: revamp/build/player-app-plan/XP-SYSTEM.md section 6 and ARCHITECTURE-RESEARCH.md.
 
    Usage:
-     Leaderboard.mount(el, { teams: [...], players: [...] }, { meId: 7, myTeamId: 'b', sort: 'level' })
+     Leaderboard.mount(el, { teams: [...], players: [...] }, { meId: 7, myTeamId: 'b', sort: 'level', iconHtml: fn })
      Leaderboard.html(data, { meId: 7, myTeamId: 'b', sort: 'points' }) // markup only
 
-   Player: { id, name, level, stars, points, wins, banner, nameStyle, clanTag, emblemSrc, rowEffect }
-   Team:   { id, name, played, wins, points }
-   Sort:   'level' (default: prestige stars, then level, then points) or 'points' (points, then wins).
+   Player: { id, name, level, stars, points, wins, icon, look, clanTag, emblemSrc, under18, hidden, visible }
+     icon:  a character id (a01), an icon id (i07) or a VIP picture id (v03). Shown left of the name.
+            Missing or odd ids get the plain mark.
+     look:  equipped shop items { banner, name, row } (flat banner / nameStyle / rowEffect also work).
+     Hidden: hidden:true, visible:false or under18:true. Shown as "Player" with the plain mark, no look,
+            no level, no stars, no points, and no tap. A player's own row is never hidden to them.
+   Options: iconHtml(id) -> markup for an i or v id (the app passes its icon renderer). Optional.
+   Team:  { id, name, played, wins, points }
+   Sort:  'level' (default: prestige stars, then level, then points) or 'points' (points, then wins).
+          Hidden players compare as zero, so their numbers never move them up the board.
    Ties share a rank (1, 1, 3). Names are escaped everywhere.
 */
 (function (root) {
@@ -38,15 +47,37 @@
     return x < y ? -1 : x > y ? 1 : 0;
   }
 
-  // Players sorted for the chosen mode. Returns a new array.
-  function sortPlayers(players, mode) {
+  // Icon ids: a or i + 2 or 3 digits (characters and icons), v + 2 digits (VIP pictures).
+  var ICON_RE = /^(?:[ia]\d{2,3}|v\d{2})$/;
+  var CHAR_RE = /^a\d{2,3}$/;
+
+  // Hidden for others: the server flag, visible:false, or under-18. Never hidden on the player's own row.
+  function isHidden(p, meId) {
+    if (meId != null && String(p.id) === String(meId)) return false;
+    return p.hidden === true || p.visible === false || p.under18 === true;
+  }
+
+  // The values the board may compare and show. Hidden players count as zero.
+  function view(p, meId) {
+    var hidden = isHidden(p, meId);
+    return {
+      name: hidden ? 'Player' : String(p.name || ''),
+      level: hidden ? 0 : num(p.level),
+      stars: hidden ? 0 : num(p.stars),
+      points: hidden ? 0 : num(p.points),
+      wins: hidden ? 0 : num(p.wins)
+    };
+  }
+
+  // Players sorted for the chosen mode. Returns a new array of the player objects.
+  function sortPlayers(players, mode, meId) {
     var list = (players || []).slice();
     list.sort(function (a, b) {
+      var x = view(a, meId), y = view(b, meId);
       if (mode === 'points') {
-        return (num(b.points) - num(a.points)) || (num(b.wins) - num(a.wins)) || cmpText(a.name, b.name);
+        return (y.points - x.points) || (y.wins - x.wins) || cmpText(x.name, y.name);
       }
-      return (num(b.stars) - num(a.stars)) || (num(b.level) - num(a.level)) ||
-        (num(b.points) - num(a.points)) || cmpText(a.name, b.name);
+      return (y.stars - x.stars) || (y.level - x.level) || (y.points - x.points) || cmpText(x.name, y.name);
     });
     return list;
   }
@@ -73,38 +104,78 @@
     return out;
   }
 
-  function playerKey(p, mode) {
+  function playerKey(p, mode, meId) {
+    var v = view(p, meId);
     return mode === 'points'
-      ? num(p.points) + '|' + num(p.wins)
-      : num(p.stars) + '|' + num(p.level) + '|' + num(p.points);
+      ? v.points + '|' + v.wins
+      : v.stars + '|' + v.level + '|' + v.points;
+  }
+
+  // Equipped look, read from the player. PlayerName cleans every value again, so odd text never reaches the markup.
+  function lookOf(p) {
+    var l = p.look || p.equipped || {};
+    return {
+      banner: l.banner || p.banner || '',
+      nameStyle: l.name || l.nameStyle || p.nameStyle || '',
+      rowEffect: l.row || l.rowEffect || p.rowEffect || ''
+    };
+  }
+
+  // The plain mark: one SVG, used when there is no picture to show.
+  function plainBall() {
+    return '<svg viewBox="0 0 24 24" focusable="false"><circle cx="12" cy="12" r="10" fill="currentColor" opacity=".25"/>' +
+      '<path d="M2 12h20M12 2v20M5 5c4 4 4 10 0 14M19 5c-4 4-4 10 0 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
+  }
+
+  // The small picture left of the name. Characters are cropped to head and upper body (CSS).
+  function avatarHtml(p, opts, hidden) {
+    var id = hidden ? '' : String(p.icon || '');
+    var inner = '';
+    if (ICON_RE.test(id)) {
+      if (CHAR_RE.test(id)) {
+        inner = '<img src="icons/characters/set/' + id + '.svg" alt="" loading="lazy" decoding="async">';
+      } else if (typeof opts.iconHtml === 'function') {
+        inner = opts.iconHtml(id) || '';
+      }
+    }
+    return '<span class="lb-av' + (inner ? '' : ' lb-av--ball') + '" aria-hidden="true">' + (inner || plainBall()) + '</span>';
   }
 
   function playerRow(entry, opts) {
     var p = entry.item;
     var me = opts.meId != null && String(p.id) === String(opts.meId);
+    var hidden = isHidden(p, opts.meId);
+    var look = hidden ? {} : lookOf(p);
     var chip = PN().html({
-      name: p.name,
+      name: hidden ? 'Player' : p.name,
+      mock: hidden,
       level: p.level,
       stars: p.stars,
-      banner: p.banner,
-      nameStyle: p.nameStyle,
-      clanTag: p.clanTag,
-      emblemSrc: p.emblemSrc,
-      rowEffect: p.rowEffect,
+      banner: look.banner,
+      nameStyle: look.nameStyle,
+      clanTag: hidden ? '' : p.clanTag,
+      emblemSrc: hidden ? '' : p.emblemSrc,
+      rowEffect: look.rowEffect,
       size: 'compact'
     });
-    return '<li class="lb-row' + (me ? ' lb-row--me' : '') + '"' + (me ? ' aria-current="true"' : '') + '>' +
+    var stat = hidden
+      ? '<span class="lb-stat"></span>'
+      : '<span class="lb-stat"><b>' + fmt(p.points) + '</b> pts' +
+        (me ? '<span class="lb-you">You</span>' : '') + '</span>';
+    var cls = 'lb-row lb-row--player' + (me ? ' lb-row--me' : '') + (hidden ? ' lb-row--hidden' : '');
+    var tap = hidden ? '' : ' data-player="' + esc(String(p.id)) + '"';
+    return '<li class="' + cls + '"' + (me ? ' aria-current="true"' : '') + tap + '>' +
       '<span class="lb-rank" aria-label="Rank ' + entry.rank + '">' + entry.rank + '</span>' +
+      avatarHtml(p, opts, hidden) +
       chip +
-      '<span class="lb-stat"><b>' + fmt(p.points) + '</b> pts' +
-      (me ? '<span class="lb-you">You</span>' : '') + '</span>' +
+      stat +
       '</li>';
   }
 
   function teamRow(entry, opts) {
     var t = entry.item;
     var mine = opts.myTeamId != null && String(t.id) === String(opts.myTeamId);
-    return '<li class="lb-row' + (mine ? ' lb-row--me' : '') + '"' + (mine ? ' aria-current="true"' : '') + '>' +
+    return '<li class="lb-row lb-row--team' + (mine ? ' lb-row--me' : '') + '"' + (mine ? ' aria-current="true"' : '') + '>' +
       '<span class="lb-rank" aria-label="Rank ' + entry.rank + '">' + entry.rank + '</span>' +
       '<span class="lb-card"><span class="lb-team">' + esc(t.name) + '</span>' +
       '<span class="lb-sub">' + fmt(t.wins) + ' wins from ' + fmt(t.played) + '</span></span>' +
@@ -118,11 +189,11 @@
     opts = opts || {};
     var mode = opts.sort === 'points' ? 'points' : 'level';
     var teams = sortTeams(data.teams);
-    var players = sortPlayers(data.players, mode);
+    var players = sortPlayers(data.players, mode, opts.meId);
 
     var teamRows = rankList(teams, function (t) { return num(t.wins) + '|' + num(t.points); })
       .map(function (e) { return teamRow(e, opts); }).join('');
-    var playerRows = rankList(players, function (p) { return playerKey(p, mode); })
+    var playerRows = rankList(players, function (p) { return playerKey(p, mode, opts.meId); })
       .map(function (e) { return playerRow(e, opts); }).join('');
 
     var seg = '<div class="lb-seg" role="group" aria-label="Sort players">' +
@@ -132,18 +203,18 @@
 
     // No <h1> here: the app shell already shows the screen title.
     return '<header>' +
-      '<p class="muted">' + esc(opts.updatedText || 'Updates after each night.') + '</p>' +
+      '<p class="muted">' + esc(opts.updatedText || 'Updates after each run.') + '</p>' +
       '</header>' +
       '<section aria-labelledby="lb-teams-h">' +
       '<h2 id="lb-teams-h">Team Standings</h2>' +
       (teams.length ? '<ol class="lb-list">' + teamRows + '</ol>'
-        : '<p class="lb-empty">No teams yet. Standings show after the first night.</p>') +
+        : '<p class="lb-empty">No teams yet. Standings show after the first game.</p>') +
       '</section>' +
       '<section aria-labelledby="lb-players-h">' +
       '<h2 id="lb-players-h">Top Players</h2>' +
       seg +
       (players.length ? '<ol class="lb-list">' + playerRows + '</ol>'
-        : '<p class="lb-empty">No players yet. Sign up to get on the board.</p>') +
+        : '<p class="lb-empty">No players on the board yet.</p>') +
       '</section>';
   }
 
@@ -153,7 +224,13 @@
     var state = { sort: opts.sort === 'points' ? 'points' : 'level' };
 
     function draw(focusSort) {
-      el.innerHTML = html(data, { meId: opts.meId, myTeamId: opts.myTeamId, sort: state.sort, updatedText: opts.updatedText });
+      el.innerHTML = html(data, {
+        meId: opts.meId,
+        myTeamId: opts.myTeamId,
+        sort: state.sort,
+        updatedText: opts.updatedText,
+        iconHtml: opts.iconHtml
+      });
       var btns = el.querySelectorAll('[data-sort]');
       Array.prototype.forEach.call(btns, function (b) {
         b.addEventListener('click', function () {
@@ -180,6 +257,7 @@
     sortPlayers: sortPlayers,
     sortTeams: sortTeams,
     rankList: rankList,
+    isHidden: isHidden,
     fmt: fmt
   };
 

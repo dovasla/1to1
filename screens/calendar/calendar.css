@@ -1,4 +1,4 @@
-/* Add to calendar button. Owner: N4 calendar module. Uses the app tokens from app-tokens.css. */
-.cal-btn { display:flex; align-items:center; justify-content:center; width:100%; min-height:52px; margin-top:10px; padding:0 16px; box-sizing:border-box; border:0; border-radius:var(--radius-btn, 12px); background:var(--yellow, #FFD21F); color:var(--on-yellow, #0E0E0E); font:900 17px/1.1 var(--font-body, system-ui, sans-serif); text-transform:uppercase; letter-spacing:.04em; text-align:center; cursor:pointer; }
+/* Add to calendar button (P8). Uses the brand tokens (brand/tokens.css). */
+.cal-btn { display:flex; align-items:center; justify-content:center; width:100%; min-height:52px; margin-top:10px; padding:0 16px; box-sizing:border-box; border:0; border-radius:var(--radius-btn, 14px); background:var(--brand, #FFD21F); color:var(--on-brand, #0E0E0E); font:900 17px/1.1 var(--font-body, system-ui, sans-serif); text-transform:uppercase; letter-spacing:.04em; text-align:center; cursor:pointer; }
 .cal-btn--ghost { background:transparent; color:var(--ink, #F4F5F7); border:2px solid var(--line, #2C2F38); }
-.cal-btn:focus-visible { outline:3px solid var(--blue, #0A5CFF); outline-offset:2px; }
+.cal-btn:focus-visible { outline:3px solid var(--focus, #FFD21F); outline-offset:2px; }

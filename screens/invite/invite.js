@@ -1,4 +1,4 @@
-/* Bring a friend (N13). Plain JS, no framework. Owns only screens/invite/.
+/* Bring a friend (P8). Plain JS, no framework. Owns only screens/invite/.
    Browser: window.PlayerInvite. Node tests: invite.test.js.
 
    - readCode(search): the invite code from a link (?i=ABC234). '' when missing or not a code.
@@ -40,7 +40,7 @@
   }
 
   function shareText(link) {
-    return 'Come and play pickup basketball with me. Sign up with my link and we both get ' + REWARD + ' coins after your first night: ' + link;
+    return 'Come and play pickup basketball with me. Sign up with my link and we both get ' + REWARD + ' coins after your first run: ' + link;
   }
 
   // The status line under the button. Plain words, no numbers the player cannot act on.
@@ -54,7 +54,7 @@
     var d = data || {};
     var state = d.state || 'ready';
     var head = '<h2 class="invite-title">Bring a friend</h2>';
-    var lead = '<p class="invite-lead">When a friend plays their first night, you both get ' + REWARD + ' coins.</p>';
+    var lead = '<p class="invite-lead">When a friend plays their first run, you both get ' + REWARD + ' coins.</p>';
     if (state === 'loading') {
       return '<section class="invite-card" aria-busy="true">' + head + '<p class="invite-lead">Getting your link…</p></section>';
     }
@@ -81,7 +81,7 @@
     function share(link, btn) {
       var text = shareText(link);
       if (typeof navigator !== 'undefined' && navigator.share) {
-        return navigator.share({ title: '1TO1 Basketball', text: text, url: link })
+        return navigator.share({ title: 'Check Ball', text: text, url: link })
           .then(function () { st.msg = ''; }, function () { st.msg = ''; });
       }
       var copy = navigator && navigator.clipboard && navigator.clipboard.writeText

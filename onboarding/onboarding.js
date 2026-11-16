@@ -1,4 +1,4 @@
-/* 1TO1 player app: first-minute onboarding (N10).
+/* Check Ball player app: first-minute onboarding (N10, P9 port).
    Three short screens, each with one yellow button. Shown once per phone.
    Usage:
      PlayerOnboarding.markPending(localStorage);          // sign-up succeeded
@@ -69,20 +69,20 @@
       else how = 'Open this page on your phone, then add it to your Home Screen.';
       return {
         title: 'Install app',
-        lines: ['1TO1 opens like an app and keeps your last screens, even with no signal.', how],
+        lines: ['Check Ball opens like an app and keeps your last screens, even with no signal.', how],
         button: 'Next'
       };
     }
     if (id === 'next') {
       return {
-        title: 'Next night',
-        lines: ['Home shows the next night, the time and what to do.', 'Check it before game night.'],
+        title: 'Next run',
+        lines: ['Home shows the next run, the time and what to do.', 'Check it before the run.'],
         button: 'Next'
       };
     }
     return {
       title: 'The basics',
-      lines: ['Pay for the night before you play.', 'Play. Your team shows on Home.', 'Earn XP every night you play.'],
+      lines: ['Pay for the run before you play.', 'Play. Your team shows on Home.', 'Earn XP every run you play.'],
       button: 'Got it'
     };
   }

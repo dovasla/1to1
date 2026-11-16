@@ -14,6 +14,18 @@
   var backend = host ? host.get() : B.create(window.PLAYER_APP_CONFIG || { backend: 'mock', level: 12, stars: 3 },
     function () { return window.PLAYER_TOKEN || ''; });
 
+  // Bright hall: the app sets data-theme="light" on its own page, which does not reach this iframe.
+  // Copy it across (same origin) on load and whenever this frame gets focus. Falls back to dark.
+  function syncTheme() {
+    var t = '';
+    try { t = window.parent !== window ? window.parent.document.documentElement.getAttribute('data-theme') || '' : ''; } catch (e) { t = ''; }
+    if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+    else document.documentElement.removeAttribute('data-theme');
+  }
+  syncTheme();
+  window.addEventListener('focus', syncTheme);
+  document.addEventListener('visibilitychange', syncTheme);
+
   // The signed-in player's name, from the app shell. Only the demo page (no shell) shows the sample name.
   function myName() {
     var n = '';
@@ -60,12 +72,12 @@
     var short = PN.shortName(myName());
     if (item.slot === 'calling') {
       return '<span class="pn-call pn-call--' + item.value + '">' +
-        '<span class="pn-call-title">' + escText(short) + '</span><span class="pn-call-stat">Lv ' + (st.level || 1) + '</span></span>';
+        '<span class="pn-call-title">' + escText(short) + '</span><span class="pn-call-stat">Lv ' + st.level + '</span></span>';
     }
     var l = R.look({ items: st.items, equipped: {}, clanTag: '' },
       { slot: item.slot, id: item.id, tag: st.clanTag || 'TNT' });
     return PN.html({
-      name: short, level: st.level || 1, stars: st.stars || 0,
+      name: short, level: st.level, stars: st.stars,
       banner: l.banner, nameStyle: l.nameStyle, rowEffect: l.rowEffect, clanTag: l.clanTag
     });
   }

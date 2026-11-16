@@ -1,4 +1,4 @@
-/* Player app: Add to calendar. Owner: N4 calendar module. Plain JS, no framework, no network.
+/* Player app: Add to calendar (P8). Owner: calendar module. Plain JS, no framework, no network.
    Makes one .ics file in the browser for the next night and downloads it. Works on iPhone and
    Android with no server. Only the title, place and description the caller passes go in the file.
 
@@ -24,7 +24,7 @@
   var TZ = 'Europe/London';
   var DURATION_MIN = 120;            // a night is 2 hours
   var ALARM_MIN_BEFORE = 120;        // reminder 2 hours before
-  var DEFAULT_TITLE = '1TO1 basketball night';
+  var DEFAULT_TITLE = 'Check Ball run';
   var BYDAY = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
   var DOW = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
   // Regular nights repeat weekly. dow: 0 = Sunday. London local time.
@@ -137,12 +137,12 @@
     var lines = [
       'BEGIN:VCALENDAR',
       'VERSION:2.0',
-      'PRODID:-//1TO1//Player app//EN',
+      'PRODID:-//Check Ball//Player app//EN',
       'CALSCALE:GREGORIAN',
       'METHOD:PUBLISH'
     ].concat(VTIMEZONE, [
       'BEGIN:VEVENT',
-      'UID:1to1-' + utcStamp(start) + (weekly ? '-weekly' : '') + '@1TO1',
+      'UID:1to1-' + utcStamp(start) + (weekly ? '-weekly' : '') + '@CheckBall',
       'DTSTAMP:' + utcStamp(stamp),
       'DTSTART;TZID=' + TZ + ':' + localStamp(sp),
       'DTEND;TZID=' + TZ + ':' + localStamp(ep)
@@ -165,10 +165,10 @@
     return lines.map(fold).join('\r\n') + '\r\n';
   }
 
-  // File name in London time, e.g. 1to1-night-20261119-2000.ics
+  // File name in London time, e.g. check-ball-night-20261119-2000.ics
   function fileName(night) {
     var p = londonParts(toMs(night.startsAt));
-    return '1to1-night-' + p.y + p2(p.mo) + p2(p.d) + '-' + p2(p.h) + p2(p.mi) + '.ics';
+    return 'check-ball-night-' + p.y + p2(p.mo) + p2(p.d) + '-' + p2(p.h) + p2(p.mi) + '.ics';
   }
 
   function esc(s) {
@@ -213,7 +213,7 @@
       e.preventDefault();
       var night = typeof getNight === 'function' ? getNight() : getNight;
       try {
-        if (!night) throw new Error('calendar: no night');
+        if (!night) throw new Error('calendar: no run');
         download(buildIcs(night), fileName(night), doc);
         if (typeof opts.onDone === 'function') opts.onDone('ok');
       } catch (err) {

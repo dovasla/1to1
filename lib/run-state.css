@@ -1,0 +1,2 @@
+/* Run-state line on Home (P12). One plain line above the big number. Words only, no colour alone. */
+.ph-runstate { margin:0 0 6px; font-size:16px; font-weight:700; color:var(--ink); }

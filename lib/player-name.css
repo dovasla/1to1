@@ -14,8 +14,8 @@
   min-width: 0;
   padding: 8px 12px;
   border-radius: 12px;
-  background: var(--card, #1A1C22);
-  color: var(--ink, #F4F5F7);
+  background: var(--card);
+  color: var(--ink);
   font: 800 16px/1.25 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   overflow: hidden;
   overflow-wrap: anywhere;
@@ -38,16 +38,16 @@
   font-size: 15px;
   font-weight: 900;
   letter-spacing: .06em;
-  color: #0E0E0E;
-  background: var(--yellow, #FFD21F);
+  color: var(--on-brand);
+  background: var(--brand);
   border-radius: 6px;
   padding: 1px 6px;
 }
 /* Level text is light blue on dark cards and meets WCAG AA (4.5:1) even over the gold banner fade (QA item 4). */
-.pn-lv { font-size: 15px; font-weight: 800; color: #C4D5FF; white-space: nowrap; }
+.pn-lv { font-size: 15px; font-weight: 800; color: var(--link-text); white-space: nowrap; }
 .pn-lv::before { content: "\00B7"; color: #E6EAF2; font-weight: 700; margin-right: 8px; }
-.pn-stars { font-size: 15px; color: var(--yellow, #FFD21F); letter-spacing: 1px; white-space: nowrap; }
-.pn-stars-more { font-size: 15px; font-weight: 900; color: var(--yellow, #FFD21F); white-space: nowrap; }
+.pn-stars { font-size: 15px; color: var(--brand-text); letter-spacing: 1px; white-space: nowrap; }
+.pn-stars-more { font-size: 15px; font-weight: 900; color: var(--brand-text); white-space: nowrap; }
 
 /* Emblems: small CSS-only badges, 24px, never GIF. */
 .pn-emb { flex: none; display: inline-block; width: 24px; height: 24px; border-radius: 50%; object-fit: cover; }
@@ -69,12 +69,12 @@
 
 /* Banner: a soft strip behind the row. An equipped shop banner wins; with none, the star count picks one (p1 to p10). */
 .pn-banner { display: block; pointer-events: none; }
-.pn-banner--gold { background: linear-gradient(90deg, rgba(255, 210, 31, .30), rgba(255, 210, 31, 0) 75%); }
+.pn-banner--brand { background: linear-gradient(90deg, rgba(255, 210, 31, .30), rgba(255, 210, 31, 0) 75%); }
 .pn-banner--blue { background: linear-gradient(90deg, rgba(10, 92, 255, .38), rgba(10, 92, 255, 0) 75%); }
-.pn-banner--ember { background: linear-gradient(90deg, rgba(255, 120, 40, .34), rgba(255, 120, 40, 0) 75%); }
+.pn-banner--tier-ember { background: linear-gradient(90deg, rgba(255, 120, 40, .34), rgba(255, 120, 40, 0) 75%); }
 .pn-banner--legend { background: linear-gradient(90deg, rgba(255, 210, 31, .42), rgba(10, 92, 255, .30) 70%, rgba(10, 92, 255, 0)); }
-.pn-banner--silver { background: linear-gradient(90deg, rgba(201, 206, 214, .34), rgba(201, 206, 214, 0) 75%); }
-.pn-banner--bronze { background: linear-gradient(90deg, rgba(196, 128, 58, .36), rgba(196, 128, 58, 0) 75%); }
+.pn-banner--tier-silver { background: linear-gradient(90deg, rgba(201, 206, 214, .34), rgba(201, 206, 214, 0) 75%); }
+.pn-banner--tier-bronze { background: linear-gradient(90deg, rgba(196, 128, 58, .36), rgba(196, 128, 58, 0) 75%); }
 .pn-banner--black { background: linear-gradient(90deg, #000, rgba(0, 0, 0, 0) 80%); box-shadow: inset 3px 0 0 #FFD21F; }
 
 /* Prestige banners, one per star. Stars 1 to 5 climb bronze, silver, gold, ember, legend.
@@ -92,12 +92,12 @@
 
 /* Name styles. */
 .pn-name--caps { text-transform: uppercase; letter-spacing: .04em; }
-.pn-name--gold { color: var(--gold, #FFD21F); }
-.pn-name--silver { color: var(--silver, #C9CED6); }
-.pn-name--bronze { color: var(--bronze, #C4803A); }
-.pn-name--blue { color: var(--bluename, #6FA0FF); }
-.pn-name--ember { color: var(--ember, #FF8A4C); }
-.pn-name--legend { background: linear-gradient(90deg, #0A5CFF, var(--yellow, #FFD21F)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.pn-name--brand { color: var(--brand-text); }
+.pn-name--tier-silver { color: var(--tier-silver); }
+.pn-name--tier-bronze { color: var(--tier-bronze); }
+.pn-name--blue { color: var(--link-text); }
+.pn-name--tier-ember { color: var(--tier-ember); }
+.pn-name--legend { background: linear-gradient(90deg, #0A5CFF, var(--brand)); -webkit-background-clip: text; background-clip: text; color: transparent; }
 
 /* Row effects. One pseudo-element each, animating only transform or opacity. */
 /* Shimmer: slow sweep. A static yellow ring is always there, so the row still stands out without motion. */
@@ -138,14 +138,14 @@
 
 /* Tappable chip: 48px minimum, focus ring. */
 .pn--tap { cursor: pointer; }
-.pn--tap:focus-visible { outline: 3px solid var(--blue, #0A5CFF); outline-offset: 2px; }
+.pn--tap:focus-visible { outline:px solid var(--focus); outline-offset: 2px; }
 
 /* Full card: name, level and stars on one line, banner across the top. */
 .pn--full {
   display: block;
   padding: 16px;
   min-height: 0;
-  border: 1px solid var(--line, #2C2F38);
+  border: 1px solid var(--line);
 }
 .pn--full .pn-line { font-size: 24px; font-weight: 900; text-transform: uppercase; letter-spacing: .02em; margin-top: 0; }
 .pn--full .pn-lv { font-size: 18px; }
@@ -161,31 +161,31 @@
   margin-top: 12px;
   padding: 12px 14px;
   border-radius: 14px;
-  border: 2px solid var(--yellow, #FFD21F);
+  border: 2px solid var(--brand);
   background: linear-gradient(135deg, #1A1C22, #0E0E0E);
-  color: #F4F5F7;
+  color: var(--ink);
 }
-.pn-call-title { font-size: 20px; font-weight: 900; text-transform: uppercase; color: #FFD21F; overflow-wrap: anywhere; }
-.pn-call-stat { font-size: 15px; font-weight: 800; color: #F4F5F7; }
+.pn-call-title { font-size: 20px; font-weight: 900; text-transform: uppercase; color: var(--brand-text); overflow-wrap: anywhere; }
+.pn-call-stat { font-size: 15px; font-weight: 800; color: var(--ink); }
 .pn-call--arrive { animation: pn-call-in 420ms cubic-bezier(.2, .8, .2, 1) both; }
 @keyframes pn-call-in {
   0% { transform: translateX(-28px); opacity: 0; }
   70% { transform: translateX(3px); opacity: 1; }
   100% { transform: none; opacity: 1; }
 }
-.pn-call--blue { background: linear-gradient(135deg, #0A5CFF, #0A2A6B); border-color: #0A5CFF; }
-.pn-call--blue .pn-call-title, .pn-call--blue .pn-call-stat { color: #fff; }
-.pn-call--court { background: linear-gradient(135deg, #1F7A43, #0E3B21); border-color: #FFD21F; }
-.pn-call--silver { background: linear-gradient(135deg, #E6E9EE, #8A93A3); border-color: #C9CED6; }
-.pn-call--silver .pn-call-title, .pn-call--silver .pn-call-stat { color: #0E0E0E; }
-.pn-call--black { background: #000; border-color: #FFD21F; }
-.pn-call--gold { background: linear-gradient(135deg, #FFD21F, #6B5200); border-color: #FFD21F; }
-.pn-call--gold .pn-call-title, .pn-call--gold .pn-call-stat { color: #0E0E0E; }
-.pn-call--ember { background: linear-gradient(135deg, #FF7A2F, #7A2A0A); border-color: #FF8A4C; }
-.pn-call--ember .pn-call-title, .pn-call--ember .pn-call-stat { color: #fff; }
-.pn-call--bronze { background: linear-gradient(135deg, #C4803A, #5C3510); border-color: #C4803A; }
-.pn-call--bronze .pn-call-title, .pn-call--bronze .pn-call-stat { color: #fff; }
-.pn-call--legend { background: linear-gradient(135deg, #0A5CFF, #0E0E0E); border-color: #FFD21F; }
+.pn-call--blue { background: linear-gradient(135deg, #0A5CFF, #0A2A6B); border-color: var(--link); }
+.pn-call--blue .pn-call-title, .pn-call--blue .pn-call-stat { color: var(--on-brand); }
+.pn-call--court { background: linear-gradient(135deg, #1F7A43, #0E3B21); border-color: var(--brand); }
+.pn-call--tier-silver { background: linear-gradient(135deg, #E6E9EE, #8A93A3); border-color: #C9CED6; }
+.pn-call--tier-silver .pn-call-title, .pn-call--tier-silver .pn-call-stat { color: var(--on-brand); }
+.pn-call--black { background: #000; border-color: var(--brand); }
+.pn-call--brand { background: linear-gradient(135deg, #FFD21F, #6B5200); border-color: var(--brand); }
+.pn-call--brand .pn-call-title, .pn-call--brand .pn-call-stat { color: var(--on-brand); }
+.pn-call--tier-ember { background: linear-gradient(135deg, #FF7A2F, #7A2A0A); border-color: #FF8A4C; }
+.pn-call--tier-ember .pn-call-title, .pn-call--tier-ember .pn-call-stat { color: var(--on-brand); }
+.pn-call--tier-bronze { background: linear-gradient(135deg, #C4803A, #5C3510); border-color: #C4803A; }
+.pn-call--tier-bronze .pn-call-title, .pn-call--tier-bronze .pn-call-stat { color: var(--on-brand); }
+.pn-call--legend { background: linear-gradient(135deg, #0A5CFF, #0E0E0E); border-color: var(--brand); }
 
 /* Mock: plain name only. */
 .pn--mock { font-weight: 700; }
@@ -193,12 +193,12 @@
 /* Bright hall (light) mode. */
 /* The black banner turns into a soft ink wash on light cards, so the row text stays readable. */
 :root:not([data-theme="dark"]) .pn-banner--black,
-:root[data-theme="light"] .pn-banner--black { background: linear-gradient(90deg, rgba(14, 14, 14, .18), rgba(14, 14, 14, 0) 80%); box-shadow: inset 3px 0 0 var(--yellow, #B88A00); }
+:root[data-theme="light"] .pn-banner--black { background: linear-gradient(90deg, rgba(14, 14, 14, .18), rgba(14, 14, 14, 0) 80%); box-shadow: inset 3px 0 0 var(--brand); }
 @media (prefers-color-scheme: light) {
-  :root:not([data-theme="dark"]) .pn-lv { color: #0A5CFF; }
+  :root:not([data-theme="dark"]) .pn-lv { color: var(--brand-text); }
   :root:not([data-theme="dark"]) .pn-lv::before { color: #4B5263; }
 }
-:root[data-theme="light"] .pn-lv { color: #0A5CFF; }
+:root[data-theme="light"] .pn-lv { color: var(--brand-text); }
 :root[data-theme="light"] .pn-lv::before { color: #4B5263; }
 
 /* Reduced motion: no sweep, no breathing, no spin, no slam-in. The still ring and the banner stay. */
@@ -217,7 +217,3 @@
 :root[data-reduce-motion="1"] .pn-emb--spark,
 :root[data-reduce-motion="1"] .pn-call--arrive { animation: none; }
 :root[data-reduce-motion="1"] .pn-fx--glow::after { opacity: .5; }
-
-/* Light theme: the star row is yellow text on white (fails contrast). Use the dark gold text token. (gate fix, 15 Nov) */
-:root[data-theme="light"] .pn-stars, :root[data-theme="light"] .pn-stars-more { color: var(--gold-text); }
-@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .pn-stars, :root:not([data-theme="dark"]) .pn-stars-more { color: var(--gold-text); } }

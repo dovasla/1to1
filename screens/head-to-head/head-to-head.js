@@ -89,5 +89,16 @@
     return { html: html };
   }
 
-  return { buildCard: buildCard, buildLog: buildLog, recordText: recordText, esc: esc };
+  // Picker: the players from the leaderboard you can compare with. Hidden players and yourself are left out.
+  function pickerHtml(rows) {
+    var list = (Array.isArray(rows) ? rows : []).filter(function (r) {
+      return r && !r.me && r.public_id && r.name && r.name !== 'Player';
+    });
+    if (!list.length) return '<p class="hh-empty">No other players to compare with yet</p>';
+    return '<h3 class="hh-title">Head to head</h3><ul class="hh-picker">' + list.slice(0, 20).map(function (r) {
+      return '<li><button type="button" class="btn ghost hh-pick" data-h2h="' + esc(r.public_id) + '">' + esc(r.name) + '</button></li>';
+    }).join('') + '</ul><div id="hH2hCard"></div>';
+  }
+
+  return { buildCard: buildCard, buildLog: buildLog, pickerHtml: pickerHtml, recordText: recordText, esc: esc };
 });

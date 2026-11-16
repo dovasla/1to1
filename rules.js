@@ -27,7 +27,7 @@
     'Cold Blooded', 'Menace', 'All-Star', 'Cheat Code', 'HIM'
   ];
 
-  // Default run windows (local time). day: 0 = Sunday, 4 = Thursday. Hours are 24h.
+  // Default run windows (local time). day: index 0 to 6 from the start of the week. Hours are 24h.
   var RUN_WINDOWS = [
     { day: 0, startHour: 11, endHour: 13 },
     { day: 4, startHour: 20, endHour: 22 }
@@ -52,19 +52,6 @@
     return n >= 1 && n <= SKILL_LEVELS.length ? SKILL_LEVELS[n - 1] : '';
   }
 
-  // Names players may not sign up with (owner and staff names). Stored as character codes so the
-  // words do not appear in the player build. Compared lower case, first name only.
-  var RESERVED_FIRST = [
-    [106, 111, 114, 100],
-    [111, 114, 103, 97, 110, 105, 115, 101, 114],
-    [111, 114, 103, 97, 110, 105, 122, 101, 114],
-    [111, 119, 110, 101, 114],
-    [97, 100, 109, 105, 110]                                               // admin
-  ].map(function (codes) { return String.fromCharCode.apply(null, codes); });
-  function isReservedFirst(first) {
-    return RESERVED_FIRST.indexOf(cleanName(first).toLowerCase()) >= 0;
-  }
-
   function validateSignup(input) {
     input = input || {};
     var errors = {};
@@ -74,7 +61,6 @@
     if (!first) errors.first = 'Add your first name.';
     else if (first.length > 20) errors.first = 'Keep it under 20 letters.';
     else if (!/^[A-Za-z][A-Za-z'\- ]*$/.test(first)) errors.first = 'Use letters only.';
-    else if (isReservedFirst(first)) errors.first = 'That name is not available. Use your own first name.';
 
     if (!li) errors.lastInitial = 'Add the first letter of your last name.';
     else if (!/^[A-Z]$/.test(li)) errors.lastInitial = 'Just one letter, no full name.';
@@ -119,18 +105,8 @@
   // value of the card picked) and height (inches, 53 to 84). Weights 40/20/15/15/10 (Fable 23:14), as in
   // off-rating.js. Same maths as skill_score_from_answers() in supabase/migration-6-skill.sql (the server copy wins).
   var SKILL_WEIGHTS = { exp: 0.40, shoot: 0.20, dribble: 0.15, run: 0.15, height: 0.10 };
-  // Version 2 (Fable R60): four taps, whole-number values (doubled). Integer maths, so phone and server agree.
-  // sum = 36*exp + 27*min(place, exp+8) + 18*play + 9*height; score = 100 + round-half-up(sum/2), kept 100 to 1000.
-  function skillScoreV2(a) {
-    var e = Number(a.exp), p = Number(a.play), pl = Number(a.place), h = Number(a.height);
-    if (![e, p, pl, h].every(isFinite)) return null;
-    var sum = 36 * e + 27 * Math.min(pl, e + 8) + 18 * p + 9 * h;
-    return Math.min(1000, Math.max(100, 100 + Math.floor(sum / 2 + 0.5)));
-  }
-
   function skillScoreFromAnswers(a) {
     if (!a) return null;
-    if (String(a.v) === '2') return skillScoreV2(a);
     var keys = ['exp', 'shoot', 'dribble', 'run', 'height'];
     for (var i = 0; i < keys.length; i++) if (!isFinite(Number(a[keys[i]]))) return null;
     var h = Math.min(84, Math.max(53, Number(a.height)));
@@ -206,20 +182,36 @@
     return s;
   }
 
+  // Username: the name other players see (migration-44). 3 to 14 letters, digits or underscore.
+  var USERNAME_RE = /^[A-Za-z0-9_]{3,14}$/;
+  var USERNAME_HELP = '3 to 14 letters, numbers or _. No spaces.';
+
+  function validateUsername(raw) {
+    var v = String(raw == null ? '' : raw).trim();
+    return USERNAME_RE.test(v) ? { ok: true, value: v } : { ok: false, error: USERNAME_HELP };
+  }
+
+  // The name the box starts with: first name, last initial and any extra letters (e.g. RobC). Same base as the server.
+  function defaultUsername(first, li, extra) {
+    var s = titleCase(cleanName(first).toLowerCase()) + cleanName(li).toUpperCase() + cleanName(extra).toLowerCase();
+    return s.replace(/[^A-Za-z0-9]/g, '').slice(0, 14);
+  }
+
   return {
+    USERNAME_HELP: USERNAME_HELP,
+    validateUsername: validateUsername,
+    defaultUsername: defaultUsername,
     SKILL_LEVELS: SKILL_LEVELS,
     XP_START_LEVEL: XP_START_LEVEL,
     RUN_WINDOWS: RUN_WINDOWS,
     cleanName: cleanName,
     levelLabel: levelLabel,
     validateSignup: validateSignup,
-    isReservedFirst: isReservedFirst,
     validatePin: validatePin,
     keyFor: keyFor,
     ratingFromLevel: ratingFromLevel,
     skillScoreFromLevel: skillScoreFromLevel,
     skillScoreFromAnswers: skillScoreFromAnswers,
-    skillScoreV2: skillScoreV2,
     toRegular: toRegular,
     toRegularsCsv: toRegularsCsv,
     mergeApproved: mergeApproved,

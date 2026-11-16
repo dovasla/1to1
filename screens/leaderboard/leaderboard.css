@@ -20,7 +20,7 @@
   font-size: 22px;
   font-weight: 900;
   line-height: 1;
-  color: var(--gold-text);
+  color: var(--brand-text);
   text-align: center;
   font-variant-numeric: tabular-nums;
 }
@@ -28,7 +28,7 @@
 
 /* Me or my team: a thick yellow frame on the row. Outline, so it does not fight the row effect ring. */
 .lb-row--me > .pn,
-.lb-row--me > .lb-card { outline: 3px solid var(--gold-text); outline-offset: -3px; }
+.lb-row--me > .lb-card { outline:px solid var(--focus); outline-offset: -3px; }
 
 /* Team name card, same height as a player row. */
 .lb-card {
@@ -62,8 +62,8 @@
   font-weight: 900;
   letter-spacing: .06em;
   text-transform: uppercase;
-  color: var(--on-yellow);
-  background: var(--yellow);
+  color: var(--on-brand);
+  background: var(--brand);
   border-radius: 6px;
   padding: 1px 6px;
 }
@@ -83,8 +83,8 @@
   letter-spacing: .04em;
   cursor: pointer;
 }
-.lb-seg button[aria-pressed="true"] { background: var(--yellow); border-color:var(--yellow-text); color: var(--on-yellow); }
-.lb-seg button:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+.lb-seg button[aria-pressed="true"] { background: var(--brand); border-color: var(--brand); color: var(--on-brand); }
+.lb-seg button:focus-visible { outline:px solid var(--focus); outline-offset: 2px; }
 
 .lb-empty {
   margin: 0;
@@ -103,3 +103,34 @@
 :root[data-reduce-motion="1"] .lb *,
 :root[data-reduce-motion="1"] .lb *::before,
 :root[data-reduce-motion="1"] .lb *::after { animation: none !important; transition: none !important; }
+
+/* Patch B (next-66): player rows get a picture left of the name. Rank, picture, name chip, points.
+   Team rows keep the three column layout above. Hidden players: dashed picture frame, no points. */
+.lb-row--player { grid-template-columns: 36px 36px minmax(0, 1fr) auto; gap: 6px; }
+@media (max-width: 359px) { .lb-row--player { grid-template-columns: 30px 36px minmax(0, 1fr) auto; } }
+.lb-row--team { grid-template-columns: 40px minmax(0, 1fr) auto; gap: 8px; }
+
+.lb-av {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--card);
+  border: 2px solid var(--line);
+  color: var(--ink);
+  display: block;
+  flex: none;
+}
+.lb-av img {
+  position: absolute;
+  left: -35%;
+  top: 0;
+  width: 170%;
+  height: 170%;
+  max-width: none;
+  display: block;
+}
+.lb-av svg { width: 100%; height: 100%; padding: 5px; box-sizing: border-box; display: block; }
+.lb-av--ball { color: var(--muted); }
+.lb-row--hidden .lb-av { border-style: dashed; }

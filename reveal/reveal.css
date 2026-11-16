@@ -8,23 +8,23 @@
 @font-face { font-family: "Barlow Condensed"; font-weight: 700; font-style: normal; font-display: swap; src: url("fonts/barlowcondensed-700.woff2") format("woff2"); }
 
 .lr-overlay {
-  --lr-bg: #0E0E0E;
-  --lr-card: #1A1C22;
-  --lr-raised: #23262E;
-  --lr-line: #2C2F38;
-  --lr-text: #F4F5F7;
-  --lr-muted: #AEB4C0;
-  --lr-yellow: #FFD21F;
-  --lr-on-yellow: #0E0E0E;
-  --lr-head: #FFD21F;
-  --lr-blue: #0A5CFF;
-  --lr-blue-text: #6FA0FF;
-  --lr-gold-text: #FFD21F;
-  --lr-opp: #FF6B6B;
+  --lr-bg: var(--bg);
+  --lr-card: var(--card);
+  --lr-raised: var(--raised);
+  --lr-line: var(--line);
+  --lr-text: var(--ink);
+  --lr-muted: var(--muted);
+  --lr-yellow: var(--brand);
+  --lr-on-yellow: var(--on-brand);
+  --lr-head: var(--brand);
+  --lr-blue: var(--link);
+  --lr-blue-text: var(--link-text);
+  --lr-gold-text: var(--brand);
+  --lr-opp: var(--red);
   --lr-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
-  /* PlayerName reads these, so the chip follows this screen's theme even on a light page. */
-  --card: #1A1C22;
-  --ink: #F4F5F7;
+  /* PlayerName reads these, so the chip follows this screen theme. */
+  --card: var(--card);
+  --ink: var(--ink);
   position: fixed;
   inset: 0;
   z-index: 1000;
@@ -38,20 +38,7 @@
   line-height: 1.4;
   animation: lr-sheet 0.24s var(--lr-ease);
 }
-.lr-overlay[data-theme="light"] {
-  --lr-bg: #F4F6FA;
-  --lr-card: #FFFFFF;
-  --lr-raised: #EDF0F5;
-  --lr-line: #D9DEE8;
-  --lr-text: #111318;
-  --lr-muted: #4B5263;
-  --lr-head: #0A5CFF;
-  --lr-blue-text: #0A5CFF;
-  --lr-gold-text: #6B4E00;
-  --lr-opp: #C62828;
-  --card: #FFFFFF;
-  --ink: #111318;
-}
+
 
 .lr-phone {
   width: 100%;
@@ -122,7 +109,7 @@
   font-size: 20px;
   line-height: 1.1;
   letter-spacing: 0.02em;
-  color: #FFFFFF;
+  color: var(--on-brand);
 }
 
 /* Screen title: two words, caps, Barlow Condensed 28px. */
@@ -163,7 +150,7 @@
 .lr-row.in { opacity: 1; transform: none; }
 .lr-row.lr-opp { transform: translateX(24px); }
 .lr-row.lr-opp.in { transform: none; }
-.lr-row.lr-cur { background: linear-gradient(90deg, rgba(255, 210, 31, 0.14), rgba(255, 210, 31, 0)); }
+.lr-row.lr-cur { background: linear-gradient(90deg, color-mix(in srgb, var(--brand) 14%, transparent), transparent); }
 
 .lr-n {
   width: 22px;
@@ -196,7 +183,7 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
-.lr-tag-blue { background: var(--lr-blue); color: #FFFFFF; }
+.lr-tag-blue { background: var(--lr-blue); color: var(--on-brand); }
 .lr-tag-yellow { background: var(--lr-yellow); color: var(--lr-on-yellow); }
 .lr-tier {
   font-family: "Barlow", sans-serif;
@@ -221,7 +208,7 @@
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, rgba(255, 210, 31, 0), rgba(255, 210, 31, 0.22), rgba(255, 210, 31, 0));
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--brand) 22%, transparent), transparent);
   background-size: 200% 100%;
   animation: lr-sheen 2.4s linear infinite;
   pointer-events: none;

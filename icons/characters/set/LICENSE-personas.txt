@@ -1,0 +1,7 @@
+Avatars in this folder are rendered from DiceBear "Personas" (https://www.dicebear.com).
+
+Design: Personas by Draftbit (https://personas.draftbit.com/), designer Draftbit (https://draftbit.com/), licensed CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/).
+Code: DiceBear by Florian Körner, MIT License.
+
+Credit line for the app credits text:
+"Avatars: Personas by Draftbit (CC BY 4.0), via DiceBear."

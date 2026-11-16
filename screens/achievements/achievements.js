@@ -5,16 +5,16 @@
 (function (root) {
   'use strict';
 
-  // id, title, goal (plain words), coins (paid once), enabled. Keep in step with supabase/migration-16-achievements.sql.
+  // id, title, goal (plain words), coins (paid once), enabled. Keep in step with supabase/migration-16-achievements.sql. Coins are not paid in the app yet (desk R246).
   var ACHIEVEMENTS = [
-    { id: 'first-game',    title: 'First game',       goal: 'Play your first night',                     coins: 50,  enabled: true },
+    { id: 'first-game',    title: 'First game',       goal: 'Play your first run',                     coins: 50,  enabled: true },
     { id: 'first-win',     title: 'First win',        goal: 'Win your first game',                       coins: 50,  enabled: true },
-    { id: 'clean-night',   title: 'Clean night',      goal: 'Play a night with no fouls',                coins: 150, enabled: true },
-    { id: 'perfect-night', title: 'Perfect night',    goal: 'Win every game in one night (two or more)', coins: 250, enabled: true },
-    { id: 'wins-5-night',  title: 'Five in a night',  goal: 'Win 5 games in one night',                  coins: 300, enabled: true },
-    { id: 'iron-10',       title: 'Iron 10',          goal: 'Play 10 nights',                            coins: 100, enabled: true },
-    { id: 'iron-25',       title: 'Iron 25',          goal: 'Play 25 nights',                            coins: 400, enabled: true },
-    { id: 'iron-50',       title: 'Iron 50',          goal: 'Play 50 nights',                            coins: 500, enabled: true },
+    { id: 'clean-night',   title: 'Clean run',      goal: 'Play a run with no fouls',                coins: 150, enabled: true },
+    { id: 'perfect-night', title: 'Perfect run',    goal: 'Win every game in one run (four or more)', coins: 250, enabled: true },
+    { id: 'wins-5-night',  title: 'Five in a run',  goal: 'Win 5 games in one run',                  coins: 300, enabled: true },
+    { id: 'iron-10',       title: 'Iron 10',          goal: 'Play 10 runs',                            coins: 100, enabled: true },
+    { id: 'iron-25',       title: 'Iron 25',          goal: 'Play 25 runs',                            coins: 400, enabled: true },
+    { id: 'iron-50',       title: 'Iron 50',          goal: 'Play 50 runs',                            coins: 500, enabled: true },
     { id: 'streak-4',      title: 'Four weeks',       goal: 'Come 4 weeks running',                      coins: 200, enabled: true },
     { id: 'streak-8',      title: 'Eight weeks',      goal: 'Come 8 weeks running',                      coins: 400, enabled: true },
     { id: 'mvp',           title: 'MVP',              goal: 'Win an MVP vote',                           coins: 300, enabled: true },
@@ -74,7 +74,7 @@
     if (!rows || rows.length === 0) {
       var empty = document.createElement('p');
       empty.className = 'ach-empty';
-      empty.textContent = 'No badges yet. Play a night to start.';
+      empty.textContent = 'No badges yet. Play a run to start.';
       el.appendChild(empty);
       return;
     }
@@ -95,10 +95,13 @@
       goal.textContent = r.earned ? 'Earned' : r.goal;
       li.appendChild(goal);
 
-      var meta = document.createElement('span');
-      meta.className = 'ach-meta';
-      meta.textContent = r.earned ? 'Paid ' + r.coins + ' coins' : progressText(r) + ' · ' + r.coins + ' coins';
-      li.appendChild(meta);
+      // No coin line: badge coins are not paid yet (desk R246). Locked badges show progress only.
+      if (!r.earned) {
+        var meta = document.createElement('span');
+        meta.className = 'ach-meta';
+        meta.textContent = progressText(r);
+        li.appendChild(meta);
+      }
 
       list.appendChild(li);
     });

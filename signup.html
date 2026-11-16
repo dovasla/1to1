@@ -6,30 +6,28 @@
 <meta name="theme-color" content="#0E0E0E">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="1TO1">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon-180-v2.png">
+<meta name="apple-mobile-web-app-title" content="">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png">
 <link rel="stylesheet" href="pwa.css">
 <link rel="manifest" href="manifest.webmanifest">
-<title>Join the run</title>
-<link rel="icon" href="icons/icon-32-v2.png" sizes="32x32" type="image/png">
+<title>Sign up</title>
+<link rel="icon" href="icons/icon-32.png" sizes="32x32" type="image/png">
 <script>
   // Same theme rule as the app: the saved choice wins, otherwise the phone setting (handled in CSS).
   try { var t = localStorage.getItem('1to1-theme'); if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); } catch (e) { /* private window: phone setting */ }
 </script>
 <link rel="stylesheet" href="app.css">
 <link rel="stylesheet" href="app-tokens.css">
-<link rel="stylesheet" href="keyboard-submit.css">
+<link rel="stylesheet" href="icons/characters/picker.css">
 <style>
   /* Brand: yellow Send button with dark text, like the other yellow buttons. */
-  #send.btn { background:var(--yellow); color:var(--on-yellow); }
+  #send.btn { background:var(--brand); color:var(--on-brand); }
 </style>
-<link rel="stylesheet" href="weak-signal/signal.css">
 </head>
 <body data-no-install-card>
 <main>
-  <h1>Join the run</h1>
-  <p class="muted">Use your first name and the first letter of your last name. Example: John Smith becomes <b>John S</b>. We keep nothing else.</p>
+  <h1>Sign up</h1>
+  <p class="muted">Use your first name and the first letter of your last name. Example: John Smith becomes <b>John S</b>.</p>
 
   <section id="formView" class="card">
     <form id="f" novalidate>
@@ -47,22 +45,36 @@
         <p class="err" id="e-extra" hidden></p>
       </div>
 
+      <label for="user">Username</label>
+      <p class="muted">This is the name other players see.</p>
+      <input id="user" name="username" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="14">
+      <p class="err" id="e-username" hidden></p>
+
       <label for="pin">Your 4-digit PIN</label>
       <p class="muted">You use this with your name to log in later. Pick four digits you will remember. Don't use your birthday or anything obvious.</p>
       <input id="pin" name="pin" type="password" inputmode="numeric" autocomplete="new-password" pattern="[0-9]*" maxlength="4" required>
       <p class="err" id="e-pin" hidden></p>
 
-      <button class="btn" type="submit" id="send">Send</button>
+    <button class="btn" type="submit" id="send">Send</button>
       <p class="err" id="e-form" hidden></p>
     </form>
   </section>
 
+  <section id="charView" class="card" hidden>
+    <h2>Pick your character</h2>
+    <p class="muted">Shown next to your name on the board and on court. Skip to keep the plain mark for now. You can change it later in Profile.</p>
+    <p class="muted" id="userNote" hidden></p>
+    <p class="err" id="e-char" hidden></p>
+    <button class="btn ghost" id="charSkip" type="button">Skip for now</button>
+    <div id="pickHost"></div>
+  </section>
+
   <section id="doneView" class="card" hidden>
-    <p class="ok">You're signed up.</p>
+    <p class="ok">You're in.</p>
     <p class="big" id="keptPin"></p>
     <p>You are signed in on this phone. Tap the button to open the app.</p>
-    <p><a class="btn yellow" href="app.html">Open 1TO1</a></p>
-    <p class="muted">Next time, log in with your first name, last initial and PIN.</p>
+    <p><a class="btn yellow" href="app.html">Open&nbsp;<span data-name="brand"></span></a></p>
+    <p class="muted">Now log in with your first name, last initial and PIN.</p>
     <section class="install-steps" aria-labelledby="installHDone">
       <h2 id="installHDone">Get the app</h2>
       <ol class="install-list">
@@ -73,40 +85,50 @@
           <p><b>Android:</b> in Chrome, tap the three dots, then Install app.</p>
         </div></li>
       </ol>
-      <p class="muted">Then tap the 1TO1 icon on game night.</p>
+      <p class="muted">Then tap the <span data-name="brand"></span> icon when your run starts.</p>
     </section>
     <button class="btn ghost" id="again" type="button">Sign up someone else</button>
   </section>
 
   <section class="card">
     <h2>Already signed up?</h2>
-    <p class="muted">Log in in the app with your first name, last initial and PIN.</p>
+    <p class="muted">Open the app and log in with your first name, last initial and PIN.</p>
     <a class="btn ghost" href="app.html">Log in</a>
   </section>
 
   <p class="muted" id="modeNote" hidden></p>
 </main>
+<script src="brand/names.js"></script>
+<script src="onboarding/onboarding.js"></script>
 <script src="config.js"></script>
 <script src="rules.js"></script>
 <script src="backend.js"></script>
-<script src="weak-signal/signal.js"></script>
-<script src="onboarding/onboarding.js"></script>
 <script src="screens/invite/invite.js"></script>
-<script>
+<script src="wording-56.js"></script>
+<script type="module">
+import { renderCharacterPicker } from './icons/characters/picker.js';
 (function () {
   'use strict';
   var cfg = window.PLAYER_APP_CONFIG || {};
-  var be = PlayerBackend.create(cfg.backend === 'supabase' ? 'supabase' : 'mock',
-    { url: cfg.supabaseUrl, anonKey: cfg.supabaseAnonKey });
+  // ?mock=1 (test link) always uses the local test backend, so tests never reach the live database.
+  // Same rule as app.html.
+  var useMock = cfg.backend !== 'supabase' || new URLSearchParams(location.search).get('mock') === '1';
+  var be = useMock
+    ? PlayerBackend.create('mock', { store: PlayerBackend.memoryStore() })
+    : PlayerBackend.create('supabase', { url: cfg.supabaseUrl, anonKey: cfg.supabaseAnonKey });
   var $ = function (id) { return document.getElementById(id); };
+  // One sign-up at a time. A double tap (or Enter twice) must not send a second request.
+  var busy = false;      // a request is out
+  var signedUp = false;  // this page has signed the player up; later answers are ignored
+  var lastSend = 0;      // R158: a repeat submit within 1.5 s is ignored (double tap, Enter twice)
   // Same key the app uses, so the app opens already signed in. Never stores the PIN.
   var TOKEN_KEY = '1to1-player-token';
   function saveToken(t) { try { localStorage.setItem(TOKEN_KEY, t); } catch (e) { /* private window: the app asks for a log in */ } }
-  // The skill is set at the desk (The organiser), not by the player. Sign-up sends the middle level for now.
+  // The skill is set at the desk (the organiser), not by the player. Sign-up sends the middle level for now.
   var DEFAULT_LEVEL = 15;
+  var token = '';          // sign-in token for this phone, set after sign-up
+  var userTouched = false; // once the player types a username, the prefill stops following the name
 
-  // Bring a friend (N13): the code from the link, kept for the sign-up call only.
-  var inviteCode = (window.PlayerInvite && PlayerInvite.readCode(location.search)) || '';
   if (be.kind === 'mock') { $('modeNote').hidden = false; $('modeNote').textContent = 'Test mode: this device only.'; }
 
   function showErrors(errors) {
@@ -117,80 +139,134 @@
     });
   }
 
+  // Username box: starts as first name plus last initial (e.g. RobC) and follows the name until the player edits it.
+  function baseName() {
+    return PlayerRules.defaultUsername($('first').value, $('li').value, $('extra').value.replace(/[^A-Za-z]/g, ''));
+  }
+  function refreshUser() { if (!userTouched) $('user').value = baseName(); }
+  ['first', 'li', 'extra'].forEach(function (id) { $(id).addEventListener('input', refreshUser); });
+  $('user').addEventListener('input', function () { userTouched = true; $('e-username').hidden = true; });
+
   $('pin').addEventListener('input', function () { this.value = this.value.replace(/[^0-9]/g, ''); $('e-pin').hidden = true; });
+
+  function showDone() {
+    $('charView').hidden = true;
+    $('formView').hidden = true;
+    $('doneView').hidden = false;
+    $('doneView').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // Character step (R70). Skip keeps the plain mark. A failed save never blocks: Skip is always there.
+  function saveChar(id) {
+    $('e-char').hidden = true;
+    be.setIcon(token, id).then(function (r) {
+      if (r && r.ok) return showDone();
+      $('e-char').textContent = 'Couldn’t save that one just now. Tap Use this one again, or Skip.';
+      $('e-char').hidden = false;
+    }, function () {
+      $('e-char').textContent = 'Couldn’t save that one just now. Tap Use this one again, or Skip.';
+      $('e-char').hidden = false;
+    });
+  }
+
+  function showCharacter(usernameNote) {
+    $('formView').hidden = true;
+    if (!token) return showDone();   // no sign-in saved: the app asks for a log in, so skip the picker
+    $('charView').hidden = false;
+    if (usernameNote) { $('userNote').textContent = usernameNote; $('userNote').hidden = false; }
+    renderCharacterPicker($('pickHost'), { onUse: saveChar });
+    $('charView').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 
   $('f').addEventListener('submit', function (e) {
     e.preventDefault();
+    if (busy || signedUp) return;
+    if (Date.now() - lastSend < 1500) return;
+    lastSend = Date.now();
     $('e-form').hidden = true;
     var v = PlayerRules.validateSignup({
       first: $('first').value, lastInitial: $('li').value,
       level: DEFAULT_LEVEL
     });
     var pin = PlayerRules.validatePin($('pin').value);
+    var uname = PlayerRules.validateUsername($('user').value.trim() ? $('user').value : baseName());
     var errors = v.errors;
     if (!pin.ok) errors.pin = pin.error;
+    if (!uname.ok) errors.username = uname.error;
     showErrors(errors);
-    if (!v.ok || !pin.ok) return;
+    if (!v.ok || !pin.ok || !uname.ok) return;
+    busy = true;
     $('send').disabled = true;
     v.clean.extra = $('extra').value.replace(/[^A-Za-z]/g, '').toLowerCase();
-    // R18: sign-up never asks for a door code. The 4-digit code is only entered later, on Join a run.
-    be.signUp(v.clean, pin.pin, '', inviteCode).then(function (r) {
+    be.signUp(v.clean, pin.pin, '', window.PlayerInvite ? PlayerInvite.readCode(location.search) : '').then(function (r) {
+      // A late answer after the player is already signed up is ignored (never shows "already" for them).
+      if (signedUp) return;
       if (!r.ok) {
+        busy = false;
         $('send').disabled = false;
         if (r.reason === 'name-taken') {
           // Unique names (Fable A2): the name is already used. Ask for more letters, never say whose PIN.
-          var first = $('first').value.trim(), li = $('li').value.trim().toUpperCase();
-          $('e-lastInitial').textContent = "There's already a " + first + ' ' + li + '. Add one more letter.';
-          $('e-lastInitial').hidden = false;
+          $('e-username').textContent = 'That name is taken. Add another letter of your last name.';
+          $('e-username').hidden = false;
           $('extraRow').hidden = false;
           $('extra').focus();
         }
-        else if (r.reason === 'bad-door') { $('e-door').textContent = 'That door code is not right. Ask at the desk.'; $('e-door').hidden = false; }
-        else if (r.reason === 'busy') { $('e-form').textContent = 'Sign-up is busy right now. Try again in a minute.'; $('e-form').hidden = false; }
+        else if (r.reason === 'name-reserved' || r.reason === 'bad-name') {
+          $('e-username').textContent = (window.WORDING56 ? WORDING56.signupMessage(r.reason, r.hint) : 'Check your name and try again.');
+          $('e-username').hidden = false;
+        }
+        else if (r.reason === 'bad-door') { $('e-form').textContent = 'Sign-up is not open right now. Ask at the desk.'; $('e-form').hidden = false; }
+        else if (r.reason === 'busy') { $('e-form').textContent = (window.WORDING56 ? WORDING56.signupMessage('busy') : 'Sign-up is full for today. Ask the organiser at the desk.'); $('e-form').hidden = false; }
         else { $('e-form').textContent = 'Check your name and try again.'; $('e-form').hidden = false; }
         return;
       }
       // The PIN you keep is shown once. It may differ from the one you typed.
+      signedUp = true;
+      if (window.PlayerOnboarding) PlayerOnboarding.markPending(localStorage);
       $('keptPin').textContent = 'Your PIN is ' + r.pin + '. Remember it.';
       $('pin').value = '';
+      var note = '';
       // Sign this phone in, so "Open 1TO1" goes straight to the app. If that fails, the app asks for a log in.
-      if (window.PlayerOnboarding) PlayerOnboarding.markPending(localStorage);
       return be.login(v.clean.first, v.clean.lastInitial, r.pin).then(function (s) {
-        if (s && s.ok && s.token) saveToken(s.token);
+        if (s && s.ok && s.token) { token = s.token; saveToken(s.token); }
       }).catch(function () { /* no sign-in saved */ }).then(function () {
-        $('formView').hidden = true;
-        $('doneView').hidden = false;
-        $('doneView').scrollIntoView({ behavior: 'smooth', block: 'start' });
-      });
+        if (!token) return;
+        // Save the username the player typed. If the name is taken, the app keeps the name it gave them.
+        return be.setUsername(token, uname.value).then(function (u) {
+          if (u && u.ok) { try { localStorage.setItem('1to1-player-username', u.username || uname.value); } catch (e) { /* private window */ } return; }
+          note = u && u.reason === 'taken'
+            ? '“' + uname.value + '” is taken, so you keep the name the app gave you for now. You can change it in Settings.'
+            : 'Couldn’t save your username just now. You can change it in Settings.';
+        }, function () {
+          note = 'Couldn’t save your username just now. You can change it in Settings.';
+        });
+      }).then(function () { showCharacter(note); });
     }).catch(function () {
+      if (signedUp) return;
+      busy = false;
+      $('send').disabled = false;
       $('e-form').textContent = 'Couldn’t send just now. Check your signal and tap Send again. What you typed is still here.';
       $('e-form').hidden = false;
-    }).then(function () { $('send').disabled = false; });
+    });
   });
+
+  // Skip is always on screen, so the player can keep the plain mark without picking one.
+  $('charSkip').addEventListener('click', showDone);
 
   $('again').addEventListener('click', function () {
     $('f').reset();
-    $('doneView').hidden = true; $('formView').hidden = false;
+    token = ''; userTouched = false;
+    signedUp = false; busy = false; $('send').disabled = false;
+    document.querySelectorAll('.err').forEach(function (p) { p.hidden = true; p.textContent = ''; });
+    $('extraRow').hidden = true; $('keptPin').textContent = '';
+    $('doneView').hidden = true; $('charView').hidden = true; $('formView').hidden = false;
+    $('pickHost').replaceChildren(); $('userNote').hidden = true; $('e-char').hidden = true;
+    refreshUser();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    $('first').focus();
   });
 })();
 </script>
 <script src="pwa.js"></script>
-<script>
-/* Keep the main button reachable while a name field is focused (small screens, on-screen keyboard). */
-(function () {
-  var btn = document.getElementById('send');
-  if (!btn) return;
-  function lift() {
-    var vv = window.visualViewport;
-    var h = vv ? vv.height : window.innerHeight;
-    if (btn.getBoundingClientRect().bottom > h - 8) btn.scrollIntoView({ block: 'end' });
-  }
-  document.addEventListener('focusin', function (e) {
-    if (!e.target || !e.target.matches || !e.target.matches('input, textarea, select')) return;
-    setTimeout(lift, 350);
-  });
-  if (window.visualViewport) window.visualViewport.addEventListener('resize', function () { setTimeout(lift, 50); });
-})();
-</script>
 </body>
 </html>

@@ -1,8 +1,12 @@
-/* Reminder switches in More (N11). 48px taps, 16px labels, dark base, yellow when on. */
+/* Reminder switches in More (P4). Check Ball look: dark base, yellow when on, 48px taps, 16px labels. */
 .pp-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; padding: 8px 0; }
 .pp-label { font-size: 16px; line-height: 1.3; max-width: 70%; }
-.pp-switch { min-width: 72px; min-height: 48px; padding: 0 14px; border: 2px solid #FFD400; border-radius: 12px;
-  background: transparent; color: #FFD400; font: inherit; font-weight: 700; text-transform: uppercase; cursor: pointer; }
-.pp-switch[aria-checked="true"] { background: #FFD400; color: #000; }
+.pp-switch { min-width: 72px; min-height: 48px; padding: 0 14px; border: 2px solid #FFD21F; border-radius: 12px;
+  background: transparent; color: #FFD21F; font: inherit; font-weight: 700; text-transform: uppercase; cursor: pointer; }
+.pp-switch[aria-checked="true"] { background: #FFD21F; color: #0E0E0E; }
+.pp-switch:focus-visible { outline: 3px solid #FFD21F; outline-offset: 2px; }
 .pp-switch[disabled] { opacity: .5; }
-.pp-note { font-size: 14px; line-height: 1.4; margin: 8px 0 0; color: #ddd; min-height: 0; }
+.pp-note { font-size: 14px; line-height: 1.4; margin: 8px 0 0; color: #D6D6D6; min-height: 0; }
+html[data-theme="light"] .pp-switch { border-color: #0E0E0E; color: #0E0E0E; }
+html[data-theme="light"] .pp-switch[aria-checked="true"] { background: #FFD21F; color: #0E0E0E; }
+html[data-theme="light"] .pp-note { color: #333; }

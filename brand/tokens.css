@@ -1,0 +1,30 @@
+/* 1TO1 brand tokens, look A (Blackout). The ONLY file that defines colours.
+   Source: revamp/brand/options/tokens-A-blackout.css + BRAND-LOCK-15NOV.md. Dark is the default.
+   Bright mode: any element with data-theme="light" (the app root, or a screen overlay). Never follows the phone. */
+:root {
+  --bg:#0E0E0E; --card:#1A1C22; --raised:#23262E; --line:#2C2F38;
+  --ink:#F4F5F7; --muted:#AEB4C0;
+  --brand:#FFD21F; --on-brand:#0E0E0E; --on-link:#FFFFFF; --brand-text:#FFD21F; --focus:#FFD21F;
+  --heat:#FF9A1F; --link:#0A5CFF; --link-text:#6FA0FF; --green:#2BD67B; --red:#FF6B6B;
+  --tabs-bg:#121419; --scrim:rgba(0,0,0,.6);
+  --tier-silver:#C9CED6; --tier-bronze:#C4803A; --tier-ember:#FF8A4C;
+  --radius-card:16px; --radius-btn:14px; --radius-field:12px;
+  --row-h:56px; --btn-h:52px; --gutter:16px; --gap:12px;
+  --font-body:"Barlow", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-head:"Barlow Condensed", "Barlow", system-ui, sans-serif;
+  --ease:cubic-bezier(.2,.7,.2,1);
+}
+
+[data-theme="light"] {
+  --bg:#F4F6FA; --card:#FFFFFF; --raised:#EDF0F5; --line:#D9DEE8;
+  --ink:#111318; --muted:#4B5263;
+  --brand:#FFD21F; --on-brand:#0E0E0E; --brand-text:#111318; --focus:#111318;
+  --heat:#B0481A; --link:#0A5CFF; --link-text:#0A5CFF; --green:#0E7A43; --red:#C62828;
+  --tabs-bg:#FFFFFF; --scrim:rgba(17,19,24,.45);
+  --tier-silver:#4B5263; --tier-bronze:#8A4B16; --tier-ember:#B0481A;
+}
+
+@font-face { font-family:"Barlow"; font-weight:400; font-style:normal; font-display:swap; src:url("../fonts/barlow-400.woff2") format("woff2"); }
+@font-face { font-family:"Barlow"; font-weight:600; font-style:normal; font-display:swap; src:url("../fonts/barlow-600.woff2") format("woff2"); }
+@font-face { font-family:"Barlow"; font-weight:700; font-style:normal; font-display:swap; src:url("../fonts/barlow-700.woff2") format("woff2"); }
+@font-face { font-family:"Barlow Condensed"; font-weight:700; font-style:normal; font-display:swap; src:url("../fonts/barlowcondensed-700.woff2") format("woff2"); }

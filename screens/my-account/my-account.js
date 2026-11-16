@@ -68,8 +68,10 @@
     if (kind === 'privacy') {
       return '<section class="ma-sheet" aria-label="Privacy"><h2 class="ma-title">Privacy</h2>' +
         '<h3 class="ma-sub">What we keep</h3><ul class="ma-plain">' +
-        '<li>First name and last initial</li><li>Your PIN, scrambled. Never shown.</li>' +
-        '<li>Game stats, points and history</li><li>Payment status (paid or not, and the amount)</li></ul>' +
+        '<li>First name and last initial (your username)</li><li>Your PIN, scrambled. Never shown.</li>' +
+        '<li>Your character and the show-me switch</li><li>Alert sign-up, if you turned alerts on</li>' +
+        '<li>Game stats, points and history</li><li>Payments (paid or not, and the amount)</li>' +
+        '<li>Shop purchases</li></ul>' +
         '<h3 class="ma-sub">What we never keep</h3><ul class="ma-plain">' +
         '<li>Phone number</li><li>Email address</li><li>Card details</li></ul>' +
         '<button type="button" class="ma-btn is-quiet" data-ma-action="cancel">Close</button></section>';
@@ -98,7 +100,7 @@
 
   // The download: one JSON file with everything held about the player.
   function dataFile(data) {
-    return { filename: '1to1-my-data.json', type: 'application/json', text: JSON.stringify(data, null, 2) };
+    return { filename: 'check-ball-my-data.json', type: 'application/json', text: JSON.stringify(data, null, 2) };
   }
 
   return { buildPanel: buildPanel, buildSheet: buildSheet, messageFor: messageFor, validPin: validPin,

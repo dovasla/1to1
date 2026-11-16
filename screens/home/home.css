@@ -1,8 +1,9 @@
-/* Player app: Home screen styles (N1 redesign). Uses tokens from app-tokens.css (dark base, Bright hall in light).
-   Yellow is for the one main action only. Blue marks player progress. */
+/* Player app: Home lobby styles. Owner: Home thread. Uses the tokens from app.css (dark base, bright hall in light). */
 .ph { max-width:520px; margin:0 auto; padding:16px 16px 24px; color:var(--ink); }
 .ph * { box-sizing:border-box; }
 .ph a { color:inherit; text-decoration:none; }
+.ph a.ph-btn:not(.ph-btn--ghost) { color:var(--on-brand); }
+.ph a.ph-btn--ghost { color:var(--ink); }
 .ph-ic { width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; flex:none; }
 .ph-cap { font-size:14px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); }
 .ph-muted { color:var(--muted); font-size:16px; margin:6px 0 0; }
@@ -11,114 +12,108 @@
 
 /* Top bar */
 .ph-top { display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:48px; }
-.ph h1 { font-size:28px; line-height:1; margin:0; }
+.ph h1 { font-size:28px; line-height:1; margin:0; }  /* font and colour come from app-tokens.css */
 .ph-coins { display:inline-flex; align-items:center; gap:6px; min-height:48px; padding:0 12px; border:2px solid var(--line); border-radius:99px; background:var(--card); }
 .ph-coins b { font-size:18px; font-weight:900; }
 .ph-coins .ph-cap { font-size:14px; }
-.ph-coins .ph-ic { color:var(--gold-text); }  /* gold-text is dark gold in Bright hall */
+.ph-coins .ph-ic { color:var(--brand-text); }
 
-/* Door code card: the first thing on Home (next-38). Yellow border because it is the one main action. */
-.ph-door { border-color:var(--yellow); }
-.ph-door h2 { font-size:30px; }
+/* Hero: the player card */
+.ph-hero { display:block; margin-top:10px; padding:14px; border-radius:18px; border:2px solid var(--brand); background:var(--card); min-height:48px; }
+.ph-hero:focus-visible { outline:px solid var(--focus); outline-offset:3px; }
+.ph-hero-top { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.ph-pill { display:inline-block; padding:4px 10px; border-radius:8px; background:var(--brand); color:var(--on-brand); font-size:14px; font-weight:900; letter-spacing:.04em; }
+.ph-hero-name { margin:10px 0 2px; }
+.ph-skill { font-size:16px; color:var(--muted); text-transform:uppercase; font-weight:700; letter-spacing:.04em; }
+.ph-skill b { color:var(--ink); }
+.ph-dash { border-top:2px dashed var(--line); margin:10px 0 8px; }
+.ph-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; text-align:center; }
+.ph-stats > div { display:flex; flex-direction:column; gap:2px; }
+.ph-stats b { font-size:28px; font-weight:900; line-height:1; color:var(--ink); }
 
-/* Next night card (top card) */
-.ph-next { margin-top:12px; padding:16px; border-radius:var(--radius); border:2px solid var(--blue); background:var(--card); }
-.ph-next h2 { font-size:26px; line-height:1.05; margin:6px 0 0; font-family:var(--font-head); text-transform:uppercase; }
-.ph-count { margin-top:12px; display:flex; flex-direction:column; gap:2px; }
+/* XP bar */
+.ph-xp { margin-top:12px; }
+.ph-xp-row { display:flex; justify-content:space-between; gap:10px; font-size:16px; color:var(--muted); }
+.ph-xp-row b { color:var(--ink); text-transform:uppercase; font-weight:800; }
+.ph-bar { height:12px; border-radius:99px; background:var(--line); overflow:hidden; margin-top:8px; }
+.ph-bar i { display:block; height:100%; background:var(--brand); border-radius:99px; transition:width .6s ease; }
+
+/* Tonight card */
+.ph-card { margin-top:12px; padding:14px; border-radius:16px; border:1px solid var(--line); background:var(--card); }
+.ph-card--hero { border-color:var(--focus); }
+.ph-card h2 { font-size:24px; line-height:1.05; margin:6px 0 0; }  /* heading style from app-tokens.css */
+.ph-vs { font-size:18px; margin:6px 0 0; color:var(--muted); }
+.ph-vs b { color:var(--ink); }
+.ph-count { margin-top:8px; display:flex; flex-direction:column; gap:2px; }
 .ph-count-label { font-size:14px; font-weight:800; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); }
 .ph-count-num { font-size:44px; font-weight:900; line-height:1; font-variant-numeric:tabular-nums; color:var(--ink); font-family:var(--font-head); }
-.ph-count-line { margin-top:8px; font-size:16px; }
+.ph-btn { display:flex; align-items:center; justify-content:center; width:100%; min-height:52px; margin-top:10px; border-radius:var(--radius-btn); background:var(--brand); color:var(--on-brand); font-weight:900; text-transform:uppercase; letter-spacing:.04em; font-size:17px; }
+.ph-btn--ghost { background:transparent; color:var(--ink); border:2px solid var(--line); }
+.ph-btn:focus-visible, .ph-row:focus-visible, .ph-chip:focus-visible, .ph-coins:focus-visible { outline:px solid var(--focus); outline-offset:2px; }
 
-/* The one main button */
-.ph-btn { display:flex; align-items:center; justify-content:center; width:100%; min-height:52px; margin-top:14px; padding:0 16px; border:0; border-radius:var(--radius-btn); background:var(--yellow); color:var(--on-yellow); font:inherit; font-weight:900; text-transform:uppercase; letter-spacing:.04em; font-size:17px; cursor:pointer; }
-.ph-btn--ghost { background:transparent; color:var(--ink); border:2px solid var(--line); margin-top:8px; }
-.ph-btn:focus-visible, .ph-row:focus-visible, .ph-chip:focus-visible, .ph-coins:focus-visible, .ph-you-name:focus-visible { outline:3px solid var(--blue); outline-offset:2px; }
-
-/* Level strip: thin, not a card */
-.ph-you { margin-top:14px; }
-.ph-you-top { display:flex; align-items:baseline; justify-content:space-between; gap:10px; min-height:48px; }
-.ph-you-name { font-size:18px; font-weight:800; text-transform:uppercase; letter-spacing:.02em; min-height:48px; display:inline-flex; align-items:center; }
-.ph-skill { font-size:14px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:.04em; }
-.ph-you-row { display:flex; justify-content:space-between; gap:10px; font-size:16px; color:var(--muted); }
-.ph-you-row b { color:var(--ink); text-transform:uppercase; font-weight:800; }
-.ph-bar { height:8px; border-radius:99px; background:var(--line); overflow:hidden; margin-top:8px; }
-.ph-bar i { display:block; height:100%; background:var(--blue); border-radius:99px; transition:width .6s ease; }
-
-/* Slots */
-.ph-slots { margin-top:6px; }
-.ph-slot { margin-top:14px; }
-.ph-h2 { font-size:20px; margin:0 0 10px; font-family:var(--font-head); text-transform:uppercase; }
-.ph-strip { display:flex; flex-wrap:wrap; gap:8px; padding-bottom:4px; }
+/* Blocks: schedule strip, last night, live */
+.ph-block { margin-top:14px; }
+.ph-h2 { font-size:20px; margin:0 0 10px; }  /* heading style from app-tokens.css */
+.ph-strip { display:flex; gap:8px; overflow-x:auto; padding-bottom:4px; -webkit-overflow-scrolling:touch; }
 .ph-chip { flex:0 0 auto; min-width:96px; min-height:48px; padding:10px 12px; border-radius:14px; border:2px solid var(--line); background:var(--card); display:flex; flex-direction:column; gap:2px; }
 .ph-chip b { font-size:18px; font-variant-numeric:tabular-nums; }
 .ph-chip small { font-size:14px; font-weight:800; text-transform:uppercase; color:var(--muted); }
 .ph-chip--done { opacity:.6; }
-.ph-chip--next { border-color:var(--blue); }
-.ph-chip--live { border-color:var(--green); background:var(--green); color:var(--on-yellow); }
-.ph-chip--live .ph-cap, .ph-chip--live small { color:var(--on-yellow); }
-.ph-row { display:flex; align-items:center; gap:12px; min-height:56px; padding:12px 14px; border-radius:14px; border:1px solid var(--line); background:var(--card); }
+.ph-chip--next { border-color:var(--brand); }
+.ph-chip--live { border-color:var(--green); background:var(--green); color:var(--on-brand); }
+.ph-chip--live .ph-cap, .ph-chip--live small { color:var(--on-brand); }
+.ph-row { display:flex; align-items:center; gap:12px; min-height:56px; padding:12px 14px; margin-top:10px; border-radius:14px; border:1px solid var(--line); background:var(--card); }
 .ph-row-body { display:flex; flex-direction:column; gap:2px; min-width:0; }
 .ph-row-body b { font-size:18px; }
 .ph-row-body span { font-size:16px; color:var(--muted); overflow-wrap:anywhere; }
 .ph-updated { margin-top:16px; }
 
-/* Small phones: same layout, tighter gutter */
-@media (max-width:360px) {
-  .ph { padding:10px 16px 16px; }
-  .ph h1 { font-size:24px; }
-  .ph-next { padding:12px 14px; margin-top:10px; }
-  .ph-next h2 { font-size:24px; }
-  .ph-count { margin-top:8px; }
-  .ph-count-num { font-size:40px; }
-  .ph-btn { margin-top:10px; }
-  .ph-you { margin-top:10px; }
-  .ph-slot { margin-top:10px; }
-}
+/* "I'm in / Can't make it" (R74, R85): a quiet row inside the Tonight card. Outline buttons, no yellow fill. */
+.ph-rsvp { margin-top:14px; padding-top:12px; border-top:1px solid var(--line); }
+.ph-rsvp-q { margin:0; font-size:16px; color:var(--muted); }
+.ph-rsvp-btns { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px; }
+.ph-rsvp-btn { min-height:48px; padding:6px 10px; border-radius:var(--radius-btn); border:2px solid var(--line); background:transparent; color:var(--ink); font-family:inherit; font-size:16px; font-weight:800; line-height:1.15; }
+.ph-rsvp-btn.is-on { border-color:var(--brand); color:var(--brand-text); }
+.ph-rsvp-btn:disabled { opacity:.6; }
+.ph-rsvp-btn:focus-visible { outline:px solid var(--focus); outline-offset:2px; }
+.ph-rsvp-word { margin:8px 0 0; font-size:14px; font-weight:800; text-transform:uppercase; letter-spacing:.1em; color:var(--brand-text); }
+.ph-rsvp-quiet { margin:14px 0 0; padding-top:12px; border-top:1px solid var(--line); font-size:16px; color:var(--muted); }
 
-/* Motion only for the XP fill, and it stops for reduced motion. */
+/* Movement only at moments: the bar fill is the only motion, and it stops for reduced motion. */
 @media (prefers-reduced-motion: reduce) {
   .ph-bar i { transition:none; }
 }
-
-/* Live score card: top of Home while a game is on */
-.ph-live-card { display:flex; flex-direction:column; gap:6px; padding:14px; border-radius:var(--radius); border:2px solid var(--green); background:var(--card); }
-.ph-live-score { display:grid; grid-template-columns:1fr auto auto auto 1fr; align-items:center; gap:8px; text-align:center; }
-.ph-live-score b { font-size:44px; font-weight:900; line-height:1; font-family:var(--font-head); font-variant-numeric:tabular-nums; }
-.ph-live-score i { font-style:normal; font-size:24px; color:var(--muted); }
-.ph-live-team { font-size:16px; font-weight:800; text-transform:uppercase; overflow-wrap:anywhere; }
-
-/* "You're here" tick line */
-.ph-tick { color:var(--green); font-weight:800; }
-.ph-tick .ph-ic { width:18px; height:18px; stroke:currentColor; }
-
-/* Door code sheet (I'm here). Lives on document.body, so it is outside .ph. */
-.ph-sheet-wrap { position:fixed; inset:0; z-index:60; display:flex; align-items:flex-end; justify-content:center; }
-.ph-sheet-back { position:absolute; inset:0; background:rgba(0,0,0,.6); }
-.ph-sheet { position:relative; width:100%; max-width:520px; max-height:100%; overflow:auto; padding:16px 16px 20px; border-radius:20px 20px 0 0; background:var(--card); color:var(--ink); border-top:2px solid var(--blue); animation:ph-slide .25s var(--ease); }
-.ph-sheet h2 { font-size:26px; line-height:1.05; margin:0; font-family:var(--font-head); text-transform:uppercase; }
-.ph-digits { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:14px; }
-.ph-box { display:flex; align-items:center; justify-content:center; min-height:64px; border-radius:var(--radius-btn); border:2px solid var(--line); background:var(--bg); font-size:36px; font-weight:900; font-family:var(--font-head); font-variant-numeric:tabular-nums; }
-.ph-sheet-msg { min-height:20px; color:var(--red); font-weight:800; }
-.ph-pad { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:6px; }
-.ph-key { min-height:56px; border-radius:var(--radius-btn); border:2px solid var(--line); background:var(--raised); color:var(--ink); font:inherit; font-size:26px; font-weight:800; cursor:pointer; }
-.ph-key--alt { font-size:16px; text-transform:uppercase; font-weight:800; color:var(--muted); }
-.ph-key:disabled { opacity:.5; }
-.ph-key:focus-visible, .ph-sheet button:focus-visible { outline:3px solid var(--blue); outline-offset:2px; }
-.ph-sheet > .ph-btn { margin-top:12px; }
-@keyframes ph-slide { from { transform:translateY(40px); opacity:.2; } to { transform:none; opacity:1; } }
-@media (prefers-reduced-motion: reduce) { .ph-sheet { animation:none; } }
 @media (max-width:360px) {
-  .ph-box { min-height:56px; font-size:32px; }
-  .ph-key { min-height:52px; }
+  .ph { padding:14px 16px 20px; }
+  .ph h1 { font-size:24px; }
+  .ph-count-num { font-size:44px; }
+  .ph-stats b { font-size:28px; }
 }
 
-/* Spoken-only text (screen readers read it, sighted users do not see it) */
-.ph-sr { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); clip-path:inset(50%); white-space:nowrap; }
+/* Join keypad (door code): inside the tonight card. Keys are 48px or taller, digits 20px. */
+.ph-kp { margin-top:14px; padding-top:12px; border-top:1px solid var(--line); }
+.ph-kp-cells { display:flex; gap:8px; margin-top:8px; }
+.ph-kp-cell { flex:1 1 0; min-height:52px; display:flex; align-items:center; justify-content:center; border:2px solid var(--line); border-radius:var(--radius-btn); font-size:24px; font-weight:900; color:var(--ink); }
+.ph-kp-cell.is-set { border-color:var(--brand); }
+.ph-kp-keys { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:8px; }
+.ph-kp-key { min-height:52px; border-radius:var(--radius-btn); border:2px solid var(--line); background:transparent; color:var(--ink); font-family:inherit; font-size:20px; font-weight:800; }
+.ph-kp-key--go { background:var(--brand); border-color:var(--brand); color:var(--on-brand); text-transform:uppercase; font-size:17px; letter-spacing:.04em; }
+.ph-kp-key:disabled { opacity:.5; }
+.ph-kp-key:focus-visible { outline:px solid var(--focus); outline-offset:2px; }
+.ph-kp-done { margin:14px 0 0; padding-top:12px; border-top:1px solid var(--line); font-size:16px; font-weight:800; color:var(--brand-text); }
+.ph-kp-msg { font-size:16px; color:var(--ink); }
+.ph-kp-retry { display:flex; align-items:center; justify-content:center; width:100%; min-height:48px; margin-top:10px; border-radius:var(--radius-btn); border:2px solid var(--line); background:transparent; color:var(--ink); font-family:inherit; font-size:16px; font-weight:800; }
+.ph-kp-retry:disabled { opacity:.5; }
+.ph-kp-retry:focus-visible { outline:px solid var(--focus); outline-offset:2px; }
 
-/* next-31: inline door code box (Join). 48px tap target, 14px+ labels. */
-.ph-join { margin-top:12px; text-align:left; }
-.ph-join .ph-cap { display:block; margin-bottom:6px; font-size:14px; }
-.ph-join-row { display:flex; gap:8px; align-items:stretch; }
-.ph-join-input { flex:1 1 auto; min-width:0; min-height:52px; padding:0 12px; border-radius:var(--radius-btn); border:2px solid var(--line); background:var(--raised); color:var(--ink); font:inherit; font-size:26px; font-weight:800; letter-spacing:.3em; text-align:center; }
-.ph-join-input:focus { outline:3px solid var(--yellow); outline-offset:2px; }
-.ph-join-btn { flex:0 0 auto; width:auto; min-width:96px; margin-top:0; }
+/* Buttons use the body face (Barlow), not the browser's system font (R130). */
+.ph-btn, .ph-rsvp-btn, .ph-kp-key, .ph-kp-retry { font-family:var(--font-body); }
+
+/* R143: "More to come" with three hopping dots, always shown before Start. Reduce motion stops the hop. */
+.ph-more { margin: 8px 0 0; font-size: 14px; font-weight: 600; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+.ph-dots { display: inline-flex; gap: 3px; }
+.ph-dots i { width: 5px; height: 5px; border-radius: 50%; background: var(--brand); animation: ph-hop 900ms ease-in-out infinite; }
+.ph-dots i:nth-child(2) { animation-delay: 150ms; }
+.ph-dots i:nth-child(3) { animation-delay: 300ms; }
+@keyframes ph-hop { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-4px); } }
+@media (prefers-reduced-motion: reduce) { .ph-dots i { animation: none; } }

@@ -22,6 +22,16 @@
   }
   function num(v) { var n = Number(v); return isFinite(n) ? Math.round(n) : 0; }
 
+  // Seasons (P6c): same ids and words as the server's p_season and the Stats tab (seasons.js).
+  var SEASONS = [
+    { id: 'current', label: 'This season' },
+    { id: 'last', label: 'Last season' },
+    { id: 'all', label: 'All time' }
+  ];
+  function seasonOf(id) {
+    return SEASONS.some(function (x) { return x.id === id; }) ? id : 'current';
+  }
+
   function boardLabel(id) {
     var b = BOARDS.filter(function (x) { return x.id === id; })[0];
     return b ? b.label : 'XP';
@@ -45,7 +55,7 @@
     var cards = '<div class="sb-stats">' + statCard('Games', t.games) + statCard('Wins', t.wins) +
       statCard('Points', t.points) + statCard('MVP', t.mvp) + '</div>';
     if (!nights.length) {
-      return cards + '<p class="sb-note">No nights yet. Your numbers show here once the organiser closes a night.</p>';
+      return cards + '<p class="sb-note">No runs yet. Your numbers show here once the organiser closes a run.</p>';
     }
     var items = nights.map(function (n) {
       return '<li class="sb-night">' +
@@ -55,11 +65,19 @@
         '<span class="sb-xp">+' + esc(num(n.xp)) + ' XP</span>' +
         '</li>';
     }).join('');
-    return cards + '<h2 class="sb-h2">Recent nights</h2><ul class="sb-list">' + items + '</ul>';
+    return cards + '<h2 class="sb-h2">Recent runs</h2><ul class="sb-list">' + items + '</ul>';
   }
 
   // Leaderboard: chips for the board, then the rows. The caller's row is marked "me".
-  function boardHtml(board, data) {
+  function seasonChips(season) {
+    return '<div class="sb-chips" role="group" aria-label="Choose a season">' + SEASONS.map(function (x) {
+      var on = x.id === season;
+      return '<button type="button" class="sb-chip' + (on ? ' is-on' : '') + '" data-season="' + x.id +
+        '" aria-pressed="' + (on ? 'true' : 'false') + '">' + esc(x.label) + '</button>';
+    }).join('') + '</div>';
+  }
+
+  function boardHtml(board, data, season) {
     var chips = '<div class="sb-chips" role="group" aria-label="Choose a board">' + BOARDS.map(function (b) {
       var on = b.id === board;
       return '<button type="button" class="sb-chip' + (on ? ' is-on' : '') + '" data-board="' + b.id +
@@ -67,8 +85,8 @@
     }).join('') + '</div>';
     var rows = (data && data.rows) || [];
     if (!rows.length) {
-      return chips + '<p class="sb-note">Nobody is on the ' + esc(boardLabel(board)) +
-        ' board yet. Play a night to get on it.</p>';
+      return seasonChips(season) + chips + '<p class="sb-note">Nobody is on the ' + esc(boardLabel(board)) +
+        ' board yet. Play a run to get on it.</p>';
     }
     var list = '<ol class="sb-board">' + rows.map(function (r) {
       return '<li class="sb-row' + (r.me ? ' is-me' : '') + '">' +
@@ -82,7 +100,7 @@
     var inList = rows.some(function (r) { return r.me; });
     var foot = (me && !inList) ? '<p class="sb-note">You are number ' + esc(num(me.rank)) + ' with ' +
       esc(num(me.value)) + '.</p>' : '';
-    return chips + list + foot;
+    return seasonChips(season) + chips + list + foot;
   }
 
   function segHtml(id, label, tab) {
@@ -102,7 +120,7 @@
       body = '<p class="sb-note" role="alert">Can’t load stats right now. Check your signal and try again.</p>' +
         '<button type="button" class="sb-retry" data-act="retry">Try again</button>';
     } else {
-      body = tab === 'mine' ? mineHtml(v.profile) : boardHtml(v.board || 'xp', v.data);
+      body = tab === 'mine' ? mineHtml(v.profile) : boardHtml(v.board || 'xp', v.data, seasonOf(v.season));
     }
     return '<section class="sb" aria-label="Stats">' +
       '<h1 class="sb-h1">Stats</h1>' +
@@ -113,12 +131,12 @@
   // Browser only: draws into el and handles taps. Reads only; nothing is written.
   function mount(el, opts) {
     var o = opts || {};
-    var st = { tab: o.tab === 'board' ? 'board' : 'mine', board: o.board || 'xp', loading: true, error: false, profile: null, data: null };
+    var st = { tab: o.tab === 'board' ? 'board' : 'mine', board: o.board || 'xp', season: seasonOf(o.season), loading: true, error: false, profile: null, data: null };
     var seq = 0;
 
     function paint() { el.innerHTML = render(st); }
     function loadBoard() {
-      return o.rpc('player_leaderboard', { p_token: o.token, p_board: st.board, p_limit: 20, p_season: 'all' }).then(function (j) {
+      return o.rpc('player_leaderboard', { p_token: o.token, p_board: st.board, p_limit: 20, p_season: st.season }).then(function (j) {
         if (!j || j.ok === false) throw new Error('board');
         st.data = j;
       });
@@ -132,7 +150,9 @@
     function run(work) {
       var mine = ++seq;
       st.loading = true; st.error = false; paint();
-      return work().then(function () {
+      var TO = (typeof PlayerLoadTimeout !== 'undefined') ? PlayerLoadTimeout : null;
+      var pending = TO ? TO.withTimeout(work(), o.timeoutMs) : work();
+      return pending.then(function () {
         if (mine !== seq) return;
         st.loading = false; paint();
       }, function () {
@@ -143,12 +163,19 @@
     function refresh() { return run(function () { return Promise.all([loadProfile(), loadBoard()]); }); }
 
     el.addEventListener('click', function (e) {
-      var t = e.target && e.target.closest ? e.target.closest('[data-tab],[data-board],[data-act]') : null;
+      var t = e.target && e.target.closest ? e.target.closest('[data-tab],[data-board],[data-season],[data-act]') : null;
       if (!t) return;
       if (t.hasAttribute('data-act')) { refresh(); return; }
       if (t.hasAttribute('data-tab')) {
         st.tab = t.getAttribute('data-tab') === 'board' ? 'board' : 'mine';
         paint();
+        return;
+      }
+      if (t.hasAttribute('data-season')) {
+        var sid = seasonOf(t.getAttribute('data-season'));
+        if (sid === st.season && st.data) { paint(); return; }
+        st.season = sid;
+        run(loadBoard);
         return;
       }
       if (t.hasAttribute('data-board')) {
@@ -163,7 +190,7 @@
     return refresh();
   }
 
-  var api = { BOARDS: BOARDS, esc: esc, boardLabel: boardLabel, render: render };
+  var api = { BOARDS: BOARDS, SEASONS: SEASONS, seasonOf: seasonOf, esc: esc, boardLabel: boardLabel, render: render };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.PlayerStatsBoard = Object.assign(root.PlayerStatsBoard || {}, api, { mount: mount });
 })(typeof window !== 'undefined' ? window : globalThis);

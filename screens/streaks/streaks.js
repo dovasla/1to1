@@ -51,14 +51,14 @@
     if (weeks === 0) {
       state = 'none';
       title = 'No streak yet';
-      line = 'Play one night to start a streak.';
+      line = 'Play one run to start a streak.';
       shield = false;
       nextXp = bonus(1);
     } else if (!known) {
       // Next week is not known yet: say what keeps it going, do not claim a result.
       state = 'unknown';
       title = plural(weeks, 'week running', 'weeks running');
-      line = 'Play your next night to keep it going.';
+      line = 'Play your next run to keep it going.';
       shield = true;
       nextXp = bonus(weeks + 1);
     } else if (gap <= 0) {
@@ -94,7 +94,7 @@
     // Badges: unlock at the exact night count. The next one shows how many nights to go.
     var badges = BADGES.map(function (at) {
       var unlocked = nights >= at;
-      return { at: at, label: at + ' nights', unlocked: unlocked, toGo: unlocked ? 0 : at - nights };
+      return { at: at, label: at + ' runs', unlocked: unlocked, toGo: unlocked ? 0 : at - nights };
     });
     var nextBadge = null;
     for (var i = 0; i < badges.length; i++) { if (!badges[i].unlocked) { nextBadge = badges[i]; break; } }
@@ -112,7 +112,7 @@
       badges: badges,
       nextBadge: nextBadge,
       badgeLine: nextBadge
-        ? plural(nextBadge.toGo, 'night', 'nights') + ' to ' + nextBadge.at + ' nights.'
+        ? plural(nextBadge.toGo, 'run', 'runs') + ' to ' + nextBadge.at + ' runs.'
         : 'All attendance badges earned.'
     };
   }
@@ -146,7 +146,7 @@
     var chips = v.badges.map(function (b) {
       if (b.unlocked) {
         return '<li class="st-badge st-badge-on" aria-label="' + esc(b.label) + ' unlocked">' +
-          '<span class="st-badge-n">' + b.at + '</span><span class="st-badge-t">nights</span></li>';
+          '<span class="st-badge-n">' + b.at + '</span><span class="st-badge-t">runs</span></li>';
       }
       return '<li class="st-badge st-badge-off" aria-label="' + esc(b.label) + ', locked, ' + b.toGo + ' to go">' +
         '<span class="st-badge-n">' + b.at + '</span><span class="st-badge-t">' + esc(plural(b.toGo, 'to go', 'to go')) + '</span></li>';

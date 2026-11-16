@@ -6,13 +6,13 @@
 .ma-sub { color: var(--yellow-text, #FFD21F); font-size: 14px; font-weight: 800; text-transform: uppercase; margin: 12px 0 4px; }
 .ma-hint, .ma-plain li { color: var(--muted, #AEB4C0); font-size: 14px; margin: 4px 0; }
 .ma-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
-.ma-row, .ma-btn, .ma-text { min-height: 48px; width: 100%; border-radius: 12px; font-size: 16px; font-weight: 800; border: 2px solid var(--yellow-text, #FFD21F); background: transparent; color: var(--ink, #F4F5F7); text-align: left; padding: 0 14px; }
+.ma-row, .ma-btn, .ma-text { font-family: Barlow, system-ui, sans-serif; min-height: 48px; width: 100%; border-radius: 12px; font-size: 16px; font-weight: 800; border: 2px solid var(--yellow-text, #FFD21F); background: transparent; color: var(--ink, #F4F5F7); text-align: left; padding: 0 14px; }
 .ma-btn { background: var(--yellow, #FFD21F); border-color: var(--yellow, #FFD21F); color: var(--on-yellow, #0E0E0E); text-align: center; margin-top: 12px; }
 .ma-btn.is-quiet, .ma-text { background: transparent; color: var(--yellow-text, #FFD21F); border-color: transparent; width: auto; padding: 0; min-height: 48px; }
 .ma-row.is-danger { border-color: var(--red, #FF6B6B); color: var(--red, #FF6B6B); }
 .ma-btn.is-danger { background: var(--red, #FF6B6B); border-color: var(--red, #FF6B6B); color: var(--on-red, #0E0E0E); }
 .ma-field { display: grid; gap: 6px; font-size: 14px; color: var(--muted, #AEB4C0); margin-top: 10px; }
-.ma-field input { min-height: 48px; font-size: 16px; border-radius: 10px; border: 2px solid var(--muted, #AEB4C0); background: transparent; color: var(--ink, #F4F5F7); padding: 0 12px; }
+.ma-field input { font-family: Barlow, system-ui, sans-serif; min-height: 48px; font-size: 16px; border-radius: 10px; border: 2px solid var(--muted, #AEB4C0); background: transparent; color: var(--ink, #F4F5F7); padding: 0 12px; }
 .ma-error { color: var(--red, #FF6B6B); font-size: 14px; font-weight: 700; margin: 6px 0; }
 .ma-link { margin: 8px 0 0; }
 .ma-plain { padding-left: 18px; }

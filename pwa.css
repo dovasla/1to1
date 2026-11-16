@@ -1,39 +1,36 @@
 /* 1TO1 player app: offline bar and Add-to-Home-Screen card. Own colours so it works before app.css loads. */
-.pwa-offline { position: fixed; top: 0; left: 0; right: 0; z-index: 60; padding: 10px 16px; background: #FFD21F; color: #0E0E0E; font: 600 15px/1.35 Barlow, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; text-align: center; }
+.pwa-offline { position: fixed; top: 0; left: 0; right: 0; z-index: 60; padding: 10px 16px; background: var(--brand); color: var(--on-brand); font: 600 15px/1.35 Barlow, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; text-align: center; }
 .pwa-offline[hidden] { display: none; }
-/* N0: "New version ready. Tap to update." Shown at the top; one tap reloads into the new build. */
-.pwa-update { position: fixed; top: 0; left: 0; right: 0; z-index: 62; min-height: 48px; padding: 12px 16px; margin: 0; border: 0; background: #FFD21F; color: #0E0E0E; font: 800 16px/1.35 Barlow, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; text-align: center; cursor: pointer; }
-.pwa-update[hidden] { display: none; }
-.pwa-install { position: fixed; left: 0; right: 0; bottom: 0; z-index: 60; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: #1A1C22; color: #F4F5F7; border-top: 2px solid #FFD21F; font: 400 16px/1.4 Barlow, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+.pwa-install { position: fixed; left: 0; right: 0; bottom: 0; z-index: 60; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: var(--card); color: var(--ink); border-top: 2px solid var(--brand); font: 400 16px/1.4 Barlow, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
 .pwa-install[hidden] { display: none; }
 .pwa-install-text { margin: 0; flex: 1 1 220px; min-width: 0; }
 .pwa-install-actions { display: flex; gap: 8px; }
 .pwa-btn { min-height: 48px; min-width: 48px; padding: 10px 16px; border-radius: 14px; border: 0; font: 800 16px/1 Barlow, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; cursor: pointer; }
 .pwa-btn[hidden] { display: none; }
-.pwa-yes { background: #FFD21F; color: #0E0E0E; }
-.pwa-no { background: transparent; color: #F4F5F7; border: 2px solid #2C2F38; }
+.pwa-yes { background: var(--brand); color: var(--on-brand); }
+.pwa-no { background: transparent; color: var(--ink); border: 2px solid var(--line); }
 body.pwa-pad { padding-bottom: 150px; }
 
 /* "Get the app" steps on the You're in screen and the login screen. Hidden once the app runs installed. */
-.install-steps { margin: 16px 0 0; padding: 16px; background: var(--card); border: 1px solid var(--line); border-top: 3px solid var(--yellow); border-radius: var(--radius); color: var(--ink); font-family: var(--font-body); }
-.install-steps h2 { margin: 0 0 12px; font: 700 22px/1.2 var(--font-head); text-transform: uppercase; letter-spacing: .02em; color: var(--gold-text); }
+.install-steps { margin: 16px 0 0; padding: 16px; background: var(--card); border: 1px solid var(--line); border-top: 3px solid var(--brand); border-radius: var(--radius); color: var(--ink); font-family: var(--font-body); }
+.install-steps h2 { margin: 0 0 12px; font: 700 22px/1.2 var(--font-head); text-transform: uppercase; letter-spacing: .02em; color: var(--brand-text); }
 .install-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
 .install-list li { display: flex; gap: 12px; align-items: flex-start; }
 .install-list li > div { flex: 1 1 auto; min-width: 0; }
 .install-list b { font-size: 17px; }
 .install-list p { margin: 6px 0 0; font-size: 16px; line-height: 1.4; }
 .is-num { flex: 0 0 auto; width: 36px; height: 36px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font: 800 18px/1 var(--font-head); background: var(--raised); color: var(--ink); border: 2px solid var(--line); }
-.is-done .is-num { background: var(--green); border-color: var(--green); color: var(--on-yellow); }
-.is-next .is-num { background: var(--yellow); border-color:var(--yellow-text); color: var(--on-yellow); }
+.is-done .is-num { background: var(--green); border-color: var(--green); color: var(--on-brand); }
+.is-next .is-num { background: var(--brand); border-color: var(--brand); color: var(--on-brand); }
 .is-state { display: inline-block; margin-left: 8px; font-size: 14px; font-weight: 700; color: var(--green); }
 .install-steps .muted { margin: 12px 0 0; font-size: 15px; }
 .is-installed .install-steps { display: none; }
 @media (display-mode: standalone) { .install-steps { display: none !important; } }
 
 /* Home: one dismissible "Add to your phone" card. Hidden once the app runs installed. */
-.home-install { margin: 0 0 12px; padding: 14px 16px; background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--yellow); border-radius: var(--radius); color: var(--ink); font-family: var(--font-body); }
+.home-install { margin: 0 0 12px; padding: 14px 16px; background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--brand); border-radius: var(--radius); color: var(--ink); font-family: var(--font-body); }
 .home-install[hidden] { display: none; }
-.home-install h2 { margin: 0 0 8px; font: 700 20px/1.2 var(--font-head); text-transform: uppercase; letter-spacing: .02em; color: var(--gold-text); }
+.home-install h2 { margin: 0 0 8px; font: 700 20px/1.2 var(--font-head); text-transform: uppercase; letter-spacing: .02em; color: var(--brand-text); }
 .home-install p { margin: 0 0 6px; font-size: 16px; line-height: 1.4; }
 .home-install .btn { margin-top: 8px; }
 .is-installed .home-install { display: none; }

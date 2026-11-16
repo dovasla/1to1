@@ -1,4 +1,4 @@
-/* 1TO1 share card (N9). Draws a 1080 x 1350 picture on a canvas in the browser.
+/* Check Ball share card (N9, P8). Draws a 1080 x 1350 picture on a canvas in the browser.
    No server, no upload, no network. Only whitelisted fields are read, so phone, PIN,
    email and payment data can never reach the picture even if passed in.
    Usage:
@@ -16,9 +16,9 @@
   'use strict';
 
   var W = 1080, H = 1350;
-  var SIGNUP_ADDRESS = 'dovasla.github.io/1to1';
-  var MARK = '1TO1';
-  var FOOTER = 'PICKUP NIGHT';
+  var MARK = 'CHECK BALL';
+  var FOOTER = 'PICKUP RUN';
+  var TAGLINE = 'CHECK. GAME ON.';
 
   // Banner colours (shop values). Prestige banners p1 to p10 use the gold ramp.
   var BANNERS = {
@@ -27,7 +27,7 @@
     legend: ['#8A5CFF', '#4B2BB0']
   };
   var DEFAULT_BANNER = ['#FFD21F', '#C99A00'];
-  var MODES = { career: 'CAREER', recap: 'LAST NIGHT' };
+  var MODES = { career: 'CAREER', recap: 'LAST RUN' };
   var MAX_NUMBERS = 4;
 
   function clean(s, max) {
@@ -75,7 +75,7 @@
     if (d.clanTag) out.push(d.clanTag);
     if (d.mode === 'recap' && d.nightLabel) out.push(d.nightLabel);
     d.numbers.forEach(function (n) { out.push(n.label, n.value); });
-    out.push(FOOTER, 'JOIN AT ' + SIGNUP_ADDRESS.toUpperCase());
+    out.push(FOOTER, TAGLINE);
     return out;
   }
 
@@ -197,7 +197,7 @@
     ctx.fillText(FOOTER, 72, H - 118);
     ctx.fillStyle = '#A7ADB8';
     ctx.font = '600 36px ' + body;
-    ctx.fillText('Join at ' + SIGNUP_ADDRESS, 72, H - 62);
+    ctx.fillText('Check. Game on.', 72, H - 62);
     return ctx;
   }
 
@@ -243,13 +243,13 @@
     opts = opts || {};
     var nav = opts.nav || (typeof navigator !== 'undefined' ? navigator : {});
     var d = sanitize(data);
-    var fileName = '1to1-' + d.mode + '.png';
+    var fileName = 'check-ball-' + d.mode + '.png';
     return toBlob(data).then(function (blob) {
       var hasFile = typeof File === 'function';
       var file = hasFile ? new File([blob], fileName, { type: 'image/png' }) : null;
       var canFiles = !!(file && nav.canShare && nav.canShare({ files: [file] }));
       if (pickAction({ hasShare: !!nav.share, canShareFiles: canFiles }) === 'share') {
-        return nav.share({ files: [file], title: '1TO1', text: '1TO1 pickup night. Join at ' + SIGNUP_ADDRESS })
+        return nav.share({ files: [file], title: 'Check Ball', text: 'Check Ball pickup run. Check. Game on.' })
           .then(function () { return 'shared'; }, function (e) {
             if (e && e.name === 'AbortError') return 'cancelled';
             return download(blob, fileName);
@@ -260,7 +260,7 @@
   }
 
   return {
-    W: W, H: H, SIGNUP_ADDRESS: SIGNUP_ADDRESS,
+    W: W, H: H,
     sanitize: sanitize, textList: textList, fitName: fitName, pickAction: pickAction,
     draw: draw, toBlob: toBlob, share: share, bannerColours: BANNERS
   };

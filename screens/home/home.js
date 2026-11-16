@@ -1,733 +1,347 @@
-/* Player app: Home screen ("Today" panel, D3 I'm here). Plain JS, no framework, no network.
-   Owner: Home thread (module home-redesign-r3). Shared hooks go through the integrator (N0), see HOOKS.md.
-
+/* Player app: Home lobby screen. Owner: Home thread. Plain JS, no framework, no network.
    Usage:
-     var h = PlayerHome.mount(el, data, { imIn, pay, paid, checkIn, live, lineup, card, night, shop });
+     var h = PlayerHome.mount(el, data, { onCard, onLineup, onLive, onNight, onShop });
      h.update(newData);   // re-render with fresh data
      h.destroy();         // stop the clock and remove listeners
-
-   Layout, top to bottom:
-     1. Live score card, only while a game is on.
-     2. Top bar: "Home" and coins.
-     3. Next night card: day, time, court, countdown, the ONE yellow main button.
-     4. Level strip: name, level and stars (shared PlayerName component) and a thin XP bar.
-     5. Slots: cards registered with PlayerHome.register(id, order, renderFn, bindFn).
-
-   Main button order (ruling R18): Watch live (game on) -> I'm in -> Pay £5 -> I'm here (code window,
-   not yet checked in) -> See my lineup (published, and paid or pulled in) -> You're set.
-
-   The door code never hides anything. It only means "I'm here".
-
    data = {
-     player: { name, banner, nameStyle, clanTag, callingCard, emblemSrc },
+     player: { name, banner, nameStyle, clanTag, callingCard, emblemSrc, skill: 'Steady Starter', games, wins },
      run:    PlayerXp run object (xp, maxLevel, stars, ...),
      coins:  240,
-     court:  'Riverside Sports Hall' (optional),
-     next:   { gameNo, vs, dayLabel, startsAt: ISO } or null,
-     nextRunLabel: 'Sunday 12:45',           // shown when next is null
-     tonight: {                              // optional. Filled by the N2, pay-first and D1 hooks.
-       rsvp: 'none' | 'in',                  // "I'm in"
-       count, needed, paidCount,             // "12 in, 7 paid" (N2). Shown only when count is a number.
-       paid: false, claimed: false,          // pay state. claimed = "I've paid" sent to the organiser
-       amount: '£5', payLink: 'https://...', // amount owed and the Square link
-       error: false,                         // last "I've paid" send failed
-       checkedIn: false,                     // "I'm here" done (D1 player_check_in)
-       runClosed: false,                     // run is closed: no more codes
-       lineupReady: false,                   // lineup published for this player (never by clock)
-       pulledIn: false                       // organiser put this player on court by hand (Pass)
-     },
-     schedule: [{ no, time, vs, state }],    // game chips, slot 'games'
-     lastNight: { xp, games, wins } or null, // slot 'last-night' (hidden when null)
-     live: { game, teamA, scoreA, teamB, scoreB, clock } or null, // live card at the top
-     updatedAt: '10:42' or null
+     next:   { gameNo: 3, vs: 'Team Red', dayLabel: 'Day, 7:45', startsAt: ISO string } or null,
+     nextRunLabel: 'No run set',         // shown when next is null
+     schedule: [{ no: 1, time: '19:00', vs: 'Team Blue', state: 'done'|'live'|'next'|'todo' }],
+     lastNight: { xp: 143, games: 3, wins: 2 } or null,
+     live: { game: 2, teamA: 'Red', scoreA: 14, teamB: 'Blue', scoreB: 12, clock: '4:10 left' } or null,
+     updatedAt: '10:42' or null,          // shows "Last updated" when set (offline)
+     rsvp:   { ok, reason, closed, cancelled, me: 'in' | 'out' | null, fillingUp } or null,  // from player_get_in (R74, R88)
+     rsvpError: false                     // true after a failed "I'm in" / "Can't make it" save
    }
-
-   handlers.checkIn(code) must return a Promise of { ok: true } or { ok: false, error }. The sheet calls it with the 4 digits.
-   handlers.liveFeed() (optional) returns a Promise of { live } (same shape as data.live, or null). Home asks every 5 s while a game is on.
-   d.night (optional, from the night-status module): { status, message, payloadCancelled, games: [{startsAt}], spots: {going, capacity} }.
-   Empty states (no night yet, cancelled, full, night over) replace the Next night card and hide the main button where needed.
-   handle.markHere() marks this phone as checked in (integrator calls it after a #in/1234 link check-in).
-   The #in/1234 link, login and the player_check_in call itself belong to the integrator (app.js, backend.js).
-   error is one of: 'wrong-code', 'too-early', 'run-closed', 'locked' (shown as "Wait 10 minutes").
-   Needs lib/xp.js (window.PlayerXp) and lib/player-name.js (window.PlayerName).
-   Nothing animates on open. The only motion is the XP fill, and it stops for reduced motion.
+   Shows at most three cards: tonight, pay (while owed), last night (after a run). Old copy: screens/home/_old/home-next59b.js.
+   handlers.rsvp(state) is called on "I'm in" ('in') or "Can't make it" ('out'). It may return a promise; the buttons are off until it settles.
+   Rules: revamp/build/player-app-plan/XP-SYSTEM.md. Skill (1 to 30) is shown as a name only, never mixed with XP level.
+   Lineup button shows only in the last 60 seconds before tip-off. Nothing animates on open.
 */
 (function (root) {
   'use strict';
 
   var PN = root.PlayerName;
-  var XP = root.PlayerXp;
-  var ON_COURT_MS = 7 * 60 * 1000;   // a game is "on" for 7 minutes after tip-off
-  var LONDON = 'Europe/London';
-  var CODE_ERR = {
-    'wrong-code': 'Wrong code',
-    'too-early': 'No session is open yet. Ask the organiser to start it.',
-    'no-session': 'No session is open yet. Ask the organiser to start it.',
-    'run-closed': 'Run closed',
-    'locked': 'Wait 10 minutes',
-    'signin': 'Please sign in again. Your sign-in has run out.',   // next-35: sign-in expired, not a failed check-in
-    'no-signal': 'No signal. Try again when you have signal.'   // next-35
-  };
-  var COACH_KEY = '1to1-home-coach-v1';
-  var registry = [];                 // slots, sorted by order
-
-  // Night status helper (night-status module). Read lazily so load order does not matter.
-  function ns() { return root.PlayerNightStatus || null; }
+  var LINEUP_LEAD_MS = 60 * 1000;   // lineup reveal starts 1 minute before tip-off
+  var ON_COURT_MS = 7 * 60 * 1000;  // a game is "on" for 7 minutes after tip-off
 
   var ICON = {
     coin: '<svg class="ph-ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12.2" cy="11.8" r="8.2"/><path d="M9.6 9.4c.5-.8 1.4-1.2 2.5-1.2 1.6 0 2.6.8 2.6 2 0 2.5-5 1.8-5 4.2 0 1.2 1 2 2.6 2 1 0 1.9-.3 2.4-1.1"/></svg>',
-    clock: '<svg class="ph-ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12.1" cy="12.2" r="8.6"/><path d="M12 7.6V12.3l3.1 1.9"/></svg>',
-    tick: '<svg class="ph-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>'
+    clock: '<svg class="ph-ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12.1" cy="12.2" r="8.6"/><path d="M12 7.6V12.3l3.1 1.9"/></svg>'
   };
 
   function esc(s) { return PN.esc(s == null ? '' : String(s)); }
   function pad(n) { return (n < 10 ? '0' : '') + n; }
 
-  // Under an hour: 12:40. Never negative.
+  // 1h 12m above an hour, 12:40 under it. Never negative.
   function fmt(ms) {
     var s = Math.max(0, Math.floor(ms / 1000));
-    var m = Math.floor((s % 3600) / 60), sec = s % 60;
-    var h = Math.floor(s / 3600);
+    var h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
     return h > 0 ? h + 'h ' + pad(m) + 'm' : pad(m) + ':' + pad(sec);
   }
 
-  // Days then hours (2d 5h), then hours and minutes (5h 12m), then mm:ss under an hour.
-  function countdown(ms) {
-    var s = Math.max(0, Math.floor(ms / 1000));
-    var d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60);
-    if (d > 0) return d + 'd ' + h + 'h';
-    if (h > 0) return h + 'h ' + pad(m) + 'm';
-    return fmt(ms);
-  }
-
-  // Which tonight state we are in: none, wait, on. ("lineup" is only the label window, 60 s before start.)
+  // Which tonight state we are in. Drives what the Tonight card shows.
   function tonightKind(next, now) {
-    if (!next) return 'none';
-    var t = next.startsAt ? Date.parse(next.startsAt) : NaN;
-    // next-23: the organiser's live games carry no start time. A published game still means tonight (Pay and check-in still work).
-    if (isNaN(t)) return 'wait';
+    if (!next || !next.startsAt) return 'none';
+    var t = Date.parse(next.startsAt);
+    if (isNaN(t)) return 'none';
+    // R177: no game times on the night. Count down to the run start, then say the game is next (no countdown).
+    if (next.timed === false) return now >= t ? 'next' : ((t - now) <= LINEUP_LEAD_MS ? 'lineup' : 'wait');
     if (now >= t) return now < t + ON_COURT_MS ? 'on' : 'wait';
-    return 'wait';
+    return (t - now) <= LINEUP_LEAD_MS ? 'lineup' : 'wait';
   }
 
-  // The door code works from 2 hours before start until the run is closed.
-  function inCodeWindow(d, now) {
-    var t = Date.parse(d.next && d.next.startsAt);
-    if (isNaN(t)) return false;
-    return !tonightOf(d).runClosed;
+  // "I'm in / Can't make it" (R74, R85): a quiet row under the Tonight card, only while no run is open.
+  // Players see their own answer and the "Filling up" word. Never names or counts.
+  function rsvpWord(r) {
+    if (root.PlayerFillingUp && typeof root.PlayerFillingUp.wordFor === 'function') return root.PlayerFillingUp.wordFor(r);
+    return r && r.ok === true && r.fillingUp === true ? 'Filling up' : '';
   }
 
-  // Only Europe/London clock times are shown to players.
-  function timeLabel(iso) {
-    var t = Date.parse(iso);
-    if (isNaN(t)) return '';
-    try {
-      return new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: LONDON }).format(new Date(t));
-    } catch (e) { return ''; }
-  }
-
-  function safeUrl(u) { return /^https:\/\/\S+$/.test(String(u || '')) ? String(u) : ''; }
-
-  function codeErrorText(err) { return CODE_ERR[err] || 'Check-in failed. Try again.'; }
-
-  function tonightOf(d) {
-    var t = d.tonight || {};
-    return {
-      lineupReady: !!t.lineupReady,
-      pulledIn: !!t.pulledIn,
-      checkedIn: !!t.checkedIn,
-      ended: !!t.ended,
-      runOn: !!t.runOn,   // next-36: the server says a run is open right now (player_run_status)
-      runClosed: !!t.runClosed,
-      rsvp: t.rsvp === 'in' ? 'in' : 'none',
-      rsvpUnknown: !!t.rsvpUnknown,
-      count: typeof t.count === 'number' ? t.count : null,
-      paidCount: typeof t.paidCount === 'number' ? t.paidCount : null,
-      paid: !!t.paid,
-      pass: !!t.pass,
-      claimed: !!t.claimed,
-      amount: t.amount ? String(t.amount) : '',
-      payLink: safeUrl(t.payLink),
-      payMsg: t.payMsg ? String(t.payMsg) : '',
-      error: !!t.error
+  function rsvpHtml(d, kind, busy) {
+    var r = d.rsvp;
+    if (kind !== 'wait' || !r) return '';
+    if (d.pay && d.pay.gate) return '<p class="ph-rsvp-quiet">Pay first to say you’re coming. See the Pay line below.</p>';
+    if (r.ok !== true) {
+      return (r.reason === 'no-night' || r.reason === 'signed-out') ? '' :
+        '<p class="ph-rsvp-quiet">Who’s coming is not available yet.</p>';
+    }
+    if (r.cancelled) return '<p class="ph-rsvp-quiet">This run is cancelled.</p>';
+    if (r.closed) return '';
+    var btn = function (state, label, on) {
+      return '<button type="button" class="ph-rsvp-btn' + (on ? ' is-on' : '') + '" data-rsvp="' + state +
+        '" aria-pressed="' + (on ? 'true' : 'false') + '"' + (busy ? ' disabled' : '') + '>' + label + '</button>';
     };
+    var word = rsvpWord(r);
+    return '<div class="ph-rsvp" role="group" aria-label="Are you coming?">' +
+      '<p class="ph-rsvp-q">Are you coming?</p>' +
+      '<div class="ph-rsvp-btns">' +
+        btn('in', r.me === 'in' ? 'You’re in' : 'I’m in', r.me === 'in') +
+        btn('out', 'Can’t make it', r.me === 'out') +
+      '</div>' +
+      '<p class="ph-more">More to come<span class="ph-dots" aria-hidden="true"><i></i><i></i><i></i></span></p>' +
+      (word ? '<p class="ph-rsvp-word">' + esc(word) + '</p>' : '') +
+      (d.rsvpError ? '<p class="ph-note" role="alert">Could not save that. Check the signal and try again.</p>' : '') +
+    '</div>';
   }
 
-  // What the night is, for the empty states and banners. Uses the night-status module when it is there.
-  // Returns: none, normal, cancelled, full, finished, moved, spots, note.
-  function nightKind(d, now) {
-    if (tonightOf(d).ended) return 'finished';   // next-33 (R52): the run has ended on the server
-    var n = d.night || null;
-    var helper = ns();
-    if (helper && n) {
-      var s = helper.state({
-        status: n.status, message: n.message, live: !!d.live,
-        games: n.games || [], spots: n.spots || null, payloadCancelled: !!n.payloadCancelled
-      }, now);
-      if (s !== 'none' && s !== 'live') return s;
+  // Join keypad (door code, 4 digits), on Home inside the tonight card. Never shows the code.
+  // kp = { code, busy, msg, sub, action: null | 'retry' | 'signin', lockedUntil: ms, joined }
+  // Clock time for the player, e.g. 8:14 PM. Accepts an ISO string or epoch ms.
+  function clock(t) {
+    var d = new Date(typeof t === 'number' ? t : Date.parse(t));
+    if (isNaN(d.getTime())) return 'soon';
+    var h = d.getHours(), ap = h >= 12 ? 'PM' : 'AM';
+    return (h % 12 || 12) + ':' + pad(d.getMinutes()) + ' ' + ap;
+  }
+
+  // Turns a join answer into what the keypad shows. See R113 in revamp/FABLE-RULINGS-15NOV.md.
+  function joinOutcome(r) {
+    if (r && r.ok === true) return { joined: true };
+    var reason = r && r.reason;
+    if (reason === 'wrong-code') {
+      var n = Number(r.triesLeft);
+      return { clear: true, msg: 'That code is not right. Ask at the desk.',
+        sub: isNaN(n) ? '' : n + (n === 1 ? ' try left' : ' tries left') };
     }
-    return d.next ? 'normal' : 'none';
+    if (reason === 'locked') {
+      var until = typeof r.until === 'number' ? r.until : Date.parse(r.until);
+      // No usable time from the server: the wording without the countdown (R119).
+      if (isNaN(until)) return { clear: true, msg: 'Too many tries. Ask the organiser to let you in.' };
+      return { clear: true, lockedUntil: until };
+    }
+    if (reason === 'no-code') return { clear: true, msg: 'No run is open yet.' };
+    if (reason === 'closed') return { clear: true, msg: 'This run has ended.' };
+    if (reason === 'too-early') {
+      var opens = r.opensAt ? (typeof r.opensAt === 'number' ? r.opensAt : Date.parse(r.opensAt)) : NaN;
+      return { clear: true, msg: isNaN(opens) ? 'The code is not open yet.' : 'The code opens at ' + clock(r.opensAt) + '.' };
+    }
+    if (reason === 'signin') return { msg: 'Sign in to join.', action: 'signin' };
+    if (reason === 'timeout') return { msg: 'Can’t reach Check Ball right now. Check your signal.', action: 'retry' };
+    return { msg: 'Could not join. Check the signal and try again.', action: 'retry' };
   }
 
-  // Plain message from the organiser (escaped by the helper, 120 characters at most).
-  function nightMessage(d) {
-    var helper = ns();
-    return helper && d.night ? helper.clean(d.night.message) : '';
+  // Lock wait in words, counted from the server's until time (R119). Rounds up, so it never says 0.
+  function waitWords(ms) {
+    var secs = Math.ceil(ms / 1000);
+    if (secs <= 60) return secs + (secs === 1 ? ' second' : ' seconds');
+    var mins = Math.ceil(secs / 60);
+    return mins + (mins === 1 ? ' minute' : ' minutes');
   }
 
-  // Spots left, or null. Only from the night's spots (N2 count).
-  function spotsLeft(d) {
-    var sp = d.night && d.night.spots;
-    if (!sp || !Number.isInteger(sp.capacity) || !Number.isInteger(sp.going)) return null;
-    return sp.capacity - sp.going;
+  function keypadHtml(kp) {
+    if (kp.joined) return '<p class="ph-kp-done" role="status">You’re in. See you at the run.</p>';
+    var left = kp.lockedUntil ? kp.lockedUntil - Date.now() : 0;
+    var locked = left > 0;
+    var msg = locked ? 'Too many tries. Try again in ' + waitWords(left) + ', or ask the organiser to let you in.' : kp.msg;
+    var cells = '';
+    for (var i = 0; i < 4; i++) {
+      cells += '<span class="ph-kp-cell' + (i < kp.code.length ? ' is-set' : '') + '" aria-hidden="true">' +
+        (i < kp.code.length ? '•' : '') + '</span>';
+    }
+    var keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'del', '0', 'go'];
+    var btns = keys.map(function (k) {
+      var label = k === 'del' ? 'Del' : (k === 'go' ? 'Join' : k);
+      var dis = kp.busy || locked || (k === 'go' && kp.code.length !== 4) ? ' disabled' : '';
+      return '<button type="button" class="ph-kp-key' + (k === 'go' ? ' ph-kp-key--go' : '') + '" data-key="' + k + '"' + dis + '>' + label + '</button>';
+    }).join('');
+    var extra = '';
+    if (kp.action === 'retry') extra = '<button type="button" class="ph-kp-retry" data-key="retry"' + (kp.busy ? ' disabled' : '') + '>Try again</button>';
+    if (kp.action === 'signin') extra = '<button type="button" class="ph-kp-retry" data-go="signin">Sign in</button>';
+    return '<div class="ph-kp" role="group" aria-label="Enter the code from the organiser">' +
+      '<p class="ph-rsvp-q">Enter the code from the organiser</p>' +
+      '<div class="ph-kp-cells">' + cells + '</div>' +
+      '<div class="ph-kp-keys">' + btns + '</div>' +
+      (msg ? '<p class="ph-note ph-kp-msg" role="alert">' + esc(msg) + (!locked && kp.sub ? ' <b>' + esc(kp.sub) + '</b>' : '') + '</p>' : '') +
+      extra +
+    '</div>';
   }
 
-  // The one yellow main button. Returns null when there is no night to act on.
-  // Order: live now, "I'm in", "Pay £5", "I'm here" (code window), "See my lineup", "You're set".
-  // The lineup is never timed: it shows only when it is published for this player.
-  // next-31 (R37): a Pay button shows only when it can lead somewhere: a Square link is set, or auto pay is on.
-  // With no link and auto pay off, the line reads "Pay at the door" and there is no button.
-  function payButtonOk(t) {
-    var cfg = window.PLAYER_APP_CONFIG || {};
-    return !!t.payLink || cfg.payAuto === true;
-  }
-  function payDue(t) {
-    // R43: Pay is never reachable before the code is accepted (checked in), unless pulled in.
-    return !t.paid && !t.pass && !t.runClosed && !!t.amount && payButtonOk(t) && (t.checkedIn || t.pulledIn);
+  // Run day word (M): a run belongs to the London day it starts on. "Tonight" only while it is tonight.
+  function runWord(n, now) {
+    var R = typeof window !== 'undefined' ? window.PlayerRunDay : null;
+    if (!R) return n.dayLabel || 'Next run';
+    return R.isTonight(n, now) ? (n.dayLabel || 'Tonight') : R.dayLabel(n);
   }
 
-  // next-31 (R42): a paid (or pulled-in) player does not check in with a code: no code box, no "I'm here".
-  // An unpaid player still sees "I'm here" in the code window (a cash payer says they have arrived that way).
-  // R43: "Join a session" is the one big button from the moment a night is published, not only in the window.
-  // Before the window the server answers "Too early", so the player sees why.
-  function needsCode(t, d, now) {
-    return !t.checkedIn && !t.paid && !t.pass && !t.pulledIn && !t.runClosed;
-  }
-
-  function mainAction(d, now) {
-    var nk = nightKind(d, now);
-    if (nk === 'cancelled' || nk === 'finished') return null;
+  function tonightHtml(d, now, busy, kp) {
     var kind = tonightKind(d.next, now);
-    if (kind === 'none') return null;
-    var t = tonightOf(d);
-    // R59 (desk, 15 Nov): a pass means free for this run. No Pay step, no code. Home says "You're in. Pass."
-    if (t.pass && !t.lineupReady) return { kind: 'set', label: 'You’re in. Pass.', go: 'live' };
-    if (kind === 'on' && nk === 'full' && t.rsvp !== 'in') return null;
-    // next-35 (clock audit item 2): while a game is on, an unpaid or unjoined player still gets Pay or Join, not "Watch live".
-    if (kind === 'on') {
-      if (payDue(t)) return { kind: 'pay', label: 'Pay ' + t.amount + ' by card', go: 'pay', href: t.payLink };
-      if (needsCode(t, d, now)) return { kind: 'here', label: 'Join a run', go: 'here' };
-      return { kind: 'live', label: 'Watch live', go: 'live' };
+    if (kind === 'none' && d.runOn) {
+      return '' +
+        '<div class="ph-card ph-card--hero">' +
+          '<span class="ph-cap">' + (d.next && window.PlayerRunDay && window.PlayerRunDay.isTonight(d.next, now) ? 'Tonight' : 'Next run') + '</span>' +
+          '<h2>Run is on</h2>' +
+          (d.runLabel ? '<p class="ph-vs">' + esc(d.runLabel) + '</p>' : '') +
+          '<p class="ph-note">Teams show when the organiser sends them.</p>' +
+          (kp ? keypadHtml(kp) : '') +
+        '</div>';
     }
-    if (nk === 'full' && t.rsvp !== 'in') return null;
-    // next-22: when the RSVP read failed, skip the I'm in step so Pay still shows.
-    // next-23: without "I'm in", the main button shows Pay while a payment is due (so Pay never waits on RSVP),
-    // then "I'm here" in the code window, and only then "I'm in".
-    if (t.rsvp !== 'in' && !t.rsvpUnknown) {
-      if (payDue(t)) return { kind: 'pay', label: 'Pay ' + t.amount + ' by card', go: 'pay', href: t.payLink };
-      if (needsCode(t, d, now)) return { kind: 'here', label: 'Join a run', go: 'here' };
-      return { kind: 'in', label: 'I’m in', go: 'imIn' };
+    if (kind === 'none') {
+      return '' +
+        '<div class="ph-card">' +
+          '<span class="ph-cap">Run</span>' +
+          '<h2>No run on</h2>' +
+          '<p class="ph-muted">Next run: <b class="ph-ink">' + esc(d.nextRunLabel || 'soon') + '</b></p>' +
+        '</div>';
     }
-    if (payDue(t)) return { kind: 'pay', label: 'Pay ' + t.amount + ' by card', go: 'pay', href: t.payLink };
-    if (needsCode(t, d, now)) return { kind: 'here', label: 'Join a run', go: 'here' };
-    if (t.lineupReady && (t.paid || t.pass || t.pulledIn)) return { kind: 'lineup', label: 'See my lineup', go: 'lineup' };
-    return { kind: 'set', label: t.pass ? 'You’re in. Pass.' : (t.paid ? 'Paid. You’re in.' : (t.pulledIn ? 'You’re in tonight' : 'You’re set')), go: 'live' };
-  }
-
-  // Key that decides when the page must be redrawn (not every second).
-  function stateKey(d, now) {
-    var a = mainAction(d, now);
-    var t = tonightOf(d);
-    return nightKind(d, now) + '|' + tonightKind(d.next, now) + '|' + (a ? a.kind : '-') + '|' + (t.claimed ? 'c' : '') +
-      (t.checkedIn ? 'k' : '') + (inCodeWindow(d, now) ? 'w' : '');
-  }
-
-  function mainButtonHtml(a) {
-    if (!a) return '';
-    if (a.href) {
-      return '<a class="ph-btn" href="' + esc(a.href) + '" target="_blank" rel="noopener" data-go="' + esc(a.go) + '">' + esc(a.label) + '</a>';
-    }
-    return '<button class="ph-btn" type="button" data-go="' + esc(a.go) + '">' + esc(a.label) + '</button>';
-  }
-
-  // Small lines under the main button: the pay side action, the "You're here" tick, and errors.
-  function sideHtml(d, a, now, flash) {
-    var t = tonightOf(d);
-    var out = '';
-    // One Pay path (R43): with card pay on, Pay is the only pay action (no separate "I've paid" claim).
-    if (a && a.kind === 'pay') {
-      out += t.claimed
-          ? '<p class="ph-note">Sent. The organiser will check Square.</p>'
-          : '<button class="ph-btn ph-btn--ghost" type="button" data-go="paid">Pay cash at the door</button>';
-      if (t.error) out += '<p class="ph-note" role="alert">Could not send. Try again.</p>';
-      if (t.payMsg) out += '<p class="ph-note" role="alert">' + esc(t.payMsg) + '</p>';
-      if (t.checkedIn && !t.paid) out += '<p class="ph-note">You’re here. Pay ' + esc(String(t.amount)) + ' to play tonight.</p>';
-    }
-    // next-31: "I'm here" shows in the code window whenever the player is not checked in, beside any other main
-    // button (Pay first, then here). Before the window it is hidden.
-    if (a && !t.paid && !t.pulledIn && !!t.amount && !payButtonOk(t)) {
-      out += '<p class="ph-note">Pay cash at the door</p>';
-    }
-    // next-30: in the code window "I'm here" is the main button; "I'm in" still shows beside it.
-    // next-31 (R39): pay is never a block, so "I'm in" also shows beside a Pay button.
-    if (flash) out += '<p class="ph-note" role="alert">' + esc(flash) + '</p>';
-    return out;
-  }
-
-  // Calm empty card for: no night yet, cancelled, full, night over. Plain words, one next step.
-  function emptyCardHtml(k, d, now) {
-    var msg = nightMessage(d);
-    var E = {
-      none: { cap: 'Next night', title: 'No night yet', body: '' },
-      cancelled: { cap: 'Tonight', title: 'Cancelled', body: msg || 'Not on tonight.' },
-      full: { cap: 'Tonight', title: 'Night full', body: 'No spots left.' },
-      finished: { cap: 'Tonight', title: 'This session has ended.', body: 'Thanks for playing.' }
-    }[k];
-    var when = d.next && k !== 'none' ? '<p class="ph-muted">' + esc(d.next.dayLabel || timeLabel(d.next.startsAt)) + '</p>' : '';
-    var body = E.body ? '<p class="ph-muted">' + esc(E.body) + '</p>' : '';
-    var action = tonightOf(d).ended
-      ? '<button class="ph-btn" type="button" data-go="here">Join a run</button>'
-      : d.lastNight
-      ? '<button class="ph-btn ph-btn--ghost" type="button" data-go="night">See last night</button>'
-      : '<button class="ph-btn ph-btn--ghost" type="button" data-go="card">Open my profile</button>';
-    return '<section class="ph-next ph-next--empty" role="status" aria-label="' + esc(E.cap + ' ' + E.title) + '">' +
-      '<span class="ph-cap">' + esc(E.cap) + '</span>' +
-      '<h2>' + esc(E.title) + '</h2>' + when + body + action +
-    '</section>';
-  }
-
-  // Spots line (only when 2 or fewer are left) and the organiser's message (moved or note).
-  function noteHtml(d, nk) {
-    var msg = nightMessage(d);
-    if (nk === 'moved') return '<p class="ph-note" role="status">Moved. ' + esc(msg || 'Ask the organiser for the new time.') + '</p>';
-    if (nk === 'note' && msg) return '<p class="ph-note">' + esc(msg) + '</p>';
-    return '';
-  }
-
-  // next-38 (Jord, 15 Nov): a run is on now. The door code card at the top already has the button, so this is one line.
-  function runOnCardHtml(d) {
-    return '<p class="ph-note" role="status">A run is on now. Enter the door code above.</p>';
-  }
-
-  // next-38 (Jord, 15 Nov): the door code is the first thing on Home, always there, even with no run on.
-  // It opens the same 4-digit sheet. Once this phone is checked in (or paid or passed), the card says so.
-  function doorHtml(d, flash) {
-    var t = tonightOf(d);
-    var inNow = !!(t.checkedIn || t.paid || t.pass || t.pulledIn);
-    var msg = flash ? '<p class="ph-note" role="alert">' + esc(flash) + '</p>' : '';
-    if (inNow) {
-      return '<section class="ph-next ph-door ph-door--in" aria-labelledby="phDoorH">' +
-        '<span class="ph-cap">Door</span>' +
-        '<h2 id="phDoorH">You’re checked in</h2>' +
-        '<p class="ph-muted">Nothing more to do here.</p>' +
-      '</section>';
-    }
-    return '<section class="ph-next ph-door" aria-labelledby="phDoorH">' +
-      '<span class="ph-cap">Door</span>' +
-      '<h2 id="phDoorH">Door code</h2>' +
-      '<p class="ph-muted">Type the 4-digit code from the organiser’s screen.</p>' +
-      '<button class="ph-btn" type="button" data-go="here">Enter door code</button>' +
-      msg +
-    '</section>';
-  }
-
-  // The Next night card. This is the "Today" panel. Its button is never "Join a run" (the door card does that).
-  function nextCardHtml(d, now, flash) {
-    var nk = nightKind(d, now);
-    var inNow = !!(d.tonight && d.tonight.rsvp === 'in');
-    if (!d.next && tonightOf(d).runOn && needsCode(tonightOf(d), d, now)) return runOnCardHtml(d);
-    if (!d.next) return emptyCardHtml(nk === 'cancelled' ? 'cancelled' : 'none', d, now);
-    if (nk === 'cancelled' || nk === 'finished' || (nk === 'full' && !inNow)) return emptyCardHtml(nk, d, now);
     var n = d.next;
     var t = Date.parse(n.startsAt);
-    var kind = tonightKind(n, now);
-    var a0 = mainAction(d, now);
-    var a = a0 && a0.kind === 'here' ? null : a0;
-    var tn = tonightOf(d);
-    var when = n.dayLabel || timeLabel(n.startsAt) || 'Tonight';
-    var court = d.court ? '<p class="ph-muted">' + esc(d.court) + '</p>' : '';
-    var noTime = isNaN(t);
-    var label = kind === 'on' ? 'Game on' : (noTime ? 'Tonight' : 'Starts in');
-    var num = kind === 'on'
-      ? '<b class="ph-count-num">Now</b>'
-      : (noTime ? '<b class="ph-count-num">Soon</b>'
-        : '<b class="ph-count-num" data-count>' + esc(countdown(t - now)) + '</b>');
-    return '<section class="ph-next" aria-label="Next night">' +
-      '<span class="ph-cap">Next night</span>' +
-      '<h2>' + esc(when) + '</h2>' +
-      court +
-      '<div class="ph-count"><span class="ph-count-label">' + label + '</span>' + num + '</div>' +
-      noteHtml(d, nk) +
-      (tn.runOn && needsCode(tn, d, now) ? '<p class="ph-note" role="status">A run is on now.</p>' : '') +
-      mainButtonHtml(a) +
-      sideHtml(d, a0, now, '') +
+    var head = '<span class="ph-cap">' + esc(runWord(n, now)) + '</span>' +
+               '<h2>Game ' + esc(n.gameNo) + '</h2>' +
+               (n.vs ? '<p class="ph-vs">vs <b>' + esc(n.vs) + '</b></p>' : (n.versus ? '<p class="ph-vs"><b>' + esc(n.versus) + '</b></p>' : ''));
+    var count;
+    var action = '';
+    if (kind === 'on') {
+      count = '<span class="ph-count-label">Game on</span><b class="ph-count-num">Now</b>';
+      action = '<a class="ph-btn ph-btn--ghost" href="#live" data-go="live">Watch live</a>';
+    } else if (kind === 'next') {
+      count = '<span class="ph-count-label">Game is next</span>';
+    } else if (kind === 'lineup') {
+      count = '<span class="ph-count-label">Tip-off in</span><b class="ph-count-num" data-count>' + fmt(t - now) + '</b>';
+      action = '<a class="ph-btn" href="#lineup" data-go="lineup">See my lineup</a>';
+    } else {
+      count = '<span class="ph-count-label">Starts in</span><b class="ph-count-num" data-count>' + fmt(t - now) + '</b>';
+      action = '<p class="ph-note">' + (d.teamsIn ? 'Teams show 1 minute before the start.' : 'Teams show when the organiser sends them.') + '</p>';
+    }
+    if (n.notIn && kind !== 'on') {
+      action = '<p class="ph-note">You’re not in this game.' + (n.playsIn ? ' You play in Game ' + esc(n.playsIn) + '.' : '') + '</p>';
+    }
+    // Add to calendar (P8): only while the night is still to come, and never for a night you are not in.
+    var calHtml = (hasCalendar() && !n.notIn) ? PlayerCalendar.calendarButtonHtml(calNight(n), { now: now }) : '';
+    var rsLine = d.runState ? '<p class="ph-runstate" role="status">' + esc(d.runState) + '</p>' : '';
+    return '<div class="ph-card ph-card--hero">' + head + rsLine +
+      '<div class="ph-count">' + count + '</div>' + action + calHtml + rsvpHtml(d, kind, busy) + (kp ? keypadHtml(kp) : '') + '</div>';
+  }
+
+  // The one Pay line in the app (Home only). "I’ve paid cash" is a claim for the organiser to check, not a payment.
+  // pay = { amount, status: 'due' | 'claimed' | 'paid', link, error }
+  function payHtml(pay) {
+    if (!pay || !pay.amount) return '';
+    if (pay.status === 'paid') {
+      var receipt = 'Paid ' + esc(pay.amount) + (pay.receiptDate ? ' · ' + esc(pay.receiptDate) : '');
+      return '<section class="ph-block ph-pay"><p><b>' + receipt + '.</b> See you at the run.</p></section>';
+    }
+    if (pay.status === 'claimed') {
+      return '<section class="ph-block ph-pay"><p>Sent. The organiser will check.</p></section>';
+    }
+    var card = /^https:\/\/\S+$/.test(String(pay.link || ''))
+      ? '<a class="ph-btn" href="' + esc(pay.link) + '" target="_blank" rel="noopener">Pay by card</a>'
+      : '';
+    return '<section class="ph-block ph-pay">' +
+      '<p><b>You owe ' + esc(pay.amount) + '.</b> Pay by card or in cash.</p>' +
+      card +
+      '<button class="ph-btn ph-btn--ghost" type="button" data-go="paid">I’ve paid cash</button>' +
+      (pay.error ? '<p class="ph-note" role="alert">Could not send. Try again.</p>' : '') +
     '</section>';
-  }
-
-  // Time left in the game, as text. If the feed gives clockSecs and running, the phone counts it down itself.
-  function liveClock(lv, now) {
-    if (typeof lv.clockSecs !== 'number') return lv.clock || '';
-    var elapsed = lv.running && lv.clockAt ? (now - lv.clockAt) / 1000 : 0;
-    return fmt(Math.max(0, lv.clockSecs - elapsed) * 1000) + ' left';
-  }
-
-  // Live score card. Sits at the top only while a game is on. The score is also read out in words.
-  function liveCardHtml(lv, now) {
-    var words = lv.teamA + ' ' + lv.scoreA + ', ' + lv.teamB + ' ' + lv.scoreB;
-    return '<a class="ph-live-card" href="#live" data-go="live">' +
-      '<span class="ph-cap">Live · Game ' + esc(lv.game) + '</span>' +
-      '<span class="ph-sr">' + esc(words) + '.</span>' +
-      '<div class="ph-live-score" aria-hidden="true">' +
-        '<span class="ph-live-team">' + esc(lv.teamA) + '</span>' +
-        '<b>' + esc(lv.scoreA) + '</b><i>–</i><b>' + esc(lv.scoreB) + '</b>' +
-        '<span class="ph-live-team">' + esc(lv.teamB) + '</span>' +
-      '</div>' +
-      '<span class="ph-muted" data-live-clock>' + esc(liveClock(lv, now)) + '</span>' +
-    '</a>';
-  }
-
-  // Thin level strip. Not a card. Name, level and stars come from the shared PlayerName component.
-  // Skill and clan tag are not shown on Home (Profile only): yellow stays for the one action.
-  function youHtml(d) {
-    var p = d.player || {};
-    var run = d.run || XP.newRun();
-    var prog = XP.progress(run);
-    var pct = prog.isMax ? 100 : (prog.xpForLevel ? Math.round(prog.xpInLevel / prog.xpForLevel * 100) : 0);
-    var right = prog.isMax ? 'Max level' : esc(prog.xpToNext) + ' to Level ' + (prog.level + 1);
-    var chip = PN.html({
-      name: p.name, level: prog.level, stars: prog.stars || run.stars || 0, banner: p.banner,
-      nameStyle: p.nameStyle, clanTag: '', callingCard: p.callingCard,
-      emblemSrc: p.emblemSrc, size: 'full', noCall: true
-    });
-    return '<section class="ph-you" aria-label="Your level">' +
-      '<a class="ph-you-top" href="#profile" data-go="card" aria-label="' + esc('My player card: ' + (p.name || 'Player') + ', Level ' + prog.level + ', ' + (prog.stars || run.stars || 0) + ' stars') + '">' + chip + '</a>' +
-      '<div class="ph-you-row"><b>Level ' + prog.level + '</b><span>' + right + '</span></div>' +
-      '<div class="ph-bar" role="progressbar" aria-label="Progress to next level" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + pct + '" aria-valuetext="' + pct + ' percent, ' + esc(right) + '">' +
-        '<i style="width:' + pct + '%"></i></div>' +
-    '</section>';
-  }
-
-  function scheduleHtml(list) {
-    if (!list || !list.length) return '';
-    var chips = list.map(function (g) {
-      var label = { done: 'Done', live: 'Live', next: 'Next', todo: '' }[g.state] || '';
-      return '<a class="ph-chip ph-chip--' + esc(g.state) + '" href="#live" data-go="live">' +
-        '<span class="ph-cap">G' + esc(g.no) + '</span><b>' + esc(g.time) + '</b>' +
-        '<small>' + (label || '&nbsp;') + '</small></a>';
-    }).join('');
-    return '<h2 class="ph-h2">Tonight’s games</h2><div class="ph-strip">' + chips + '</div>';
   }
 
   function lastNightHtml(ln) {
-    return '<a class="ph-row" href="#nights" data-go="night"><span class="ph-cap">Last night</span><div class="ph-row-body">' +
-      '<b>+' + esc(ln.xp) + ' points</b><span>' + esc(ln.games) + ' games · ' + esc(ln.wins) + ' wins</span></div></a>';
+    var body = ln
+      ? '<b>+' + esc(ln.xp) + ' points</b><span>' + esc(ln.games) + ' games · ' + esc(ln.wins) + ' wins</span>'
+      : '<b>No run yet</b><span>Your last run shows here</span>';
+    return '<a class="ph-row ph-card" href="#stats" data-go="night"><span class="ph-cap">Last run</span><div class="ph-row-body">' + body + '</div></a>';
   }
 
-  // Built-in slots. A slot returns '' when it has nothing to say, and then leaves no gap.
-  // The live score is not a slot: it sits at the top of the page.
-  // First-visit tip. Shows once per phone. If storage is blocked it never shows (no nagging).
-  function coachShown() {
-    try { return !!root.localStorage && root.localStorage.getItem(COACH_KEY) !== '1'; } catch (e) { return false; }
-  }
-  function coachDone() {
-    try { if (root.localStorage) root.localStorage.setItem(COACH_KEY, '1'); } catch (e) { /* nothing to do */ }
-  }
-  function coachHtml(d, now) {
-    var a = mainAction(d, now);
-    var line = a
-      ? 'Your next step: “' + a.label + '”, on the yellow button.'
-      : 'The yellow button shows your next step once a night is on.';
-    return '<section class="ph-coach" aria-label="Tip">' +
-      '<span class="ph-cap">Your next step</span>' +
-      '<p>' + esc(line) + '</p>' +
-      '<button class="ph-btn ph-btn--ghost" type="button" data-go="coach-dismiss">Got it</button>' +
-    '</section>';
-  }
-
-  function registerBuiltIns() {
-    // R27 (Fable 15 Nov): Home keeps at most six cards. Coach tip, tonight's games and last night are removed from Home.
-    // Their helper functions stay in the file, unused.
-  }
-
-  // register(id, order, renderFn, bindFn). renderFn(data, ctx) returns HTML or ''. bindFn(sectionEl) is optional.
-  // Same id replaces the old entry, so a module can be swapped without a second card.
-  function register(id, order, renderFn, bindFn) {
-    if (!id || typeof renderFn !== 'function') return;
-    registry = registry.filter(function (s) { return s.id !== id; });
-    registry.push({ id: String(id), order: Number(order) || 0, render: renderFn, bind: typeof bindFn === 'function' ? bindFn : null });
-    registry.sort(function (a, b) { return a.order - b.order; });
-  }
-
-  function slotsHtml(d, now) {
-    return registry.map(function (s) {
-      var html = '';
-      try { html = s.render(d, { now: now }) || ''; } catch (e) { html = ''; if (root.console) root.console.error('Home slot ' + s.id + ' failed', e); }
-      return html ? '<section class="ph-slot" data-slot="' + esc(s.id) + '">' + html + '</section>' : '';
-    }).join('');
-  }
-
-  function page(d, now, flash) {
-    var coins = '<a class="ph-coins" href="#shop" data-go="shop" aria-label="Coins, open shop">' + ICON.coin +
-      '<b>' + esc(d.coins || 0) + '</b><span class="ph-cap">Coins</span></a>';
-    var top = d.live ? liveCardHtml(d.live, now) : '';
+  // Home shows at most three cards (R62): the tonight card, the pay card while owed, and the last-night card after a run.
+  // Live, Stats and Profile hold the rest.
+  function page(d, now, busy, kp) {
+    var sv = (typeof window !== 'undefined' && window.ShopStrip && window.ShopStrip.html({ coins: d.coins || 0, level: d.level || 0, live: !!d.live, items: (d.shopItems || []), newLooks: !!d.newLooks })) || '';
     return '' +
-      top +
-      '<header class="ph-top"><h1>Home</h1>' + coins + '</header>' +
-      doorHtml(d, flash) +
-      nextCardHtml(d, now, flash) +
-      '<div class="ph-slots">' + slotsHtml(d, now) + '</div>' +
-      ''; // next-27: no "Last updated" line on Home
+      '<header class="ph-top">' +
+        '<h1>Home</h1>' +
+        '<a class="ph-coins" href="#shop" data-go="shop" aria-label="Coins, open shop">' + ICON.coin +
+          '<b>' + esc(d.coins || 0) + '</b><span class="ph-cap">Coins</span></a>' +
+      '</header>' +
+      '<div data-slot="tonight">' + tonightHtml(d, now, busy, kp) + '</div>' +
+      sv +
+      payHtml(d.pay) +
+      (d.lastNight ? lastNightHtml(d.lastNight) : '') +
+      (d.updatedAt ? '<p class="ph-note ph-updated">' + ICON.clock + ' Last updated ' + esc(d.updatedAt) + '</p>' : '');
   }
 
-  function bindSlots(el) {
-    registry.forEach(function (s) {
-      if (!s.bind) return;
-      var node = el.querySelector('[data-slot="' + s.id + '"]');
-      if (node) s.bind(node);
-    });
-  }
-
-  // ---------- Door code sheet (I'm here) ----------
-  // The sheet lives on document.body so a redraw of Home never closes it mid-entry.
-  function buildSheet() {
-    var wrap = document.createElement('div');
-    wrap.className = 'ph-sheet-wrap';
-    wrap.innerHTML =
-      '<div class="ph-sheet-back" data-sheet-close></div>' +
-      '<div class="ph-sheet" role="dialog" aria-modal="true" aria-labelledby="phSheetH" tabindex="-1">' +
-        '<h2 id="phSheetH">Enter the 4-digit code</h2>' +
-        '<p class="ph-muted">It’s on the organiser’s screen.</p>' +
-        '<div class="ph-digits" data-digits role="group" aria-label="Door code, 0 of 4 digits entered">' +
-          '<span class="ph-box" data-box>&nbsp;</span><span class="ph-box" data-box>&nbsp;</span>' +
-          '<span class="ph-box" data-box>&nbsp;</span><span class="ph-box" data-box>&nbsp;</span>' +
-        '</div>' +
-        '<p class="ph-note ph-sheet-msg" data-msg role="alert"></p>' +
-        '<div class="ph-pad">' +
-          [1, 2, 3, 4, 5, 6, 7, 8, 9].map(function (n) { return '<button class="ph-key" type="button" data-key="' + n + '">' + n + '</button>'; }).join('') +
-          '<button class="ph-key ph-key--alt" type="button" data-key="del" aria-label="Delete last digit">Del</button>' +
-          '<button class="ph-key" type="button" data-key="0">0</button>' +
-          '<button class="ph-key ph-key--alt" type="button" data-key="clear" aria-label="Clear all digits">Clear</button>' +
-        '</div>' +
-        '<button class="ph-btn ph-btn--ghost" type="button" data-sheet-close>Close</button>' +
-      '</div>';
-    return wrap;
-  }
+  // The night the calendar file is made from: the next run's start time.
+  function hasCalendar() { return typeof window !== 'undefined' && !!window.PlayerCalendar; }
+  function calNight(n) { return n && n.startsAt ? { startsAt: n.startsAt, title: 'Check Ball run' } : null; }
 
   function mount(el, data, handlers) {
     handlers = handlers || {};
-    var state = { data: data || {}, key: null, timer: null, liveTimer: null, local: {}, liveSet: false, liveValue: null, flash: '', sheet: null, sheetDigits: '', busy: false, inerted: [] };
-
-    // Data as shown: the app data, plus any check-in this phone has just made, plus the live feed value.
-    function view() {
-      if (!state.local.checkedIn && !state.liveSet) return state.data;
-      var out = {};
-      Object.keys(state.data).forEach(function (k) { out[k] = state.data[k]; });
-      if (state.local.checkedIn) {
-        var t = {};
-        Object.keys(state.data.tonight || {}).forEach(function (k) { t[k] = state.data.tonight[k]; });
-        t.checkedIn = true;
-        out.tonight = t;
-      }
-      if (state.liveSet) out.live = state.liveValue;
-      return out;
-    }
-
-    // Asks the live feed every 5 s while a game is on. Only the live card is redrawn, so focus stays put.
-    function pollLive() {
-      if (!handlers.liveFeed || (typeof document !== 'undefined' && document.hidden)) return;
-      var v = view();
-      if (!v.live && tonightKind(v.next, Date.now()) !== 'on') return;
-      Promise.resolve().then(function () { return handlers.liveFeed(); }).then(function (res) {
-        if (!res || !('live' in res)) return;
-        var wasLive = !!view().live;
-        state.liveSet = true;
-        state.liveValue = res.live || null;
-        if (!!state.liveValue !== wasLive) { render(); return; }
-        redrawLive();
-      }, function () { /* keep the last score on screen */ });
-    }
-
-    function redrawLive() {
-      var v = view();
-      var old = el.querySelector('.ph-live-card');
-      var html = v.live ? liveCardHtml(v.live, Date.now()) : '';
-      if (old) old.outerHTML = html;
-      else if (html) el.insertAdjacentHTML('afterbegin', html);
-    }
+    var state = { data: data || {}, kind: null, timer: null, busy: false,
+      kp: { code: '', busy: false, msg: null, sub: null, action: null, lockedUntil: 0, joined: !!(data && data.checkedIn) } };
+    var showKp = typeof handlers.join === 'function';
+    if (hasCalendar()) PlayerCalendar.attach(el, function () { return calNight(state.data.next); });
 
     function render() {
       var now = Date.now();
-      var v = view();
-      el.innerHTML = page(v, now, state.flash);
-      bindSlots(el);
-      state.key = stateKey(v, now);
+      el.innerHTML = page(state.data, now, state.busy, showKp && (state.kind !== 'none' || state.data.runOn) ? state.kp : null);
+      state.kind = tonightKind(state.data.next, now);
     }
 
-    // One clock. Redraws only when the state changes, otherwise just the number.
+    // "I'm in" / "Can't make it": one tap at a time. The integrator saves, then calls update() with fresh data.
+    function tapRsvp(btn) {
+      if (state.busy || typeof handlers.rsvp !== 'function') return;
+      state.busy = true;
+      render();
+      var done = function () { state.busy = false; render(); };
+      Promise.resolve().then(function () { return handlers.rsvp(btn.getAttribute('data-rsvp')); }).then(done, done);
+    }
+
+    // Join keypad: digits add to the code (4 max), Del removes one, Join sends it once.
+    // Wrong code, locked, closed and the rest clear the entry. Timeout and sign-in keep it, and timeout is not a wrong try.
+    var JOIN_TIMEOUT_MS = typeof handlers.joinTimeoutMs === 'number' ? handlers.joinTimeoutMs : 8000;
+    function submitJoin() {
+      var kp = state.kp;
+      if (kp.code.length !== 4 || kp.busy) return;
+      kp.busy = true; kp.msg = null; kp.sub = null; kp.action = null; render();
+      var timer;
+      var timeout = new Promise(function (res) { timer = setTimeout(function () { res({ ok: false, reason: 'timeout' }); }, JOIN_TIMEOUT_MS); });
+      var ask = Promise.resolve().then(function () { return handlers.join(kp.code); });
+      var apply = function (r) {
+        clearTimeout(timer);
+        var o = joinOutcome(r);
+        kp.busy = false;
+        if (o.joined) { kp.joined = true; kp.code = ''; kp.msg = null; kp.sub = null; kp.action = null; }
+        else {
+          if (o.clear) kp.code = '';
+          kp.msg = o.msg || null; kp.sub = o.sub || null; kp.action = o.action || null;
+          if (o.lockedUntil) kp.lockedUntil = o.lockedUntil;
+        }
+        render();
+      };
+      Promise.race([ask, timeout]).then(apply, function () { apply({ ok: false, reason: 'error' }); });
+    }
+    function tapKey(k) {
+      var kp = state.kp;
+      if (kp.busy || kp.joined) return;
+      if (k === 'retry') { submitJoin(); return; }
+      if (kp.lockedUntil && Date.now() < kp.lockedUntil) return;
+      if (k === 'del') { kp.code = kp.code.slice(0, -1); kp.msg = null; kp.sub = null; kp.action = null; render(); return; }
+      if (k === 'go') { submitJoin(); return; }
+      if (kp.code.length >= 4) return;
+      kp.code += k; kp.msg = null; kp.sub = null; kp.action = null; render();
+    }
+
+    // One clock. Re-renders only when the tonight state changes, otherwise just the number.
     function tick() {
       var now = Date.now();
-      var v = view();
-      if (stateKey(v, now) !== state.key) { render(); return; }
+      if (state.kp.lockedUntil && now >= state.kp.lockedUntil) { state.kp.lockedUntil = 0; render(); return; }
+      if (state.kp.lockedUntil) { render(); return; }  // live countdown while locked
+      var kind = tonightKind(state.data.next, now);
+      if (kind !== state.kind) { render(); return; }
       var out = el.querySelector('[data-count]');
-      if (out && v.next) out.textContent = countdown(Date.parse(v.next.startsAt) - now);
-      var clockOut = el.querySelector('[data-live-clock]');
-      if (clockOut && v.live) clockOut.textContent = liveClock(v.live, now);
-    }
-
-    function setDigits(s) {
-      state.sheetDigits = s;
-      if (!state.sheet) return;
-      var boxes = state.sheet.querySelectorAll('[data-box]');
-      for (var i = 0; i < boxes.length; i++) boxes[i].textContent = s.charAt(i) || ' ';
-      state.sheet.querySelector('[data-digits]').setAttribute('aria-label', 'Door code, ' + s.length + ' of 4 digits entered');
-    }
-
-    function setMsg(text) {
-      if (!state.sheet) return;
-      state.sheet.querySelector('[data-msg]').textContent = text || '';
-    }
-
-    function setBusy(on) {
-      state.busy = on;
-      if (!state.sheet) return;
-      var keys = state.sheet.querySelectorAll('[data-key]');
-      for (var i = 0; i < keys.length; i++) keys[i].disabled = on;
-      // A disabled key loses focus, so keep focus on the dialog while the code is checked.
-      if (on) state.sheet.focus();
-    }
-
-    // Marks everything outside the sheet inert, so screen readers and Tab skip the page behind it.
-    // aria-hidden is set too, for browsers without inert. The focus trap covers the rest.
-    function setBackgroundInert(on) {
-      if (on) {
-        state.inerted = [];
-        Array.prototype.forEach.call(document.body.children, function (node) {
-          if (node === state.sheet || node.hasAttribute('inert') || node.getAttribute('aria-hidden') === 'true') return;
-          state.inerted.push(node);
-          node.setAttribute('inert', '');
-          node.setAttribute('aria-hidden', 'true');
-        });
-        return;
-      }
-      (state.inerted || []).forEach(function (node) { node.removeAttribute('inert'); node.removeAttribute('aria-hidden'); });
-      state.inerted = [];
-    }
-
-    function closeSheet() {
-      if (!state.sheet) return;
-      setBackgroundInert(false);
-      document.removeEventListener('keydown', onSheetKey);
-      state.sheet.parentNode.removeChild(state.sheet);
-      state.sheet = null;
-      state.sheetDigits = '';
-      state.busy = false;
-      // Focus goes back to the button that opened the sheet.
-      var back = state.returnFocus;
-      state.returnFocus = null;
-      if (back && back.focus && document.body.contains(back)) back.focus();
-    }
-
-    function finishCheckIn(res) {
-      if (res && res.ok) {
-        state.local.checkedIn = true;
-        state.flash = '';
-        closeSheet();
-        render();
-        return;
-      }
-      state.flash = '';
-      setBusy(false);
-      setDigits('');
-      setMsg(codeErrorText(res && res.error));
-    }
-
-    // next-31: the inline Join box. Same check-in as the keypad sheet.
-    function submitJoin() {
-      var input = el.querySelector('#ph-join-code');
-      var code = input ? String(input.value || '').replace(/\D/g, '') : '';
-      if (code.length !== 4) { state.flash = 'Enter the 4-digit code.'; render(); return; }
-      if (!handlers.checkIn) return;
-      state.flash = '';
-      Promise.resolve()
-        .then(function () { return handlers.checkIn(code); })
-        .then(function (res) {
-          state.flash = (res && res.ok) ? '' : codeErrorText(res && res.error);
-          render();
-        }, function () { state.flash = codeErrorText('no-signal'); render(); });
-    }
-
-    function submitCode(code) {
-      if (!handlers.checkIn) { setBusy(false); setMsg(codeErrorText('')); return; }
-      setBusy(true);
-      setMsg('');
-      Promise.resolve()
-        .then(function () { return handlers.checkIn(code); })
-        .then(finishCheckIn, function () { finishCheckIn({ ok: false, error: 'no-signal' }); });
-    }
-
-    function pressKey(k) {
-      if (state.busy || !state.sheet) return;
-      if (k === 'clear') { setDigits(''); setMsg(''); return; }
-      if (k === 'del') { setDigits(state.sheetDigits.slice(0, -1)); setMsg(''); return; }
-      if (state.sheetDigits.length >= 4) return;
-      setDigits(state.sheetDigits + k);
-      setMsg('');
-      if (state.sheetDigits.length === 4) submitCode(state.sheetDigits);
-    }
-
-    // Keeps Tab and Shift+Tab inside the sheet while it is open.
-    function trapTab(e) {
-      var items = Array.prototype.slice.call(state.sheet.querySelectorAll('button')).filter(function (b) { return !b.disabled; });
-      if (!items.length) return;
-      var first = items[0], last = items[items.length - 1];
-      var inside = state.sheet.contains(document.activeElement);
-      if (!inside) { e.preventDefault(); first.focus(); return; }
-      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
-      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
-    }
-
-    function onSheetKey(e) {
-      if (!state.sheet) return;
-      if (e.key === 'Escape') { closeSheet(); return; }
-      if (e.key === 'Tab') { trapTab(e); return; }
-      if (/^[0-9]$/.test(e.key)) { pressKey(e.key); e.preventDefault(); }
-      else if (e.key === 'Backspace') { pressKey('del'); e.preventDefault(); }
-    }
-
-    function openSheet() {
-      if (state.sheet) return;
-      state.returnFocus = document.activeElement;
-      state.sheet = buildSheet();
-      document.body.appendChild(state.sheet);
-      var firstKey = state.sheet.querySelector('[data-key="1"]');
-      if (firstKey) firstKey.focus();
-      state.sheet.addEventListener('click', function (e) {
-        var close = e.target.closest ? e.target.closest('[data-sheet-close]') : null;
-        if (close) { closeSheet(); return; }
-        var key = e.target.closest ? e.target.closest('[data-key]') : null;
-        if (key) pressKey(key.getAttribute('data-key'));
-      });
-      document.addEventListener('keydown', onSheetKey);
-      setBackgroundInert(true);
-      setDigits('');
-      setMsg('');
+      if (out && state.data.next) out.textContent = fmt(Date.parse(state.data.next.startsAt) - now);
     }
 
     function onClick(e) {
+      var kk = e.target.closest ? e.target.closest('[data-key]') : null;
+      if (kk && el.contains(kk)) { e.preventDefault(); tapKey(kk.getAttribute('data-key')); return; }
+      var rs = e.target.closest ? e.target.closest('[data-rsvp]') : null;
+      if (rs && el.contains(rs)) { e.preventDefault(); tapRsvp(rs); return; }
       var a = e.target.closest ? e.target.closest('[data-go]') : null;
       if (!a || !el.contains(a)) return;
-      var go = a.getAttribute('data-go');
-      if (go === 'here') { e.preventDefault(); openSheet(); return; }
-      if (go === 'coach-dismiss') {
-        e.preventDefault();
-        coachDone();
-        render();
-        var main = el.querySelector('.ph-btn:not(.ph-btn--ghost)');
-        if (main) main.focus();
-        return;
-      }
-      if (go === 'join') { e.preventDefault(); submitJoin(); return; }
-      var fn = handlers[go];
+      var fn = handlers[a.getAttribute('data-go')];
       if (typeof fn === 'function') { e.preventDefault(); fn(a); }
     }
 
@@ -735,47 +349,22 @@
     el.addEventListener('click', onClick);
     render();
     state.timer = setInterval(tick, 1000);
-    state.liveTimer = setInterval(pollLive, 5000);
 
     return {
-      // The integrator calls this after its own player_check_in succeeds (for example from a #in/1234 link).
-      markHere: function () {
-        state.local.checkedIn = true;
-        state.flash = '';
-        closeSheet();
-        render();
-      },
       update: function (next) {
         state.data = next || {};
-        state.local = {};      // the app data now says what is true
-        state.liveSet = false; // the app's live value is used again until the next feed reply
+        state.kp.joined = !!state.data.checkedIn;   // follows the remembered join for this night, so a new run shows the keypad again
         render();
       },
       destroy: function () {
         clearInterval(state.timer);
-        clearInterval(state.liveTimer);
         el.removeEventListener('click', onClick);
-        closeSheet();
         el.innerHTML = '';
         el.classList.remove('ph');
       }
     };
   }
 
-  registerBuiltIns();
-
-  root.PlayerHome = {
-    mount: mount,
-    register: register,
-    tonightKind: tonightKind,
-    mainAction: mainAction,
-    nextCardHtml: function (d, now) { return nextCardHtml(d, now, ""); },
-    inCodeWindow: inCodeWindow,
-    codeErrorText: codeErrorText,
-    countdown: countdown,
-    liveClock: liveClock,
-    nightKind: nightKind,
-    fmt: fmt
-  };
+  root.PlayerHome = { mount: mount, tonightKind: tonightKind, fmt: fmt };
   if (typeof module !== 'undefined' && module.exports) module.exports = root.PlayerHome;
 })(typeof window !== 'undefined' ? window : globalThis);

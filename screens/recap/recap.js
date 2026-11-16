@@ -101,7 +101,7 @@
     var partsSum = PARTS.reduce(function (s, p) { return s + num(parts[p.key]); }, 0);
     var adjust = ledger ? earned - partsSum : 0;   // prestige bonus (+) or night cap (-)
     if (adjust > 0) breakdown.push({ label: 'Prestige bonus', xp: adjust });
-    if (adjust < 0) breakdown.push({ label: 'Night cap', xp: adjust });
+    if (adjust < 0) breakdown.push({ label: 'Run cap', xp: adjust });
 
     var levelTo = num(summary.level) || XP.levelOf(runXp);
     var levelFrom = Math.min(XP.levelOf(Math.max(0, runXp - earned)), levelTo);
@@ -134,8 +134,8 @@
     if (!view || !view.state) return '';
     var isNew = view.state === 'new';
     return '<button type="button" class="rc-card' + (isNew ? ' is-new' : '') + '" data-recap-open="' + esc(view.nightId) + '">' +
-      '<span class="rc-cap">Last night</span>' +
-      '<span class="rc-title">' + (isNew ? 'Your recap is ready' : 'Last night recap') + '</span>' +
+      '<span class="rc-cap">Last run</span>' +
+      '<span class="rc-title">' + (isNew ? 'Your recap is ready' : 'Last run recap') + '</span>' +
       '<span class="rc-row">' +
         '<span class="rc-mini"><b>' + esc(view.games) + '</b> games</span>' +
         '<span class="rc-mini"><b>' + esc(view.wins) + '</b> wins</span>' +
@@ -153,6 +153,7 @@
 
   // The full recap sheet. Pure HTML, so the test can check it.
   function sheetHtml(view) {
+    if (!view) return '';
     var breakdown = view.breakdown.map(function (b) {
       return '<li class="rc-line"><span>' + esc(b.label) + '</span><b>' + (b.xp > 0 ? '+' : '') + esc(b.xp) + '</b></li>';
     }).join('');
@@ -168,11 +169,11 @@
     if (view.canVote) {
       mvp = '<h3 class="rc-h3">MVP vote</h3>' +
         '<button type="button" class="rc-btn" data-recap-vote="' + esc(view.nightId) + '">Vote for MVP</button>' +
-        '<p class="rc-note">Only players who played tonight can vote.</p>';
+        '<p class="rc-note">Only players who played in this run can vote.</p>';
     }
     return '<div class="rc-overlay" data-recap-close>' +
-      '<section class="rc-sheet" role="dialog" aria-modal="true" aria-label="Last night recap">' +
-        '<h2 class="rc-h2">Last night</h2>' +
+      '<section class="rc-sheet" role="dialog" aria-modal="true" aria-label="Last run recap">' +
+        '<h2 class="rc-h2">Last run</h2>' +
         '<p class="rc-date">' + esc(view.dateLabel) + '</p>' +
         '<div class="rc-stats">' +
           '<div class="rc-big"><b>' + esc(view.games) + '</b><span>Games</span></div>' +
@@ -230,7 +231,7 @@
 
   // Slide-up sheet in the page. Closes on the Close button or the dimmed background.
   function openSheet(view, handlers) {
-    if (typeof document === 'undefined') return null;
+    if (typeof document === 'undefined' || !view) return null;
     var host = document.createElement('div');
     host.innerHTML = sheetHtml(view);
     var overlay = host.firstChild;
