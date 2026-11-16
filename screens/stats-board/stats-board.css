@@ -30,6 +30,9 @@
 
 /* Leaderboard */
 .sb-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+/* 72k: the three season buttons stay on one line from 360 px up (Android wrapped them). */
+.stats-seasons { flex-wrap: nowrap; gap: 6px; }
+.stats-seasons .sb-chip { flex: 1 1 0; min-width: 0; padding: 0 8px; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sb-chip { background: var(--card); border-color: var(--line); padding: 0 16px; }
 .sb-chip.is-on { background: var(--yellow); color: var(--on-yellow); border-color:var(--yellow-text); }
 

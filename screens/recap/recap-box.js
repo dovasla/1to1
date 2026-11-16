@@ -17,10 +17,8 @@
   function esc(s) { return RECAP ? RECAP.esc(s) : String(s == null ? '' : s); }
 
   function stateHtml(kind) {
-    if (kind === 'loading') return '<p class="muted rb-state" role="status">Loading last run…</p>';
-    if (kind === 'error') return '<div class="rb-state"><p class="muted" role="alert">' + esc(TO.TEXT.error) +
-      '</p><button type="button" class="rc-btn" data-rb-retry>' + esc(TO.TEXT.retry) + '</button></div>';
-    return '';   // empty: no card at all
+    // 72g (R274): silent while loading and silent on failure. The box shows only a finished run's card.
+    return '';
   }
 
   // Build the view from a loaded result. Names in top come from the server rows only.

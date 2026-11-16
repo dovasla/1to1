@@ -188,7 +188,7 @@
 
   function emptyHtml() {
     return '<section class="lv-card lv-empty"><h2 class="lv-h">No game on court</h2>' +
-      '<p class="lv-muted">The organiser starts the first game. This page updates on its own.</p></section>';
+      '<p class="lv-muted">Games show here when the run starts. This page updates on its own.</p></section>';
   }
 
   // Pictures: a and v ids are SVG files in icons/characters/set. i ids are drawn in code (icons/players).

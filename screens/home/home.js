@@ -168,7 +168,8 @@
   }
 
   function tonightHtml(d, now, busy, kp) {
-    var kind = tonightKind(d.next, now);
+    // 72h (R300): one state only. A run that is live (organiser pressed Start run) shows as on, never with a countdown.
+    var kind = d.runOn && d.next ? 'on' : tonightKind(d.next, now);
     if (kind === 'none' && d.runOn) {
       return '' +
         '<div class="ph-card ph-card--hero">' +
@@ -221,19 +222,24 @@
   function payHtml(pay) {
     if (!pay || !pay.amount) return '';
     if (pay.status === 'paid') {
-      var receipt = 'Paid ' + esc(pay.amount) + (pay.receiptDate ? ' · ' + esc(pay.receiptDate) : '');
-      return '<section class="ph-block ph-pay"><p><b>' + receipt + '.</b> See you at the run.</p></section>';
+      return '<section class="ph-block ph-pay"><p><b>Paid. You’re in.</b></p></section>';
     }
     if (pay.status === 'claimed') {
-      return '<section class="ph-block ph-pay"><p>Sent. The organiser will check.</p></section>';
+      return '<section class="ph-block ph-pay"><p><b>Waiting for the organiser to confirm.</b></p></section>';
     }
     var card = /^https:\/\/\S+$/.test(String(pay.link || ''))
-      ? '<a class="ph-btn" href="' + esc(pay.link) + '" target="_blank" rel="noopener">Pay by card</a>'
+      ? '<a class="ph-btn" href="' + esc(pay.link) + '" target="_blank" rel="noopener" data-go="cardpay">Pay by card</a>'
       : '';
+    if (pay.status === 'card') {
+      // 72k: never a dead end. Checking line, then both ways to pay stay on screen.
+      return '<section class="ph-block ph-pay"><p><b>Checking your card payment</b></p><p class="ph-note">This turns to Paid by itself. If it did not go through, you can still pay.</p>' +
+        card +
+        '<button class="ph-btn ph-btn--ghost" type="button" data-go="paid">I’m paying cash</button></section>';
+    }
     return '<section class="ph-block ph-pay">' +
       '<p><b>You owe ' + esc(pay.amount) + '.</b> Pay by card or in cash.</p>' +
       card +
-      '<button class="ph-btn ph-btn--ghost" type="button" data-go="paid">I’ve paid cash</button>' +
+      '<button class="ph-btn ph-btn--ghost" type="button" data-go="paid">I’m paying cash</button>' +
       (pay.error ? '<p class="ph-note" role="alert">Could not send. Try again.</p>' : '') +
     '</section>';
   }
@@ -253,7 +259,7 @@
       '<header class="ph-top">' +
         '<h1>Home</h1>' +
         '<a class="ph-coins" href="#shop" data-go="shop" aria-label="Coins, open shop">' + ICON.coin +
-          '<b>' + esc(d.coins || 0) + '</b><span class="ph-cap">Coins</span></a>' +
+          '<b>' + esc(d.coins == null ? '–' : d.coins) + '</b><span class="ph-cap">Coins</span></a>' +
       '</header>' +
       '<div data-slot="tonight">' + tonightHtml(d, now, busy, kp) + '</div>' +
       sv +

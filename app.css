@@ -44,4 +44,15 @@ legend { font-weight:700; margin-bottom:6px; }
 .actions { display:flex; gap:10px; margin-top:12px; flex-wrap:wrap; }
 .actions .btn { margin:0; flex:1; }
 [hidden] { display:none !important; }
+/* 72g: the top-bar Pay line. Yellow, full width, always on screen above the tabs' content. */
+.top-stack { position:sticky; top:0; z-index:30; }
+.live-strip { background:#0E0E0E; border-bottom:1px solid #2a2a2a; }
+.live-strip-btn { display:block; width:100%; min-height:36px; padding:6px 16px; border:0; background:transparent; color:#fff; font-family:Barlow,system-ui,sans-serif; font-size:15px; font-weight:600; text-align:center; cursor:pointer; }
+.live-strip-btn b { color:var(--brand); font-weight:900; }
+.live-strip-btn.pulse { animation:strip-pulse .9s ease-out 1; }
+@keyframes strip-pulse { 0% { background:rgba(255,212,0,.25); } 100% { background:transparent; } }
+@media (prefers-reduced-motion: reduce) { .live-strip-btn.pulse { animation:none; } }
+.live-strip[hidden] { display:none !important; }
+.pay-top { width:100%; min-height:48px; margin:0; padding:10px 16px; border:0; background:var(--brand); color:var(--on-brand); font-family:Barlow,system-ui,sans-serif; font-size:18px; font-weight:700; letter-spacing:.02em; text-transform:uppercase; cursor:pointer; }
+.pay-top[hidden] { display:none !important; }
 @media (max-width:360px) { .opts { grid-template-columns:repeat(5,1fr); gap:4px; } .opts span { font-size:15px; } h1 { font-size:26px; } }

@@ -47,11 +47,11 @@
   'use strict';
 
   var G = typeof window !== 'undefined' ? window : globalThis;
-  var VERSION = 'next-72f';  // build tag shown in the More footer; bump with each build
+  var VERSION = 'next-72k';  // build tag shown in the More footer; bump with each build
   var NICK_MIN = 2;
   var NICK_MAX = 12;
   var PANELS = ['pay', 'details', 'alerts', 'rules', 'help', 'settings', 'skill', 'achievements', 'invite', 'account', 'reminders'];
-  var PANEL_TITLE = { pay: 'Payments', details: 'My details', alerts: 'Run alerts', rules: 'How it works', help: 'Help', settings: 'Settings',
+  var PANEL_TITLE = { pay: 'Payment history', details: 'My details', alerts: 'Run alerts', rules: 'How it works', help: 'Help', settings: 'Settings',
     skill: 'Skill questions', achievements: 'Badges and milestones', invite: 'Invite a mate', account: 'My account', reminders: 'Reminders' };
 
   // Skill questions. Asked once, from Settings. Wording as in off-rating.js (Fable 23:14, the organiser 8 Nov).
@@ -252,7 +252,7 @@
       '</div>' +
       '<p class="more-label more-head">App</p>' +
       '<div class="more-group">' +
-        rowHtml('pay', 'Payments', paySummary(d.tonight)) +
+        (hasPastPayment(d.history) ? rowHtml('pay', 'Payment history', 'Past runs you paid for') : '') +
         rowHtml('settings', 'Settings', settingsSummary(d)) +
         rowHtml('help', 'Help', 'How it works and getting help') +
       '</div>' +
@@ -266,27 +266,18 @@
     return '<button class="btn ghost more-back" type="button" data-act="back" data-to="' + (to || '') + '">' + label + '</button>';
   }
 
+  // 72g (R299): More shows past payments only, and only when there is at least one. The pay screen is Home's pay box.
+  function hasPastPayment(history) {
+    return (Array.isArray(history) ? history : []).some(function (h) { return h && h.status === 'paid'; });
+  }
   function payPanelHtml(d) {
-    var t = d.tonight;
-    var rows = historyRows(d.history);
-    var status = t ? payStatus(t.status) : null;
+    var rows = historyRows(d.history).filter(function (r, i) { return d.history[i] && d.history[i].status === 'paid'; });
     var hist = rows.length
       ? '<ul class="list more-hist">' + rows.map(function (r) {
           return '<li><span>' + esc(r.label) + ' · ' + esc(r.amount) + '</span><span class="more-tone tone-' + r.tone + '">' + esc(r.text) + '</span></li>';
         }).join('') + '</ul>'
-      : '<p class="muted">No runs yet.</p>';
-    var tonight = t
-      ? '<div class="card">' +
-          '<p class="more-label">This run · ' + esc(t.label || 'This run') + '</p>' +
-          '<p class="more-big">' + esc(t.amount || '') + '</p>' +
-          '<p class="more-tone tone-' + status.tone + '">' + esc(status.text) + '</p>' +
-          (t.status === 'due'
-            ? '<div id="morePayBox"><p class="muted">Pay in cash at the desk or by card.</p></div>'
-            : '') +
-        '</div>'
-      : '<div class="card"><p class="muted">This run is not set yet. Check back before the run.</p></div>';
-    return '<h1>' + PANEL_TITLE.pay + '</h1>' + tonight +
-      '<h2>History</h2>' + hist + backHtml('');
+      : '<p class="muted">No payments yet.</p>';
+    return '<h1>Payment history</h1>' + hist + backHtml('');
   }
 
   function detailsPanelHtml(d, msg) {
@@ -299,10 +290,7 @@
     }).join('');
     return '<h1>' + PANEL_TITLE.details + '</h1>' +
       '<div class="card">' +
-        '<label for="moreNick">Nickname</label>' +
-        '<input id="moreNick" type="text" maxlength="' + NICK_MAX + '" autocomplete="nickname" value="' + esc(nick) + '" placeholder="' + esc(me.first || '') + '">' +
-        '<p class="muted">The name other players see. Leave it empty to use your first name. Letters only, 2 to 12.</p>' +
-        '<fieldset class="more-team"><legend class="label">Team I like to play for</legend>' + radios + '</fieldset>' +
+          '<fieldset class="more-team"><legend class="label">Team I like to play for</legend>' + radios + '</fieldset>' +
         '<p class="muted">This is a wish, not a rule. The organiser still sets the teams at the run.</p>' +
         '<p class="more-msg" id="moreMsg" role="status" aria-live="polite">' + esc(msg || '') + '</p>' +
         '<button class="btn yellow more-save" type="button" data-act="save-details">Save</button>' +
@@ -310,13 +298,16 @@
   }
 
   // Your username card (61, Settings). The app checks the format; the server checks taken, blocked and the 30-day wait.
+  // 72h (R305): once set, the username and name are read-only. No change control exists anywhere in the app.
   function usernameCardHtml(d) {
+    var me = d.me || {};
+    var fullName = [me.first || '', me.lastInitial ? me.lastInitial + '.' : ''].join(' ').trim();
     return '<div class="card">' +
-      '<label for="moreUser">Your username</label>' +
-      '<input id="moreUser" type="text" maxlength="14" autocomplete="off" autocapitalize="none" spellcheck="false" value="' + esc(d.username || '') + '" placeholder="Your name">' +
-      '<p class="muted">The name other players see. Use 3 to 14 letters, numbers or underscores, and no spaces. You can change it once every 30 days.</p>' +
-      '<p class="more-msg" id="moreUserMsg" role="status" aria-live="polite"></p>' +
-      '<button class="btn yellow more-save" type="button" data-act="save-username">Save username</button>' +
+      '<span class="more-label">Your username</span>' +
+      '<p class="more-big">' + esc(d.username || fullName || '') + '</p>' +
+      '<span class="more-label">Your name</span>' +
+      '<p>' + esc(fullName) + '</p>' +
+      '<p class="muted">Ask the organiser if this is wrong.</p>' +
     '</div>';
   }
 
@@ -534,12 +525,10 @@
     }
 
     function saveDetails() {
-      var nickInput = el.querySelector('#moreNick');
       var picked = el.querySelector('input[name="moreTeam"]:checked');
-      var check = checkNickname(nickInput ? nickInput.value : '');
-      if (!check.ok) { st.msg = check.msg; paint(); return; }
       var teamPref = picked ? picked.value : 'any';
-      var next = { nickname: check.value, teamPref: teamPref };
+      // 72h: the nickname is no longer editable, so the save keeps the one on file.
+      var next = { nickname: (st.data.me && st.data.me.nickname) || '', teamPref: teamPref };
       st.msg = 'Saving…';
       paint();
       Promise.resolve(h.saveProfile ? h.saveProfile(next) : { ok: true }).then(function (r) {
@@ -553,25 +542,6 @@
       }).catch(function () {
         st.msg = MSG_SAVE_FAIL;
         paint();
-      });
-    }
-
-    // Username: only the status line changes, so the box keeps what was typed.
-    function saveUsername() {
-      var input = el.querySelector('#moreUser');
-      var line = el.querySelector('#moreUserMsg');
-      function say(text) { if (line) line.textContent = text; }
-      say('Saving…');
-      Promise.resolve(h.saveUsername ? h.saveUsername(input ? input.value : '') : { ok: false, reason: 'error' }).then(function (r) {
-        if (r && r.ok) {
-          st.data.username = r.username;
-          if (input) input.value = r.username;
-          say('Saved. Your name is ' + r.username + '.');
-        } else {
-          say((r && USERNAME_MSG[r.reason]) || MSG_SAVE_FAIL);
-        }
-      }).catch(function () {
-        say(MSG_SAVE_FAIL);
       });
     }
 
@@ -632,7 +602,6 @@
       if (t.hasAttribute('data-go')) return go(t.getAttribute('data-go'));
       var act = t.getAttribute('data-act');
       if (act === 'back') return go(t.getAttribute('data-to') || '');
-      if (act === 'save-username') return saveUsername();
       if (act === 'save-skill') return saveSkill();
       if (act === 'bright') {
         st.data.bright = !st.data.bright;

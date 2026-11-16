@@ -186,7 +186,8 @@
       '<a class="btn-outline" href="../../shop/shop.html">Open shop</a></section>';
 
     // Your character (R70). The picker is filled in by app.js after render (it loads picker.js).
-    h += '<section class="card character" aria-labelledby="chT"><h2 class="cap" id="chT">Your character</h2>' +
+    h += '<section class="card character" aria-labelledby="chT"><h2 class="cap" id="chT">Pick your character</h2>' +
+      '<p class="muted">Tap one. It shows on your card and on the board.</p>' +
       '<div data-character-picker></div><p class="muted" data-character-note aria-live="polite"></p></section>';
 
     // VIP icon pictures (migration-48). Only shown when the server sent pictures to a VIP player.

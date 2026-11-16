@@ -60,7 +60,8 @@
     reveal: null,    // LineupReveal.watch handle
     run: null,       // XP run for the demo player
     coins: null,     // coin balance, read from the shop backend (one source for Home, Profile and Shop)
-    live: null
+    live: null,
+    serverRun: null  // 72k: player_run_status state: open, ended, none, cancelled, removed, signin (null until answered)
   };
 
   // ---------- helpers ----------
@@ -123,7 +124,7 @@
         teams: [{ name: 'Blue', players: sameGroup(PEOPLE.blue) }, { name: 'Red', players: sameGroup(PEOPLE.red) }]
       });
     }
-    return { title: 'This run', when: 'Time set by the desk', price: '£5', games: games };
+    return { title: 'This run', when: 'Time set by the desk', price: '£5', date: new Date(now).toISOString().slice(0, 10), games: games };
   }
 
   // R177: games may have no start time. Then the next game is the flagged one, and its time is the run start (London).
@@ -295,7 +296,7 @@
       rsvpError: S.rsvpError,
       player: { name: fullName(), banner: '', nameStyle: '', clanTag: '', skill: skillText(S.me && S.me.level), games: 0, wins: 0 },
       run: S.run,
-      coins: S.coins || 0,
+      coins: typeof S.coins === 'number' ? S.coins : null,   // 72g: null until the shop read answers, so Home shows a dash, not 0
       next: game ? nextCard(game, games) : null,
       runState: runStateText(games, now),
       nextRunLabel: (S.night && S.night.nextRun) || '',
@@ -309,7 +310,7 @@
       live: S.live,
       pay: payData(),
       checkedIn: readCheckedIn(),
-      runOn: NightShape.runOn(S.night, now),
+      runOn: runOnNow(now),
       runLabel: (S.night && S.night.fields && S.night.fields.nextRun) || '',
       level: PlayerXp.progress(S.run).level,
       shopItems: shopItemsFor(),
@@ -318,22 +319,70 @@
     };
   }
 
-  // The one Pay line (Home). A claim is only "I've paid" for the organiser to check on Square.
+  // 72g: "claim pending" survives a reload on this phone. The server does not send the claim back yet,
+  // so this phone remembers its own claim for this night (cleared on sign-out).
+  var CLAIM_KEY = 'cb.claimed';
+  function rememberClaim(on) {
+    try { if (on) localStorage.setItem(CLAIM_KEY, NIGHT_ID); else localStorage.removeItem(CLAIM_KEY); } catch (e) { /* storage blocked: the claim lasts this visit */ }
+  }
+  function storedClaim() {
+    try { return localStorage.getItem(CLAIM_KEY) === NIGHT_ID; } catch (e) { return false; }
+  }
+
+  // 72k (R315): card pending is remembered on this phone when "Pay by card" is tapped; it clears when the server says paid.
+  var CARD_KEY = 'cb.cardPending', SEEN_KEY = 'cb.paidSeen';
+  function rememberCard(on) {
+    try { if (on) localStorage.setItem(CARD_KEY, NIGHT_ID); else localStorage.removeItem(CARD_KEY); } catch (e) { /* storage blocked */ }
+  }
+  function storedCard() {
+    try { return localStorage.getItem(CARD_KEY) === NIGHT_ID; } catch (e) { return false; }
+  }
+  function seenPaid() {
+    try { return localStorage.getItem(SEEN_KEY) === NIGHT_ID; } catch (e) { return false; }
+  }
+  var paidSeenTimer = null;
+  // The one pay screen (Home). Money exists only inside a booked run (amountNow). States: due, card, claimed, paid.
+  // "Paid. You're in." shows once; after that the top line and all money text go for this run.
   function payData() {
     var cfg = window.PLAYER_APP_CONFIG || {};
-    var status = S.paid ? 'paid' : (S.claimed ? 'claimed' : 'due');
+    if (S.paid && storedCard()) rememberCard(false);
+    var status = S.paid ? 'paid' : ((S.claimed || storedClaim()) ? 'claimed' : (storedCard() ? 'card' : 'due'));
+    if (S.pay && S.pay.state) {
+      var map = { paid: 'paid', claimed: 'claimed', card_pending: 'card', due: 'due', none: 'none' };
+      status = map[S.pay.state] || 'due';
+    }
+    if (status === 'paid' && !seenPaid() && !paidSeenTimer) {
+      paidSeenTimer = setTimeout(function () {
+        try { localStorage.setItem(SEEN_KEY, NIGHT_ID); } catch (e) { /* storage blocked: shown again */ }
+        paidSeenTimer = null;
+        if (S.home) S.home.update(homeData(Date.now()));
+        payTopUpdate();
+      }, 8000);
+    }
     // Pay first (R-P2): only when the organiser's switch is On for this night. Off (or missing) changes nothing.
     var payFirst = !!(S.night && S.night.fields && S.night.fields.payFirst === true);
-    // Only after a successful join code: no Pay line before the player is checked in
-    var joined = !!(S.checkedIn || readCheckedIn());
+    var gone = status === 'paid' && seenPaid();
     return {
-      amount: joined && S.night && S.night.price ? S.night.price : '',
+      amount: gone ? '' : amountNow(),
       status: status,
       link: cfg.squarePayLink || '',
       error: !!S.payErr,
       receiptDate: niceDate(S.night && S.night.date),
       gate: payFirst && status !== 'paid'
     };
+  }
+  // 72k: a price is shown only for a player who has used a good code in a run that is open now on the server.
+  // No open run, or no join for it, means no amount anywhere (no "5 to pay" on a night with no run).
+  function amountNow() {
+    var inRun = S.serverRun === 'open';
+    // R318: when the server answered, its amount is used, and only for a booked player (amount_pence null otherwise).
+    if (S.pay && S.pay.state) {
+      if (!inRun || S.pay.state === 'none' || !S.pay.booked || S.pay.amountPence == null) return '';
+      var pounds = S.pay.amountPence / 100;
+      return '£' + (pounds % 1 === 0 ? String(pounds) : pounds.toFixed(2));
+    }
+    var joined = inRun && serverJoin !== false && !!(S.checkedIn || readCheckedIn());
+    return joined && S.night && S.night.price ? S.night.price : '';
   }
   // "16 Nov" from a night date (yyyy-mm-dd). Empty when there is no date.
   function niceDate(s) {
@@ -350,8 +399,58 @@
       updateTabDots();
     });
   }
+  // 72g: the top-bar Pay line. Shown only for a joined player who owes (due or claim pending); gone once paid.
+  // Tap opens Home, where the pay box has Pay by card and I've paid cash.
+  function payTopUpdate() {
+    var btn = document.getElementById('payTop');
+    if (!btn) return;
+    var p = payData();
+    // 72h (R299): the top Pay pill is a shortcut to the one pay screen (Home pay box), shown only after a good code in a run that is owing.
+    var show = !!S.me && !!p.amount && p.status !== 'paid';
+    btn.hidden = !show;
+    if (!show) return;
+    btn.textContent = p.status === 'claimed' ? 'Cash: waiting' : (p.status === 'card' ? 'Card: checking' : 'Pay ' + p.amount);
+  }
+  // 72g: on the other tabs, one thin dark strip under the top bar with the live score (team names and score only).
+  // One soft pulse when a score moves. Tap opens Live. Hidden on Live itself, which keeps the full view.
+  var lastStripScore = '';
+  function liveStripUpdate() {
+    var strip = document.getElementById('liveStrip');
+    if (!strip) return;
+    var f = feedNow();
+    var n = f && f.live ? f.now : null;
+    var onLive = (location.hash || '').indexOf('#live') === 0;
+    var show = !!S.me && !!n && !onLive;
+    strip.hidden = !show;
+    if (!show) { lastStripScore = ''; return; }
+    var txt = escText(n.teamA || 'Team A') + ' <b>' + escText(n.scoreA) + '</b> – <b>' + escText(n.scoreB) + '</b> ' + escText(n.teamB || 'Team B');
+    var sc = String(n.scoreA) + '-' + String(n.scoreB);
+    var body = document.getElementById('liveStripBtn');
+    if (!body) return;
+    if (body.innerHTML !== txt) body.innerHTML = txt;
+    if (lastStripScore && lastStripScore !== sc) {
+      body.classList.remove('pulse'); void body.offsetWidth; body.classList.add('pulse');
+    }
+    lastStripScore = sc;
+  }
+  (function wireLiveStrip() {
+    var btn = document.getElementById('liveStripBtn');
+    if (btn && !btn.dataset.wired) {
+      btn.dataset.wired = '1';
+      btn.addEventListener('click', function () { location.hash = '#live'; });
+    }
+  })();
+  window.addEventListener('hashchange', liveStripUpdate);
+  (function wirePayTop() {
+    var btn = document.getElementById('payTop');
+    if (btn && !btn.dataset.wired) {
+      btn.dataset.wired = '1';
+      btn.addEventListener('click', function () { location.hash = '#home'; });
+    }
+  })();
   // Pay proof (15 Nov): the Home Pay line learns "Paid" from the server every 15 s and when the phone comes back,
   // so a cash or card mark by the organiser shows here without a reload. Unmark brings "due" back.
+  var lastPaySig = '';
   function refreshPaid() {
     var t = readToken();
     if (!t || !S.me || !be.paymentStatus) return;
@@ -359,10 +458,61 @@
       if (!r || !r.ok) return;
       var was = !!S.paid;
       S.paid = !!r.paid;
-      if (was !== S.paid && S.home) S.home.update(homeData(Date.now()));
+      // R318: the server's state is the one truth. The phone memory of a claim is only a fallback when no state came back.
+      if (r.state) { S.pay = { state: r.state, booked: !!r.booked, amountPence: r.amountPence }; rememberClaim(r.state === 'claimed'); }
+      else { S.pay = null; }
+      var sig = JSON.stringify([S.paid, S.pay, S.claimed]);
+      var changed = sig !== lastPaySig;
+      lastPaySig = sig;
+      if (changed && S.home) S.home.update(homeData(Date.now()));
+      if (changed || was !== S.paid) payTopUpdate();
     }, function () { /* offline: the next look tries again */ });
   }
-  setInterval(refreshPaid, 15000);
+  // 72i: the paid check runs every 2 s while a cash claim is waiting (up to 10 minutes after the claim), else every 15 s.
+  // 72k: the server's run state. 'open' = the organiser's code is up (Start run); 'ended', 'none', 'cancelled' = not on.
+  // Until that answer comes, the night's own run flag decides.
+  function runOnNow(now) {
+    if (S.serverRun === 'open') return true;
+    if (S.serverRun === 'ended' || S.serverRun === 'none' || S.serverRun === 'cancelled' || S.serverRun === 'removed') return false;
+    return NightShape.runOn(S.night, now);
+  }
+  // A run day: the run is open on the server, or the night is dated today.
+  function runDay() {
+    if (S.serverRun === 'open') return true;
+    return !!(S.night && S.night.date && S.night.date === NightShape.londonDayKey(Date.now()));
+  }
+  // 72k: one tick. On a run day (tab visible) every 2 s: the server's run state, the night's stamp (full read only when it moved),
+  // and the paid mark. The live row has its own loop (liveDelay). Otherwise every 30 s.
+  var TICK_RUN_MS = 2000, TICK_IDLE_MS = 30000, lastNightStamp = '';
+  function tickDelay() { return runDay() && !document.hidden ? TICK_RUN_MS : TICK_IDLE_MS; }
+  function runTick() {
+    if (!S.me || document.hidden) return Promise.resolve();
+    var t = readToken();
+    var st = t && be.runStatus ? be.runStatus(t, NIGHT_ID) : Promise.resolve(null);
+    return st.then(function (r) {
+      if (r && r.ok === true && r.state && r.state !== S.serverRun) {
+        S.serverRun = r.state;
+        if (S.home) S.home.update(homeData(Date.now()));
+        liveStripUpdate();
+        checkJoinState();
+      } else if (r && r.ok === true && r.state) { S.serverRun = r.state; }
+      if (!be.getNightStamp) return refreshNight();
+      return be.getNightStamp(NIGHT_ID).then(function (s) {
+        if (s && s.ok && s.stamp !== lastNightStamp) { lastNightStamp = s.stamp; return refreshNight(); }
+      });
+    }).then(function () { return refreshPaid(); }, function () { return refreshPaid(); })
+      .then(function () { /* done */ }, function () { /* the next tick tries again */ });
+  }
+  // Checks every half second and runs a tick when its gap has passed, so a run day that starts after load is picked up at once.
+  var lastTickAt = 0;
+  function tickLoop() {
+    setTimeout(function () {
+      // Fire and forget: a slow read never stops the loop (72k rig finding).
+      if (Date.now() - lastTickAt >= tickDelay()) { lastTickAt = Date.now(); runTick().catch(function () { /* next tick tries again */ }); }
+      tickLoop();
+    }, 500);
+  }
+  tickLoop();
 
   // Night changes without a reload: check the organiser's night every 30 seconds and redraw Home when it changed.
   var lastNightSig = '';
@@ -401,7 +551,7 @@
       checkJoinState();
     }).catch(function () { setHomeError(true); });
   }
-  setInterval(refreshNight, 30000);
+  // 72k: refreshNight and refreshPaid run inside runTick (2 s on a run day, 30 s otherwise).
 
   // ---------- live feed (P9): the organiser's live row, read while the app is open ----------
   // Read only. The row holds the court, scores, fouls, the clock and the run date. It never holds who is in or who paid.
@@ -454,13 +604,19 @@
     var wait = null;
     var timeout = new Promise(function (_, reject) { wait = setTimeout(function () { reject(new Error('timeout')); }, 8000); });
     return Promise.race([be.getLive(), timeout]).then(function (row) {
+      var sig = row && row.payload ? JSON.stringify(row.payload) : '';
+      feedState.changed = sig !== feedState.sig;   // stamp check: the same row as last time needs no redraw
+      feedState.sig = sig;
       feedState.feed = row && row.payload ? row.payload : null;
       feedState.offline = false;
-    }, function () { feedState.offline = true; }).then(function () {
+    }, function () { feedState.offline = true; feedState.changed = true; }).then(function () {
       clearTimeout(wait);
       feedBusy = false;
-      if (feedNow() && feedNow().live) loadBoard(); else if (S.board) { S.board = null; }
-      if (S.liveScreen) S.liveScreen.update(liveData());
+      if (feedState.changed) {
+        if (feedNow() && feedNow().live) loadBoard(); else if (S.board) { S.board = null; }
+        if (S.liveScreen) S.liveScreen.update(liveData());
+      }
+      liveStripUpdate();
       setLiveError(feedState.offline);
       updateTabDots();
     });
@@ -468,7 +624,7 @@
   // Cadence (lib/live-cadence.js): 2 s while a game is on court, 30 s otherwise, 10 s after a failed read.
   function liveDelay() {
     var f = feedNow();
-    return PlayerLiveCadence.delayMs({ offline: feedState.offline, live: !!(f && f.live) });
+    return PlayerLiveCadence.delayMs({ offline: feedState.offline, live: !!(f && f.live) || runDay() });
   }
   function scheduleLive() {
     clearTimeout(feedTimer);
@@ -545,7 +701,7 @@
         var lab = NightShape.rowLabel(g, S.me);
         return { no: g.no, time: hhmm(g.startsAt), vs: lab.vs, versus: lab.versus, state: liveNoNow() === g.no ? 'live' : (game && g.id === game.id ? 'next' : 'todo') };
       }),
-      runOn: NightShape.runOn(S.night, Date.now()),
+      runOn: runOnNow(Date.now()),
       waiting: !!(S.paid || myPaidOrIn() || (S.rsvp && S.rsvp.ok === true && S.rsvp.me === 'in')),
       paid: !!(S.paid || myPaidOrIn(true)),
       waitError: !!S.upcomingError,
@@ -597,7 +753,7 @@
     if (!window.PlayerRunState || !games || !games.length) return '';
     var starts = games.map(function (g) { return Date.parse(g.startsAt); }).filter(function (t) { return t > 0; });
     if (!starts.length) return '';
-    var st = PlayerRunState.homeState(Math.min.apply(null, starts), now, NightShape.runOn(S.night, now), PlayerRunState.statusOf(S.night));
+    var st = PlayerRunState.homeState(Math.min.apply(null, starts), now, runOnNow(now), PlayerRunState.statusOf(S.night));
     return st ? PlayerRunState.labelFor(st) : '';
   }
 
@@ -711,7 +867,7 @@
   // P6b: my stats, streak, game log and head to head. Every read has a 12 second limit, an error state and Try again.
   function renderHistory() {
     var box = $('sub');
-    box.innerHTML = '<div id="hStreak"></div><div id="hBoard"></div><div id="hLog"></div><div id="hH2h"></div>';
+    box.innerHTML = '<div id="hStreak"></div><div id="hBoard"></div><div id="hLog"></div><div id="hH2h"></div><div id="hH2hCard"></div>';
     var tok = readToken();
     // Every read ends: an answer, an error, or a 12 second limit. A sync throw becomes an error too.
     var rpc = function (n, b) {
@@ -831,6 +987,8 @@
     var more = document.querySelector('.tabs a[data-tab="more"]');
     if (live) live.classList.toggle('has-dot', !!S.live || !!(feedNow() && feedNow().live));
     if (more) more.classList.toggle('has-dot', S.skillDone === false || !!S.payErr);
+    payTopUpdate();
+    liveStripUpdate();
   }
 
   // Home shows at most three cards (R62): the tonight card, the pay card while owed, and the last-night card.
@@ -918,7 +1076,7 @@
       username: S.username || savedUsernameHere(),
       showMe: S.showMe !== false,
       alertPrefs: S.alertPrefs || {},
-      tonight: { nightId: NIGHT_ID, label: 'This run', amount: S.night && S.night.price ? S.night.price : '', status: S.claimed ? 'claimed' : 'due' },
+      tonight: { nightId: NIGHT_ID, label: 'This run', amount: amountNow(), status: S.claimed ? 'claimed' : 'due' },
       history: [],
       cfg: window.PLAYER_APP_CONFIG || {},
       version: '0.2'
@@ -1030,7 +1188,7 @@
       // The sign-in token (not the PIN) is what the server checks. It is read from this phone, as on sign-in.
       if (!S.me) return Promise.resolve({ ok: false, reason: 'signed-out' });
       return be.claimPaid(readToken(), nightId).then(function (r) {
-        if (r && r.ok) S.claimed = true;
+        if (r && r.ok) { S.claimed = true; rememberClaim(true); }
         if (S.moreScreen) S.moreScreen.update(moreData());
         return r;
       });
@@ -1100,6 +1258,7 @@
         shop: function () { location.hash = '#profile/shop'; },
         lineup: openLineup,
         paid: claimFromHome,
+        cardpay: function (a) { rememberCard(true); if (a && a.href) window.open(a.href, '_blank', 'noopener'); if (S.home) S.home.update(homeData(Date.now())); payTopUpdate(); },
         rsvp: function (state) {
           var t = readToken();
           return be.rsvpSet(t, NIGHT_ID, state).then(function (r) {
@@ -1119,6 +1278,7 @@
           return be.checkIn(t, NIGHT_ID, code).then(function (r) {
             if (r && r.ok === true) {
               S.checkedIn = true;
+              payTopUpdate();
               // Store the code time with the record, so a later code (a new run start or a new code) shows the keypad again.
               be.runStatus(readToken(), NIGHT_ID).then(function (s) {
                 rememberCheckedIn(true, s && s.ok && s.state === 'open' ? s.codeMadeAt : '');
@@ -1208,10 +1368,17 @@
   // and the code time matches the remembered one. No answer (no signal): keep the remembered record.
   function checkJoinState() {
     var rec = localRec();
-    if (!rec || !S.me) { serverJoin = null; if (S.home) S.home.update(homeData(Date.now())); return; }
+    if (!S.me) { serverJoin = null; if (S.home) S.home.update(homeData(Date.now())); return; }
     var t = readToken();
     be.runStatus(t, NIGHT_ID).then(function (r) {
-      if (!localRec()) return;   // the night or the player changed while the answer was on its way
+      // 72i: the server knows the join (the phone was signed out and back in, or the local record is gone).
+      if (r && r.ok === true && r.state === 'open' && r.checkedIn === true) {
+        if (!localRec() || String(localRec().codeMadeAt || '') !== String(r.codeMadeAt || '')) rememberCheckedIn(true, r.codeMadeAt || '');
+        serverJoin = true;
+        if (S.home) S.home.update(homeData(Date.now()));
+        return;
+      }
+      if (!localRec()) { if (S.home) S.home.update(homeData(Date.now())); return; }   // nothing remembered and the server does not know a join
       if (r && r.ok === true) {
         if (r.state === 'open' && !rec.codeMadeAt && r.codeMadeAt) {
           // The join went through but its status check failed: adopt the server's code time now.
@@ -1234,6 +1401,8 @@
     clearToken();
     if (t) be.logout(t).catch(function () { /* the token expires in 90 days anyway */ });
     rememberCheckedIn(false);
+    rememberClaim(false);
+    S.claimed = false;
     S.checkedIn = false;
     S.me = null;
     resetUpcoming();
@@ -1353,7 +1522,6 @@
       var act = t.getAttribute('data-ma-action');
       if (act === 'cancel') return closeSheet();
       if (act === 'pin' || act === 'privacy') return openSheet(act);
-      if (act === 'name') return openSheet('name', { first: S.me && S.me.first, lastInitial: S.me && S.me.lastInitial });
       if (act === 'delete') return openSheet('delete-1');
       if (act === 'data') {
         var label = t.textContent;
@@ -1381,9 +1549,6 @@
       if (kind === 'pin') {
         if (!PlayerMyAccount.validPin(v.old_pin) || !PlayerMyAccount.validPin(v.new_pin)) return showError('PIN must be exactly 4 digits.');
         return be.playerChangePin(tok, v.old_pin, v.new_pin).then(function (r) { answer(r, closeSheet); }).catch(fail);
-      }
-      if (kind === 'name') {
-        return be.playerChangeName(tok, v.first, v.last_initial.toUpperCase()).then(function (r) { answer(r, closeSheet); }).catch(fail);
       }
       if (kind === 'delete-1') {
         if (!PlayerMyAccount.validPin(v.pin)) return showError('PIN must be exactly 4 digits.');

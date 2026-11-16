@@ -230,6 +230,10 @@
       },
       // Live feed (P9): the mock has no live row, so the Live tab keeps its own data.
       getLive: function () { return Promise.resolve(null); },
+      paymentStatus: function () { return Promise.resolve({ ok: true, paid: false }); },
+      getNightStamp: function (id) {
+        return Promise.resolve().then(function () { var n = load().nights[id]; return { ok: true, stamp: n ? JSON.stringify(n.payload || {}) : '' }; });
+      },
       getNight: function (id) {
         return Promise.resolve().then(function () { return load().nights[id] || null; });
       }
@@ -306,7 +310,8 @@
       paymentStatus: function (token, nightId) {
         return call('POST', '/rest/v1/rpc/player_payment_status', { p_token: token, p_night: nightId })
           .then(function (j) {
-            if (j && j.ok) return { ok: true, paid: j.paid === true };
+            // R318: state (none, due, card_pending, claimed, paid), booked, claimed, amount_pence (null unless booked).
+            if (j && j.ok) return { ok: true, paid: j.paid === true, state: String(j.state || ''), booked: j.booked === true, claimed: j.claimed === true, amountPence: j.amount_pence == null ? null : Number(j.amount_pence) };
             return { ok: false, reason: (j && j.reason) || 'error' };
           }, function () { return { ok: false, reason: 'error' }; });
       },
@@ -462,7 +467,8 @@
         return call('POST', '/rest/v1/rpc/player_run_status', { p_token: token, p_night: nightId })
           .then(function (j) {
             if (!j || j.ok !== true) return { ok: false };
-            return { ok: true, state: j.state || '', nightId: j.nightId || nightId, codeMadeAt: j.codeMadeAt ? String(j.codeMadeAt) : '' };
+            // checkedIn (72i): true when this player has joined by code for this code time. Needs the field in player_run_status.
+            return { ok: true, state: j.state || '', nightId: j.nightId || nightId, codeMadeAt: j.codeMadeAt ? String(j.codeMadeAt) : '', checkedIn: j.checkedIn === true };
           }, function () { return { ok: false }; });
       },
       checkIn: function (token, nightId, code) {
@@ -478,6 +484,13 @@
           var r = rows && rows[0];
           return r ? { payload: r.payload, updatedAt: r.updated_at } : null;
         });
+      },
+      // 72k: a tiny read (updated_at only) every 2 s on a run day. The full night is read only when the stamp moved.
+      getNightStamp: function (id) {
+        return call('GET', '/rest/v1/nights?select=updated_at&id=eq.' + encodeURIComponent(id)).then(function (rows) {
+          var r = rows && rows[0];
+          return { ok: true, stamp: r ? String(r.updated_at || '') : '' };
+        }, function () { return { ok: false }; });
       },
       getNight: function (id) {
         return call('GET', '/rest/v1/nights?select=*&id=eq.' + encodeURIComponent(id)).then(function (rows) {

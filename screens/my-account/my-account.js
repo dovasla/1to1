@@ -17,7 +17,6 @@
 
   var ACTIONS = [
     { id: 'pin', label: 'Change PIN' },
-    { id: 'name', label: 'Change name' },
     { id: 'data', label: 'Download my data' },
     { id: 'delete', label: 'Delete account' }
   ];
@@ -36,7 +35,7 @@
       '</section>';
   }
 
-  // Sheets. kind: 'pin' | 'name' | 'delete-1' | 'delete-2' | 'privacy'.
+  // Sheets (72h: no name change, names are read-only). kind: 'pin' | 'delete-1' | 'delete-2' | 'privacy'.
   function buildSheet(kind, opts) {
     opts = opts || {};
     var err = opts.error ? '<p class="ma-error" role="alert">' + esc(opts.error) + '</p>' : '';
@@ -45,13 +44,6 @@
         '<label class="ma-field">Current PIN<input name="old_pin" inputmode="numeric" maxlength="4" autocomplete="off" required></label>' +
         '<label class="ma-field">New PIN<input name="new_pin" inputmode="numeric" maxlength="4" autocomplete="off" required></label>' +
         '<button type="submit" class="ma-btn">Save PIN</button></form>';
-    }
-    if (kind === 'name') {
-      return '<form class="ma-sheet" data-ma-form="name"><h2 class="ma-title">Change name</h2>' +
-        '<p class="ma-hint">You can change your name once every 30 days.</p>' + err +
-        '<label class="ma-field">First name<input name="first" value="' + esc(opts.first || '') + '" maxlength="20" required></label>' +
-        '<label class="ma-field">Last initial<input name="last_initial" value="' + esc(opts.lastInitial || '') + '" maxlength="1" required></label>' +
-        '<button type="submit" class="ma-btn">Save name</button></form>';
     }
     if (kind === 'delete-1') {
       return '<form class="ma-sheet" data-ma-form="delete-1"><h2 class="ma-title">Delete account?</h2>' +

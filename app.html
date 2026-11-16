@@ -66,6 +66,11 @@
 
 <!-- The app shell: four tabs. Each tab is one view; the router shows one at a time. -->
 <div class="shell" id="shell" hidden>
+  <!-- 72g: yellow Pay line in the top bar. Only while this player is in a run and owes; gone once paid. -->
+  <div class="top-stack">
+    <button class="pay-top" id="payTop" type="button" hidden></button>
+    <div class="live-strip" id="liveStrip" hidden><button class="live-strip-btn" id="liveStripBtn" type="button" aria-label="Live score, open Live"></button></div>
+  </div>
   <main class="shell-main" id="main">
 
     <section class="view" id="v-home" data-view="home" aria-label="Home">

@@ -70,7 +70,7 @@
 
   // Leaderboard: chips for the board, then the rows. The caller's row is marked "me".
   function seasonChips(season) {
-    return '<div class="sb-chips" role="group" aria-label="Choose a season">' + SEASONS.map(function (x) {
+    return '<div class="sb-chips stats-seasons" role="group" aria-label="Choose a season">' + SEASONS.map(function (x) {
       var on = x.id === season;
       return '<button type="button" class="sb-chip' + (on ? ' is-on' : '') + '" data-season="' + x.id +
         '" aria-pressed="' + (on ? 'true' : 'false') + '">' + esc(x.label) + '</button>';

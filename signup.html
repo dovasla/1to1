@@ -131,6 +131,18 @@ import { renderCharacterPicker } from './icons/characters/picker.js';
 
   if (be.kind === 'mock') { $('modeNote').hidden = false; $('modeNote').textContent = 'Test mode: this device only.'; }
 
+  // 72i: a name error sits under the box it is about (first name, last initial, letters after it, or username).
+  function showNameError(reason, hint) {
+    var msg = window.WORDING56 ? WORDING56.signupMessage(reason, hint) : 'Check your name and try again.';
+    var box = 'e-username';
+    if (reason === 'name-reserved' || (reason === 'bad-name' && hint === 'first-name')) box = 'e-first';
+    else if (reason === 'bad-name' && hint === 'extra-letters') box = 'e-extra';
+    document.querySelectorAll('.err').forEach(function (p) { if (p.id !== 'e-form') p.hidden = true; });
+    var el = $(box);
+    el.textContent = msg; el.hidden = false;
+    if (el.scrollIntoView) el.scrollIntoView({ block: 'center' });
+  }
+
   function showErrors(errors) {
     document.querySelectorAll('.err').forEach(function (p) { if (p.id !== 'e-form') p.hidden = true; });
     Object.keys(errors).forEach(function (k) {
@@ -212,8 +224,7 @@ import { renderCharacterPicker } from './icons/characters/picker.js';
           $('extra').focus();
         }
         else if (r.reason === 'name-reserved' || r.reason === 'bad-name') {
-          $('e-username').textContent = (window.WORDING56 ? WORDING56.signupMessage(r.reason, r.hint) : 'Check your name and try again.');
-          $('e-username').hidden = false;
+          showNameError(r.reason, r.hint);
         }
         else if (r.reason === 'bad-door') { $('e-form').textContent = 'Sign-up is not open right now. Ask at the desk.'; $('e-form').hidden = false; }
         else if (r.reason === 'busy') { $('e-form').textContent = (window.WORDING56 ? WORDING56.signupMessage('busy') : 'Sign-up is full for today. Ask the organiser at the desk.'); $('e-form').hidden = false; }
