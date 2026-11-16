@@ -221,3 +221,17 @@ html[data-calm="1"] .fx-moment-sweep, html[data-fx="low"] .fx-moment-sweep { dis
 
 /* Hidden tab: loops pause, then resume when the tab is back */
 html[data-fx-hidden="1"] [class*="fx-"], html[data-fx-hidden="1"] [class*="fx-"]::before, html[data-fx-hidden="1"] [class*="fx-"]::after { animation-play-state: paused !important; }
+
+/* 72t: the top preview shows every worn art layer. Tinted by the item's tier. */
+.banner.pv-effect { box-shadow: 0 0 18px 4px var(--pv, #FFD400) inset, 0 0 12px 2px var(--pv, #FFD400); }
+.banner.pv-card .fx-card { outline: 2px dashed var(--pv, #FFD400); outline-offset: -8px; }
+.banner.pv-name .fx-title { color: var(--pv, #FFD400); letter-spacing: .12em; }
+.banner.pv-row::after { content: ""; position: absolute; left: 12px; right: 12px; bottom: 6px; height: 4px; border-radius: 2px; background: var(--pv, #FFD400); }
+.banner.pv-emblem .fx-emblem { background: var(--pv, #FFD400); color: #0E0E0E; }
+.banner { position: relative; }
+.banner.pv-tier-common { --pv: #B8B8B0; }
+.banner.pv-tier-rare { --pv: #4DA3FF; }
+.banner.pv-tier-epic { --pv: #FFD400; }
+.banner.pv-tier-legend { --pv: #FF8A00; }
+
+.banner .pv-tag { position: absolute; right: 10px; top: 8px; font-size: 14px; background: #0E0E0E; color: #F5F5F0; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--pv, #FFD400); max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

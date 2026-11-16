@@ -16,15 +16,16 @@
     <span class="coins" aria-live="polite"><span id="coins">&nbsp;</span>&nbsp;coins</span>
   </header>
 
+  <section class="banner" id="banner" aria-label="Preview"></section>
+  <p class="preview-line" id="previewLine" aria-live="polite"></p>
+
   <p class="err" id="loadErr" hidden>Could not load the shop. Check the signal and try again.</p>
   <button class="btn ghost" id="retry" type="button" hidden>Try again</button>
 
-  <section class="banner" id="banner" aria-label="Your banner"></section>
+  <nav class="tabs" id="tabs" aria-label="Shop sections"></nav>
   <div class="collect"><span id="collectLabel">Collection</span><span id="collectCount"></span></div>
   <div class="bar"><span id="collectBar"></span></div>
   <p class="next" id="nextLine"></p>
-
-  <nav class="tabs" id="tabs" aria-label="Shop sections"></nav>
   <div id="grid" aria-live="polite"><p class="muted">Loading the shop...</p></div>
 
   <h2 class="cap">Your loadout</h2>
@@ -33,18 +34,16 @@
   <p class="err" id="takeErr" hidden></p>
 </main>
 
-<div class="scrim" id="scrim" hidden></div>
-<section class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetT" hidden>
-  <div class="grab" aria-hidden="true"></div>
-  <h2 id="sheetT" tabindex="-1"></h2>
-  <div class="sheet-preview" id="sheetPreview" aria-label="Preview"></div>
-  <p class="rarity" id="sheetRarity"></p>
-  <p class="muted" id="sheetInfo"></p>
-  <p class="err" id="sheetErr" hidden></p>
-  <button class="btn" id="sheetBuy" type="button" hidden></button>
-  <button class="btn" id="sheetEquip" type="button" hidden>Equip</button>
-  <button class="btn ghost" id="sheetTry" type="button">Try it on the banner</button>
-  <button class="btn ghost" id="sheetClose" type="button">Close</button>
+<section class="buybar" id="buybar" aria-label="Buy">
+  <div class="buy-text">
+    <p class="buy-name" id="buyName"></p>
+    <p class="buy-info" id="buyInfo"></p>
+    <p class="err" id="buyErr" hidden></p>
+  </div>
+  <div class="buy-actions">
+    <button class="btn ghost" id="buyBack" type="button" hidden>My look</button>
+    <button class="btn" id="buyBtn" type="button" hidden></button>
+  </div>
 </section>
 
 <script src="../lib/player-name.js"></script>

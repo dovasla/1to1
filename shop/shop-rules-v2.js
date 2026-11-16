@@ -1,5 +1,5 @@
 /* Shop v2 rules (72n): pure functions for the tile status, unlock line and collection counts.
-   Spec: revamp/review/shop-handoff/UI-SPEC.md sections 2, 6 and 8. No DOM here, so the node tests cover it.
+   72s: buyCheck() is the only eligibility check, run on Buy. Spec: revamp/review/shop-handoff/UI-SPEC.md sections 2, 6 and 8. No DOM here, so the node tests cover it.
    player: { level, stars, coins, owned: { id: true }, equipped: { layer: id }, vip: bool } */
 (function (root) {
   'use strict';
@@ -97,7 +97,22 @@
     });
   }
 
-  var api = { RARITY: RARITY, LAYER_LABEL: LAYER_LABEL, normalise: normalise, loadoutKey: loadoutKey, lockReason: lockReason, statusFor: statusFor, collectionFor: collectionFor, nextUnlock: nextUnlock, loadoutRows: loadoutRows };
+  // Eligibility is checked only when the player taps Buy (72s). Returns '' when allowed, else a plain sentence.
+  function buyCheck(raw, player) {
+    var item = normalise(raw);
+    var owned = !!(player.owned || {})[item.id];
+    if (owned) return '';
+    if (item.unlockKind === 'vip' && !player.vip) return 'This one is for VIP players only.';
+    if (player.vip) return '';
+    if (item.unlockKind === 'level' && (player.level || 1) < (item.unlockValue || 1)) return 'You need Level ' + item.unlockValue + ' for this. You are Level ' + (player.level || 1) + '.';
+    if (item.unlockKind === 'stars' && (player.stars || 0) < (item.unlockValue || 0)) return 'This needs ' + item.unlockValue + ' prestige stars. You have ' + (player.stars || 0) + '.';
+    if (item.unlockKind === 'badge' && !(player.badges || {})[item.unlockName]) return 'Earn the ' + (item.unlockName || 'badge') + ' badge first.';
+    var price = item.price || 0;
+    if ((player.coins || 0) < price) return 'You need ' + (price - (player.coins || 0)) + ' more coins for this.';
+    return '';
+  }
+
+  var api = { buyCheck: buyCheck, RARITY: RARITY, LAYER_LABEL: LAYER_LABEL, normalise: normalise, loadoutKey: loadoutKey, lockReason: lockReason, statusFor: statusFor, collectionFor: collectionFor, nextUnlock: nextUnlock, loadoutRows: loadoutRows };
   if (typeof module === 'object' && module.exports) module.exports = api;
   else root.ShopRulesV2 = api;
 })(typeof window !== 'undefined' ? window : globalThis);

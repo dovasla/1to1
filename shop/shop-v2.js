@@ -1,4 +1,5 @@
-/* Shop v2 screen (72n). Draws the layer tabs, tiles by tier, the preview sheet, buy and equip, and the loadout.
+/* Shop v2 screen (72s). Tap any item: the banner on top shows it at once. One Buy bar underneath.
+   Eligibility (level, stars, badge, VIP, coins) is checked only when the player taps Buy.
    Data: catalogue.js (items) and the backend (shop_state / shop_act via shop-backend.js). Rules: shop-rules-v2.js. */
 (function () {
   'use strict';
@@ -14,12 +15,11 @@
   // Art layers first, then VIP, then the Coming soon layers last (desk ruling 72q).
   var TABS = ['background', 'frame', 'emblem', 'title', 'effect', 'name', 'card', 'row'].concat(['vip'], SOON_LAYERS);
   var TAB_LABEL = { vip: 'VIP' };
-  var st = null;          // { items, player }
+  var st = null;        // { items, player }
   var openTab = 'background';
-  var openItem = null;
-  var tryId = '';         // preview only, never saved
-  var closeTimer = null;
-  var takeArmed = false;  // Take all off asks once: first tap arms, second tap runs
+  var picked = '';      // item id the player tapped last (preview + Buy bar)
+  var busy = false;     // a save is running
+  var takeArmed = false;
 
   function $(id) { return document.getElementById(id); }
   function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -30,9 +30,7 @@
     if (Array.isArray(state.owned)) state.owned.forEach(function (id) { owned[id] = true; });
     else owned = state.owned || {};
     return {
-      // Server items carry layer and tier (72n shape). Anything else (old 25-row mock) falls back to the catalogue.
       items: (function () {
-        // The demo mock has no server list: it uses the catalogue. Live uses the server answer, old rows included.
         if (backend.kind === 'mock') return C.ITEMS;
         return (state.items || []).map(withLayer);
       })(),
@@ -65,15 +63,15 @@
   }
 
   function loadoutItem(id) { return id ? st.items.filter(function (i) { return i.id === id; })[0] : null; }
+  function findItem(id) { return id ? st.items.filter(function (i) { return i.id === id; })[0] : null; }
 
-  // ---- 72p patch: real looks. Old rows draw through PlayerName, new layers through ShopFx. ----
+  // ---- Art. Old rows draw through PlayerName, new layers through ShopFx. ----
   var PN = window.PlayerName;
   var FX = window.ShopFx;
   var ART_LAYERS = ['background', 'frame', 'emblem', 'title', 'effect', 'name', 'card', 'row'];
   var SLOT_PROP = { banner: 'banner', name: 'nameStyle', calling: 'callingCard', row: 'rowEffect', clan: 'clanTag' };
 
-  // Old rows (slot + value) are drawn by PlayerName. New rows are drawn by shop-effects.js.
-  // A tile with no art yet (layer not drawn, or an old row with no value) says Coming soon and cannot be bought.
+  // A tile with no art yet says Coming soon and has no price or Buy.
   function hasArt(raw) {
     if (raw.slot) return !!raw.value;
     return ART_LAYERS.indexOf(raw.layer) !== -1;
@@ -94,18 +92,17 @@
     if (raw.slot && PN) return '<span class="sample" aria-hidden="true">' + PN.html(oldProps(raw.slot, raw.value)) + '</span>';
     if (raw.layer === 'background') return '<span class="sample fx-banner fx-sample" aria-hidden="true" data-fx-sample="' + esc(raw.id) + '">' +
       '<span class="fx-layer fx-bg"></span><span class="fx-layer fx-frame"></span></span>';
-    // Frames, emblems, titles and the rest: a drawn sample (the effects module draws backgrounds only).
     return '<span class="sample s-' + esc(raw.layer) + '" aria-hidden="true"><span class="glyph">' + (NEW_GLYPH[raw.layer] || '') + '</span></span>';
   }
   function decorateArt(root) {
     if (!FX) return;
     (root || document).querySelectorAll('[data-fx-sample]').forEach(function (el) {
-      var raw = st.items.filter(function (i) { return i.id === el.getAttribute('data-fx-sample'); })[0];
+      var raw = findItem(el.getAttribute('data-fx-sample'));
       if (raw) FX.apply(el, R.normalise(raw));
     });
   }
 
-  // One banner painter for the shop top, the Try it view and the buy sheet. extra = an item to show on top (preview only).
+  // One banner painter for the top preview. extra = the tapped item, shown in its layer (preview only, never saved).
   function paintBanner(el, extra) {
     if (!el || !st) return;
     var p = st.player;
@@ -118,21 +115,81 @@
     var bg = worn('background') || DEFAULT_BG;
     var frame = worn('frame'), title = worn('title');
     el.setAttribute('data-tier', bg.tier || 'common');
-    el.className = el.className.replace(/\bframe-\S+/g, '').trim() + (frame ? ' frame-' + (frame.tier || 'common') : '');
+    // 72t: every art layer shows on the top banner. Each worn item adds a pv-<layer> class, tinted by its tier.
+    var emblem = worn('emblem'), name = worn('name'), card = worn('card'), effect = worn('effect'), row = worn('row');
+    var pv = [['emblem', emblem], ['name', name], ['card', card], ['effect', effect], ['row', row]];
+    el.className = el.className.replace(/\bframe-\S+/g, '').replace(/\bpv-\S+/g, '').trim() + (frame ? ' frame-' + (frame.tier || 'common') : '');
+    pv.forEach(function (pair) { if (pair[1]) el.classList.add('pv-' + pair[0], 'pv-tier-' + (pair[1].tier || 'common')); });
+    if (extra && extra.id) el.setAttribute('data-preview', extra.id);
+    var glyph = emblem ? esc(String(emblem.name || '').charAt(0) || '\u2605') : '&#9733;';
     el.innerHTML = '<div class="fx-banner fx-surface"><span class="fx-card">' +
       '<span class="fx-layer fx-bg"></span><span class="fx-layer fx-deep"></span><span class="fx-layer fx-deep2"></span>' +
       '<span class="fx-layer fx-sheen"></span><span class="fx-layer fx-frame"></span>' +
-      '<span class="fx-layer fx-body"><span class="fx-emblem">&#9733;</span><span>' +
+      '<span class="fx-layer fx-body"><span class="fx-emblem">' + glyph + '</span><span>' +
       '<span class="fx-title">' + esc(myName()) + '</span>' +
       '<span class="fx-word">' + esc(title ? title.name : (R.RARITY[bg.tier] || bg.tier)) + '</span>' +
+      (extra && extra.layer !== 'background' ? '<span class="pv-tag">' + esc(R.LAYER_LABEL[extra.layer] || extra.layer) + ': ' + esc(extra.name || '') + '</span>' : '') +
       '</span></span></span></div>';
     if (FX && bg.layer === 'background') FX.apply(el.querySelector('.fx-surface'), R.normalise(bg));
   }
 
+  // Tile status: short and calm. No eligibility here; that is checked only on Buy.
+  function tileStatus(raw) {
+    if (!hasArt(raw)) return { key: 'soon', text: 'Coming soon' };
+    var it = R.normalise(raw);
+    var p = st.player;
+    if (p.equipped[R.loadoutKey(it.layer)] === it.id) return { key: 'equipped', text: 'On your look' };
+    if (p.owned[it.id]) return { key: 'owned', text: 'Owned' };
+    if (p.vip) return { key: 'free', text: 'Free for VIP' };
+    if (it.unlockKind === 'vip') return { key: 'vip', text: 'VIP only' };
+    return { key: 'price', text: it.price ? it.price + ' coins' : 'Free' };
+  }
+
   function renderBanner() {
-    var tryItem = tryId ? loadoutItem(tryId) : null;
-    paintBanner($('banner'), tryItem);
+    var pickedItem = picked ? findItem(picked) : null;
+    paintBanner($('banner'), pickedItem && hasArt(pickedItem) ? pickedItem : null);
     $('coins').textContent = String(st.player.coins);
+    var line = '';
+    if (pickedItem && tileStatus(pickedItem).key === 'equipped') {
+      line = 'On your look: ' + R.normalise(pickedItem).name;
+    } else if (pickedItem) {
+      line = hasArt(pickedItem)
+        ? 'Preview: ' + R.normalise(pickedItem).name + ' (' + (R.RARITY[pickedItem.tier] || pickedItem.tier) + ')'
+        : 'No look yet for ' + R.normalise(pickedItem).name + '.';
+    } else {
+      line = 'Your look now. Tap any item to preview it.';
+    }
+    $('previewLine').textContent = line;
+  }
+
+  // The Buy bar: one button, one line of info. Coming soon items get no button.
+  function renderBuyBar() {
+    var bar = $('buybar');
+    var raw = picked ? findItem(picked) : null;
+    $('buyErr').hidden = true;
+    if (!raw) {
+      $('buyName').textContent = 'Pick an item';
+      $('buyInfo').textContent = 'Tap any item above to see it here.';
+      $('buyBtn').hidden = true;
+      $('buyBack').hidden = true;
+      return;
+    }
+    var it = R.normalise(raw);
+    var s = tileStatus(raw);
+    $('buyName').textContent = hasArt(raw) ? it.name : it.name + ' (coming soon)';
+    $('buyInfo').textContent = (R.RARITY[it.tier] || it.tier) + ' · ' + s.text;
+    var btn = $('buyBtn');
+    var show = hasArt(raw) && s.key !== 'equipped';
+    btn.hidden = !show;
+    if (show) {
+      if (s.key === 'owned') btn.textContent = 'Wear it';
+      else if (s.key === 'free') btn.textContent = 'Get it free';
+      else if (s.key === 'vip') btn.textContent = 'Unlock with VIP';
+      else btn.textContent = 'Buy, ' + it.price + ' coins';
+    }
+    $('buyBack').hidden = !picked || (findItem(picked) && tileStatus(findItem(picked)).key === 'equipped');
+    btn.disabled = busy;
+    bar.setAttribute('data-state', s.key);
   }
 
   function renderTabs() {
@@ -148,14 +205,16 @@
     $('collectLabel').textContent = soon ? 'Coming soon' : label;
     $('collectCount').textContent = soon ? '' : c.label;
     $('collectBar').style.width = (!soon && c.total) ? Math.round(100 * c.owned / c.total) + '%' : '0';
-    var n = R.nextUnlock(st.items.filter(hasArt), st.player);   // only items that can be bought now
+    var n = R.nextUnlock(st.items.filter(hasArt), st.player);
     $('nextLine').textContent = n ? 'Next unlock: ' + n.name + (n.cost ? ', ' + n.cost + ' coins' : '') + ' (' + n.need + ')' : '';
   }
 
   function tileHtml(raw) {
-    var s = hasArt(raw) ? R.statusFor(raw, st.player) : { key: 'soon', text: 'Coming soon' };
+    var s = tileStatus(raw);
     var it = R.normalise(raw);
-    return '<button class="tile" type="button" data-id="' + esc(it.id) + '" data-tier="' + esc(it.tier) + '"' + (s.key === 'soon' ? ' data-soon="1" aria-disabled="true"' : '') + '>' +
+    var on = raw.id === picked;
+    return '<button class="tile" type="button" data-id="' + esc(it.id) + '" data-tier="' + esc(it.tier) + '"' +
+      (s.key === 'soon' ? ' data-soon="1"' : '') + (on ? ' aria-pressed="true" data-on="1"' : ' aria-pressed="false"') + '>' +
       artHtml(raw) +
       '<span class="nm">' + esc(it.name) + '</span>' +
       '<span class="rw">' + esc(R.RARITY[it.tier] || it.tier) + '</span>' +
@@ -187,52 +246,41 @@
 
   function renderAll() {
     try { if (host && host.report && st) host.report(st.player.equipped); } catch (e) { /* parent gone */ }
-    renderBanner(); renderTabs(); renderCollection(); renderGrid(); renderLoadout();
+    renderBanner(); renderTabs(); renderCollection(); renderGrid(); renderLoadout(); renderBuyBar();
   }
 
-  function openSheet(id) {
-    var raw = st.items.filter(function (i) { return i.id === id; })[0];
-    if (!raw) return;
-    openItem = raw;
-    var it = R.normalise(raw);
-    var s = hasArt(raw) ? R.statusFor(raw, st.player) : { key: 'soon', text: 'Coming soon' };
-    $('sheetT').textContent = it.name;
-    paintBanner($('sheetPreview'), raw);
-    $('sheetRarity').textContent = R.RARITY[it.tier] || it.tier;
-    $('sheetInfo').textContent = s.text;
-    $('sheetErr').hidden = true;
-    var buy = $('sheetBuy');
-    buy.hidden = !(s.key === 'buyable' || s.key === 'free') || s.key === 'soon';
-    buy.textContent = s.key === 'free' ? 'Equip for free' : 'Buy and equip';
-    $('sheetEquip').hidden = s.key !== 'owned';
-    $('sheetTry').hidden = s.key === 'soon' || s.key === 'equipped';
-    $('sheetTry').hidden = s.key === 'equipped';
-    $('sheet').hidden = false;
-    $('scrim').hidden = false;
-    requestAnimationFrame(function () { $('sheet').classList.add('open'); });
+  function showBuyError(msg) {
+    $('buyErr').textContent = msg;
+    $('buyErr').hidden = false;
   }
 
-  function closeSheet() {
-    $('sheet').classList.remove('open');
-    $('scrim').hidden = true;
-    clearTimeout(closeTimer);
-    closeTimer = setTimeout(function () { $('sheet').hidden = true; }, 240);
-    openItem = null;
-  }
-
-  function act() {
-    if (!openItem || !hasArt(openItem)) return;
-    var id = openItem.id;
-    backend.act(id, '').then(function (res) {
-      if (!res.ok) { $('sheetErr').textContent = res.error || 'Could not save. Try again.'; $('sheetErr').hidden = false; return; }
+  // Buy / Wear: eligibility is checked here, on the tap, and the server checks again.
+  function buy() {
+    var raw = picked ? findItem(picked) : null;
+    if (!raw || !hasArt(raw) || busy) return;
+    var s = tileStatus(raw);
+    if (s.key === 'equipped') return;
+    if (s.key !== 'owned') {
+      var why = R.buyCheck(raw, st.player);
+      if (why) { showBuyError(why); return; }
+    }
+    busy = true;
+    $('buyBtn').disabled = true;
+    backend.act(raw.id, '').then(function (res) {
+      busy = false;
+      if (!res.ok) { showBuyError(res.error || 'Could not save. Try again.'); $('buyBtn').disabled = false; return; }
       st = readPlayer(res.state);
-      tryId = '';
-      closeSheet();
       renderAll();
     }, function () {
-      $('sheetErr').textContent = 'Could not save. Check the signal and try again.';
-      $('sheetErr').hidden = false;
+      busy = false;
+      showBuyError('Could not save. Check the signal and try again.');
+      $('buyBtn').disabled = false;
     });
+  }
+
+  function pick(id) {
+    picked = id;
+    renderAll();
   }
 
   function showLoadError(msg) {
@@ -255,21 +303,15 @@
     openTab = b.getAttribute('data-tab'); renderTabs(); renderCollection(); renderGrid();
   });
   $('grid').addEventListener('click', function (e) {
-    var t = e.target.closest('.tile'); if (t) openSheet(t.getAttribute('data-id'));
+    var t = e.target.closest('.tile'); if (t) pick(t.getAttribute('data-id'));
   });
   $('loadout').addEventListener('click', function (e) {
     var b = e.target.closest('[data-change]'); if (!b) return;
     openTab = b.getAttribute('data-change'); renderTabs(); renderCollection(); renderGrid();
     window.scrollTo(0, 0);
   });
-  $('sheetBuy').addEventListener('click', act);
-  $('sheetEquip').addEventListener('click', act);
-  $('sheetTry').addEventListener('click', function () {
-    if (!openItem) return;
-    tryId = openItem.id; closeSheet(); renderBanner();
-  });
-  $('sheetClose').addEventListener('click', closeSheet);
-  $('scrim').addEventListener('click', closeSheet);
+  $('buyBtn').addEventListener('click', buy);
+  $('buyBack').addEventListener('click', function () { picked = ''; renderAll(); });
   $('retry').addEventListener('click', load);
   // Take all off: shop_act toggles an equipped item off, so one call per equipped item (the server has no clear-all call).
   $('takeAll').addEventListener('click', function () {
@@ -297,7 +339,7 @@
     });
   });
 
-  // Reduced motion: the OS setting only (the app has no Calm switch). Stops the Legend breathe and the sheet slide.
+  // Reduced motion: the OS setting only (the app has no Calm switch). Stops the Legend breathe.
   try {
     var reduce = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
     document.body.classList.toggle('calm', reduce);

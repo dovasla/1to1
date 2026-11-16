@@ -1,12 +1,26 @@
-/* Shop v2 (72n). 360 px first, 16 px gutter, 48 px targets, 14 px minimum text. No shadows, no chevrons, no emoji. */
+/* Shop v2 (72s). Calm and simple: preview on top, tap any item, one Buy bar at the bottom.
+   360 px first, 16 px gutter, 48 px targets, 14 px minimum text. No shadows, no chevrons, no emoji. */
 body.shop-v2 { margin: 0; background: var(--bg, #0E0E0E); color: var(--ink, #F5F5F0); font: 16px/1.4 system-ui, sans-serif; }
-body.shop-v2 main { padding: 0 16px 120px; max-width: 520px; margin: 0 auto; }
+body.shop-v2 main { min-height: 100vh; box-sizing: border-box; padding: 0 16px 200px; max-width: 520px; margin: 0 auto; }
 .top { display: flex; justify-content: space-between; align-items: center; padding: 16px 0 8px; }
 .top h1 { margin: 0; font-size: 28px; text-transform: uppercase; }
 .coins { background: #FFD400; color: #0E0E0E; padding: 6px 12px; border-radius: 999px; font-weight: 700; }
-.banner { height: 112px; border-radius: 12px; border: 2px solid var(--line, #333); display: flex; align-items: flex-end; padding: 10px 12px; box-sizing: border-box; background: #1A1A1A; }
-.banner .bn { font-weight: 700; text-transform: uppercase; font-size: 18px; }
-.banner .bt { font-size: 14px; margin-left: 8px; color: #FFD400; }
+
+/* Top preview: fills its box, shows the tapped item at once. */
+.banner { height: 112px; border-radius: 12px; border: 2px solid #333; overflow: hidden; background: #1A1A1A; box-sizing: border-box; }
+.banner > * { width: 100%; height: 100%; box-sizing: border-box; }
+.banner.frame-common { outline: 2px solid #B8B8B0; }
+.banner.frame-rare { outline: 2px solid #4DA3FF; }
+.banner.frame-epic { outline: 2px solid #FFD400; }
+.banner.frame-legend { outline: 2px solid #FF8A00; }
+.preview-line { font-size: 14px; margin: 8px 0 12px; color: #D8D8D0; min-height: 20px; }
+
+.err { color: #FF6B6B; font-size: 14px; }
+.muted { color: #B8B8B0; font-size: 14px; }
+.btn { min-height: 48px; padding: 0 16px; font-size: 16px; font-weight: 700; border-radius: 12px; border: 0; background: #FFD400; color: #0E0E0E; text-transform: uppercase; }
+.btn:disabled { opacity: .5; }
+.btn.ghost { background: transparent; color: inherit; border: 1px solid #444; font-weight: 400; text-transform: none; }
+
 .collect { display: flex; justify-content: space-between; margin-top: 12px; font-size: 14px; }
 .bar { height: 6px; background: #2A2A2A; border-radius: 3px; margin: 6px 0 10px; overflow: hidden; }
 .bar span { display: block; height: 100%; background: #FFD400; width: 0; }
@@ -14,58 +28,43 @@ body.shop-v2 main { padding: 0 16px 120px; max-width: 520px; margin: 0 auto; }
 .tabs { display: flex; gap: 8px; overflow-x: auto; padding: 4px 0 12px; }
 .tabs button { flex: 0 0 auto; min-height: 48px; padding: 0 16px; border-radius: 999px; border: 1px solid #444; background: transparent; color: inherit; font-size: 14px; }
 .tabs button[aria-pressed="true"] { background: #FFD400; color: #0E0E0E; border-color: #FFD400; }
+
 .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.tile { min-height: 48px; border: 2px solid #333; border-radius: 12px; padding: 10px; background: #161616; color: inherit; text-align: left; }
-.tile .sample { height: 40px; border-radius: 8px; background: #222; margin-bottom: 8px; }
+.grid > * { min-width: 0; }
+.tile { display: block; min-width: 0; min-height: 48px; width: 100%; box-sizing: border-box; overflow-wrap: anywhere; border: 2px solid #333; border-radius: 12px; padding: 10px; background: #161616; color: inherit; text-align: left; }
+.tile > span { display: block; }
+.tile .sample { display: block; height: 40px; overflow: hidden; border-radius: 8px; background: #222; margin-bottom: 8px; }
 .tile .nm { font-weight: 700; text-transform: uppercase; font-size: 16px; }
 .tile .rw { font-size: 14px; text-transform: uppercase; }
-.tile .st { font-size: 14px; margin-top: 4px; }
+.tile .st { font-size: 14px; margin-top: 4px; color: #D8D8D0; }
 .tile[data-tier="rare"] { border-color: #4DA3FF; }
 .tile[data-tier="epic"] { border-color: #FFD400; }
-.tile[data-tier="legend"] { border-color: #FF8A00; animation: breathe 2.4s ease-in-out infinite; }
+.tile[data-tier="legend"] { border-color: #FF8A00; }
 .tile[data-tier="rare"] .rw { color: #4DA3FF; }
 .tile[data-tier="epic"] .rw { color: #FFD400; }
 .tile[data-tier="legend"] .rw { color: #FF8A00; }
-.vipLabel { grid-column: 1 / -1; font-size: 14px; text-transform: uppercase; margin-top: 8px; }
-.empty { grid-column: 1 / -1; font-size: 14px; }
-.loadout { list-style: none; padding: 0; margin: 0 0 24px; }
-.loadout li { display: flex; justify-content: space-between; align-items: center; min-height: 48px; border-bottom: 1px solid #2A2A2A; }
-.loadout button { min-height: 48px; min-width: 48px; background: transparent; color: #FFD400; border: 0; font-size: 14px; }
-.scrim { position: fixed; inset: 0; background: rgba(0,0,0,.6); }
-.sheet { position: fixed; left: 0; right: 0; bottom: 0; background: #141414; border-radius: 16px 16px 0 0; padding: 16px; display: flex; flex-direction: column; gap: 10px; max-height: 80vh; overflow-y: auto; transition: transform 240ms ease; transform: translateY(100%); }
-.sheet.open { transform: translateY(0); }
-.sheet .btn { min-height: 48px; font-size: 16px; border-radius: 12px; border: 0; background: #FFD400; color: #0E0E0E; }
-.sheet .btn.ghost { background: transparent; color: inherit; border: 1px solid #444; }
-.sheet .err { color: #FF6B6B; font-size: 14px; }
-.grab { width: 40px; height: 4px; background: #444; border-radius: 2px; margin: 0 auto; }
-.rarity { font-size: 14px; text-transform: uppercase; margin: 0; }
-.muted { color: #B8B8B0; font-size: 14px; }
-.err { color: #FF6B6B; }
-@keyframes breathe { 0%,100% { box-shadow: none; } 50% { box-shadow: 0 0 0 0 transparent; } }
-@media (prefers-reduced-motion: reduce) { .tile[data-tier="legend"] { animation: none; } .sheet { transition: none; } }
-body.calm .tile[data-tier="legend"] { animation: none; }
-.tile { display: block; min-width: 0; width: 100%; box-sizing: border-box; overflow-wrap: anywhere; }
-.tile > span { display: block; }
-.grid > * { min-width: 0; }
-
-/* 72p patch: one scroll, Coming soon, sample and banner art (shop-effects.css does the look). */
-body.shop-v2 main { min-height: 100vh; box-sizing: border-box; }
-.sheet { max-height: none; overflow: visible; }
+.tile[data-on="1"] { box-shadow: 0 0 0 2px #FFD400 inset; background: #1F1B0A; }
 .tile[data-soon="1"] { opacity: .55; }
-.tile .sample { display: block; height: 40px; overflow: hidden; border-radius: 8px; margin-bottom: 8px; }
-.banner #bannerArt { width: 100%; height: 100%; }
-.banner { height: 112px; overflow: hidden; }
-
-/* 72r: banner and preview fill their box; frames show as a border; new non-background samples are drawn here. */
-#banner > *, .sheet-preview > * { width: 100%; height: 100%; box-sizing: border-box; }
-.sheet-preview { height: 112px; border-radius: 12px; overflow: hidden; }
-.banner.frame-rare, .sheet-preview.frame-rare { outline: 2px solid #4DA3FF; }
-.banner.frame-epic, .sheet-preview.frame-epic { outline: 2px solid #FFD400; }
-.banner.frame-legend, .sheet-preview.frame-legend { outline: 2px solid #FF8A00; }
-.sample.s-frame { border: 3px solid #B8B8B0; border-radius: 8px; background: transparent; }
-.sample.s-title, .sample.s-name { display: flex; align-items: center; justify-content: center; font-weight: 700; }
-.sample .glyph { font-size: 20px; line-height: 1; }
+.tile .sample.s-frame { border: 3px solid #B8B8B0; border-radius: 8px; background: transparent; }
 .tile[data-tier="rare"] .sample.s-frame { border-color: #4DA3FF; }
 .tile[data-tier="epic"] .sample.s-frame { border-color: #FFD400; }
 .tile[data-tier="legend"] .sample.s-frame { border-color: #FF8A00; }
-.banner.frame-common, .sheet-preview.frame-common { outline: 2px solid #B8B8B0; }
+.sample.s-title, .sample.s-name { display: flex; align-items: center; justify-content: center; font-weight: 700; }
+.sample .glyph { font-size: 20px; line-height: 1; }
+.empty { grid-column: 1 / -1; font-size: 14px; }
+
+.loadout { list-style: none; padding: 0; margin: 0 0 16px; }
+.loadout li { display: flex; justify-content: space-between; align-items: center; min-height: 48px; border-bottom: 1px solid #2A2A2A; }
+.loadout button { min-height: 48px; min-width: 48px; background: transparent; color: #FFD400; border: 0; font-size: 14px; }
+.cap { font-size: 18px; text-transform: uppercase; margin: 24px 0 8px; }
+
+/* Buy bar: always at the bottom of the phone screen. */
+.buybar { position: fixed; left: 0; right: 0; bottom: 0; background: #141414; border-top: 1px solid #2A2A2A; padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px)); display: flex; gap: 12px; align-items: center; justify-content: space-between; box-sizing: border-box; }
+.buy-text { min-width: 0; flex: 1 1 auto; }
+.buy-name { margin: 0; font-weight: 700; text-transform: uppercase; font-size: 16px; overflow-wrap: anywhere; }
+.buy-info { margin: 2px 0 0; font-size: 14px; color: #D8D8D0; }
+.buy-actions { display: flex; gap: 8px; flex: 0 0 auto; }
+.buybar .err { margin: 4px 0 0; }
+
+@media (prefers-reduced-motion: reduce) { .tile[data-tier="legend"] { animation: none; } }
+body.calm .tile[data-tier="legend"] { animation: none; }

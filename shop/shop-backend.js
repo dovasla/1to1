@@ -11,6 +11,8 @@
 
   function mock(opts) {
     var o = opts || {};
+    // 72s: the demo uses the same catalogue as the shop screen, so every tile id is known.
+    var ITEMS = (root.ShopCatalogue && root.ShopCatalogue.ITEMS) || CAT.ITEMS;
     // The mock starts as a player with these numbers. Coins follow the same formula as the server.
     var st = {
       level: o.level || 12,
@@ -18,23 +20,33 @@
       coins: R.earned(o.level || 12, o.stars || 0),
       owned: [],
       equipped: {},
-      clanTag: ''
+      clanTag: '',
+      vip: !!o.vip,
+      badges: {}
     };
     function view() {
-      return R.normalise({ level: st.level, stars: st.stars, coins: st.coins, owned: st.owned,
-        equipped: st.equipped, clanTag: st.clanTag, items: CAT.ITEMS });
+      // 72s: plain copy, same keys as shop_state (the old normaliser would drop the layer keys).
+      return { level: st.level, stars: st.stars, coins: st.coins, owned: st.owned.slice(),
+        equipped: Object.assign({}, st.equipped), clanTag: st.clanTag, vip: st.vip, badges: st.badges, items: ITEMS };
     }
     return {
       kind: 'mock',
       load: function () { return Promise.resolve({ ok: true, state: view() }); },
-      act: function (id, tag) {
-        var r = R.act(view(), id, tag);
-        if (!r.ok) return Promise.resolve({ ok: false, error: r.error, state: view() });
-        st.coins = r.state.coins;
-        st.owned = r.state.owned;
-        st.equipped = r.state.equipped;
-        st.clanTag = r.state.clanTag;
-        return Promise.resolve({ ok: true, state: view(), message: r.message });
+      act: function (id) {
+        // 72s demo: same rules as the screen (buyCheck). Buy also wears the item; a second tap takes it off.
+        var it = ITEMS.filter(function (i) { return i.id === id; })[0];
+        if (!it) return Promise.resolve({ ok: false, error: 'Unknown item', state: view() });
+        var key = 'l_' + it.layer;
+        var owned = st.owned.indexOf(id) !== -1;
+        if (st.equipped[key] === id) { st.equipped[key] = null; return Promise.resolve({ ok: true, state: view(), message: 'Taken off.' }); }
+        if (!owned) {
+          var why = root.ShopRulesV2 ? root.ShopRulesV2.buyCheck(it, { level: st.level, stars: st.stars, coins: st.coins, owned: {}, vip: st.vip, badges: st.badges }) : '';
+          if (why) return Promise.resolve({ ok: false, error: why, state: view() });
+          if (!st.vip) st.coins -= (it.price || 0);
+          st.owned.push(id);
+        }
+        st.equipped[key] = id;
+        return Promise.resolve({ ok: true, state: view(), message: owned ? 'On your card.' : 'Bought. It is on your card.' });
       }
     };
   }
