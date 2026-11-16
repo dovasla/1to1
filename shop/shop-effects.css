@@ -1,0 +1,223 @@
+/* ==========================================================
+   Check Ball shop effects (production module)
+   Load after the player app CSS, with shop-effects.js.
+   Hooks are data attributes set from items.json (see INTEGRATION.md):
+     data-fx-tier   common | rare | epic | legend
+     data-fx-depth  0-3   (3 = Legend only; tilt on banners with data-fx-look)
+     data-fx-glow   one of the 14 glow families (no attribute = Plain)
+     data-fx-look   solar | void | storm | inferno   (banner backgrounds)
+   Only transform and opacity loop. Calm, low power and reduced
+   motion stop every loop and keep the look. Loops pause when the tab is hidden.
+   ========================================================== */
+
+:root {
+  --fx-y: #FFD21F;
+  --fx-rare: #3D8BFF;
+  --fx-epic: #B66BFF;
+  --fx-legend: #FF9A1F;
+  --fx-ease: cubic-bezier(.2, .8, .2, 1);
+}
+
+/* ---------- 1. Surfaces and rarity ---------- */
+.fx-surface { position: relative; isolation: isolate; }
+.fx-halo { position: absolute; inset: 0; border-radius: inherit; z-index: -1; pointer-events: none; }
+
+.fx-surface[data-fx-tier="common"] { outline: 2px solid rgba(255, 255, 255, .2); outline-offset: -2px; }
+.fx-surface[data-fx-tier="rare"] { outline: 2px solid var(--fx-rare); outline-offset: -2px; }
+.fx-surface[data-fx-tier="epic"] { outline: 2px solid var(--fx-epic); outline-offset: -2px; }
+.fx-surface[data-fx-tier="legend"] { outline: 3px solid var(--fx-legend); outline-offset: -3px; }
+:root[data-bright] .fx-surface[data-fx-tier="common"] { outline-color: rgba(14, 14, 14, .2); }
+
+.fx-surface[data-fx-tier="rare"] > .fx-halo { box-shadow: 0 0 14px rgba(61, 139, 255, .35); }
+.fx-surface[data-fx-tier="epic"] > .fx-halo { box-shadow: 0 0 18px rgba(182, 107, 255, .45); }
+.fx-surface[data-fx-tier="legend"] > .fx-halo { box-shadow: 0 0 24px rgba(255, 154, 31, .55); animation: fx-breathe 2.4s ease-in-out infinite; }
+@keyframes fx-breathe { 0%, 100% { opacity: .75; } 50% { opacity: 1; } }
+
+.fx-surface[data-fx-tier="rare"] .fx-word { color: var(--fx-rare); }
+.fx-surface[data-fx-tier="epic"] .fx-word { color: var(--fx-y); }
+.fx-surface[data-fx-tier="legend"] .fx-word { color: var(--fx-legend); }
+.fx-surface[data-fx-tier="common"] .fx-word { color: #A9ADB4; }
+
+/* ---------- 2. Glow families (14, plus Plain = no attribute) ---------- */
+/* aura: warm static halo */
+[data-fx-glow="aura"] { box-shadow: 0 0 0 1px rgba(255, 210, 31, .25), 0 0 28px rgba(255, 210, 31, .35); }
+
+/* neon: pink edge with a one-step flicker */
+[data-fx-glow="neon"] { box-shadow: 0 0 0 2px #FF3EA5, 0 0 18px #FF3EA5; }
+[data-fx-glow="neon"]::after { content: ""; position: absolute; inset: 0; border-radius: inherit; border: 2px solid #FF3EA5; pointer-events: none; animation: fx-neon 3s steps(1) infinite; }
+@keyframes fx-neon { 0%, 92%, 100% { opacity: 1; } 93% { opacity: .55; } 95% { opacity: 1; } }
+
+/* pulse: cyan heartbeat halo (opacity only) */
+[data-fx-glow="pulse"] { isolation: auto; }
+[data-fx-glow="pulse"]::before { content: ""; position: absolute; inset: -2px; border-radius: inherit; z-index: -1; box-shadow: 0 0 0 2px #2BD9FF, 0 0 14px #2BD9FF; animation: fx-pulse 2.2s ease-in-out infinite; }
+@keyframes fx-pulse { 0%, 100% { opacity: .6; } 50% { opacity: 1; } }
+
+/* flame: rising warm layer behind the surface */
+[data-fx-glow="flame"] { box-shadow: 0 0 22px rgba(255, 92, 0, .5); isolation: auto; }
+[data-fx-glow="flame"]::before { content: ""; position: absolute; inset: -6px; border-radius: 18px; z-index: -1; background: linear-gradient(0deg, #FF5C00, #FFB300 55%, transparent 80%); transform-origin: 50% 100%; opacity: .7; animation: fx-flame 1.1s ease-in-out infinite alternate; }
+@keyframes fx-flame { from { transform: scaleY(.94) translateY(2px); opacity: .6; } to { transform: scaleY(1.04) translateY(-2px); opacity: .95; } }
+
+/* ice: frost surface and one slow glint */
+[data-fx-glow="ice"] { background: linear-gradient(160deg, #EAF8FF, #9AD8F5 45%, #2C6C8F); color: #06202E; box-shadow: 0 0 20px rgba(154, 216, 245, .6), inset 0 0 0 2px #E8FAFF; overflow: hidden; }
+[data-fx-glow="ice"]::after { content: ""; position: absolute; inset: 0; background: linear-gradient(115deg, transparent 40%, rgba(255, 255, 255, .7) 50%, transparent 60%); transform: translate3d(-100%, 0, 0); pointer-events: none; animation: fx-glint 4s ease-in-out infinite; }
+@keyframes fx-glint { 0%, 60% { transform: translate3d(-100%, 0, 0); } 100% { transform: translate3d(100%, 0, 0); } }
+
+/* electric: a rare blue flash ring */
+[data-fx-glow="electric"] { box-shadow: 0 0 0 2px #7FA8FF; }
+[data-fx-glow="electric"]::after { content: ""; position: absolute; inset: -2px; border-radius: inherit; box-shadow: 0 0 0 2px #E6F0FF, 0 0 16px #7FA8FF; opacity: 0; pointer-events: none; animation: fx-zap 4.5s steps(1) infinite; }
+@keyframes fx-zap { 0%, 88%, 100% { opacity: 0; } 89% { opacity: 1; } 91% { opacity: .2; } 93% { opacity: 1; } 95% { opacity: 0; } }
+
+/* plasma: a spinning violet-pink ring behind the surface */
+/* Spinning rings turn the gradient angle, never the box (a turning box pokes out of the card). */
+@property --fx-angle { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+@keyframes fx-angle { to { --fx-angle: 360deg; } }
+[data-fx-glow="plasma"] { isolation: auto; }
+[data-fx-glow="plasma"]::before { content: ""; position: absolute; inset: -3px; border-radius: inherit; z-index: -1; background: conic-gradient(from var(--fx-angle), #9B5CFF, #FF4FD8, #3DE0FF, #9B5CFF); animation: fx-angle 6s linear infinite; }
+@keyframes fx-spin { to { transform: rotate(360deg); } }
+
+/* holo: rainbow foil that follows the finger (JS sets --fx-hp, 0-100) */
+[data-fx-glow="holo"] { overflow: hidden; }
+[data-fx-glow="holo"]::before { content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 200%; z-index: -1; background: linear-gradient(115deg, #2A2A33 20%, #6A8BFF 35%, #FF9AD5 45%, #7CFFD7 55%, #2A2A33 75%); transform: translate3d(calc(var(--fx-hp, 50) * -0.5%), 0, 0); opacity: .9; }
+
+/* gold-foil: static metal bars, no motion */
+[data-fx-glow="gold-foil"] { background: repeating-linear-gradient(100deg, #8A6A1B 0 14px, #FFD86B 18px 24px, #B88B22 28px 40px); box-shadow: inset 0 0 0 2px #FFE9A6; color: #1B1202; }
+
+/* void: near black with a violet drift */
+[data-fx-glow="void"] { background: #07050D; overflow: hidden; box-shadow: inset 0 0 0 2px #5B2BB5, 0 0 24px rgba(120, 60, 255, .5); }
+[data-fx-glow="void"]::before { content: ""; position: absolute; inset: 0; z-index: -1; background: radial-gradient(circle at 30% 40%, rgba(140, 80, 255, .45), transparent 55%); animation: fx-drift 7s ease-in-out infinite alternate; }
+@keyframes fx-drift { from { transform: translate3d(-8%, -4%, 0); } to { transform: translate3d(8%, 6%, 0); } }
+
+/* galaxy: a slow star field turning */
+[data-fx-glow="galaxy"] { background: #090B1F; overflow: hidden; box-shadow: inset 0 0 0 2px #3D4AA8; }
+[data-fx-glow="galaxy"]::before { content: ""; position: absolute; inset: -30%; border-radius: 50%; z-index: -1; background: radial-gradient(circle, #fff 1px, transparent 1.5px) 0 0 / 22px 22px, radial-gradient(circle, #9FB4FF 1px, transparent 1.5px) 11px 11px / 31px 31px; opacity: .8; animation: fx-spin 40s linear infinite; }
+
+/* glitch: one stepped jolt on tap (JS adds .fx-hit), then still */
+[data-fx-glow="glitch"] { box-shadow: inset 0 0 0 2px #E5E5E5, 4px 0 0 #FF2D55, -4px 0 0 #2BD9FF; }
+[data-fx-glow="glitch"].fx-hit { animation: fx-glitch .5s steps(2) 1; }
+@keyframes fx-glitch { 0% { transform: translate3d(0, 0, 0); } 25% { transform: translate3d(-3px, 1px, 0); } 50% { transform: translate3d(2px, -1px, 0); } 75% { transform: translate3d(-1px, 0, 0); } 100% { transform: none; } }
+
+/* rainbow-ring: the border colour travels round the edge */
+[data-fx-glow="rainbow-ring"]::after { content: ""; position: absolute; inset: -3px; border-radius: inherit; padding: 3px; background: conic-gradient(from var(--fx-angle), #FF5C5C, #FFD21F, #7CFF6B, #4FA8FF, #B66BFF, #FF5C5C); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); pointer-events: none; animation: fx-angle 6s linear infinite; }
+
+/* embers: a few sparks rising off the bottom */
+[data-fx-glow="embers"]::after { content: ""; position: absolute; left: 14%; bottom: 0; width: 6px; height: 6px; border-radius: 50%; background: #FFB300; box-shadow: 60px -4px 0 #FF7A1A, 120px -2px 0 #FFB300, 200px -6px 0 #FF5C00; pointer-events: none; animation: fx-rise 2.6s ease-out infinite; }
+@keyframes fx-rise { 0% { transform: translate3d(0, 0, 0); opacity: 0; } 20% { opacity: 1; } 100% { transform: translate3d(0, -70px, 0); opacity: 0; } }
+
+/* ---------- 3. Banners (layers) ---------- */
+.fx-banner { position: relative; height: 112px; border-radius: 18px; isolation: isolate; perspective: 700px; }
+.fx-banner.fx-sample { height: 40px; border-radius: 10px; }
+.fx-card { position: absolute; inset: 0; border-radius: inherit; overflow: hidden; background: #000; transform: rotateX(var(--fx-rx, 0deg)) rotateY(var(--fx-ry, 0deg)); transition: transform .2s var(--fx-ease); }
+.fx-card::after { content: ""; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, .45) 50%, transparent 70%); transform: translate3d(-120%, 0, 0); pointer-events: none; }
+.fx-card.fx-go::after { animation: fx-sweep .8s var(--fx-ease) 1 both; }
+@keyframes fx-sweep { from { transform: translate3d(-120%, 0, 0); } to { transform: translate3d(120%, 0, 0); } }
+
+.fx-layer { position: absolute; inset: 0; border-radius: inherit; pointer-events: none; }
+/* Depth: parallax offsets from JS (--fx-dx, --fx-dy, -1 to 1). Flat when not tilting. */
+.fx-bg { transform: translate3d(calc(var(--fx-dx, 0) * -4px), calc(var(--fx-dy, 0) * -4px), 0) scale(1.08); }
+.fx-deep { transform: translate3d(calc(var(--fx-dx, 0) * -8px), calc(var(--fx-dy, 0) * -8px), 0); }
+.fx-deep2 { transform: translate3d(calc(var(--fx-dx, 0) * -12px), calc(var(--fx-dy, 0) * -12px), 0); }
+.fx-deep::before, .fx-deep2::before { content: ""; position: absolute; }
+.fx-frame { box-shadow: inset 0 0 0 3px var(--fx-frame, #FFD21F), inset 0 0 0 6px rgba(0, 0, 0, .35); }
+.fx-body { display: flex; align-items: center; gap: 14px; padding: 18px; }
+.fx-emblem { width: 64px; height: 64px; flex: 0 0 64px; border-radius: 50%; background: rgba(0, 0, 0, .35); display: grid; place-items: center; font-size: 30px; line-height: 1; }
+.fx-title { font: 700 24px/1 "Barlow Condensed", "Barlow", system-ui, sans-serif; text-transform: uppercase; letter-spacing: .04em; color: #fff; text-shadow: 0 2px 8px rgba(0, 0, 0, .7); }
+.fx-word { display: inline-block; margin-top: 8px; padding: 4px 10px; border-radius: 6px; background: #000; font-size: 14px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.fx-banner.fx-sample .fx-body { padding: 0 10px; gap: 8px; }
+.fx-banner.fx-sample .fx-emblem { width: 28px; height: 28px; flex-basis: 28px; font-size: 14px; }
+.fx-banner.fx-sample .fx-title, .fx-banner.fx-sample .fx-word { display: none; }
+
+/* Depth 3 (Legend banners with a look) tilt via JS. Depth 2 (Epic) stays flat. */
+
+/* Background looks: Legend (with motion layers) */
+.fx-banner:not([data-fx-look]) .fx-bg { background: linear-gradient(120deg, #2A2C31, #17181B); }
+.fx-banner[data-fx-look="solar"] .fx-bg { background: radial-gradient(circle at 70% 40%, #FFF3B0 0, #FF9A1F 30%, #2A0F4A 75%); }
+.fx-banner[data-fx-look="void"] .fx-bg { background: radial-gradient(ellipse at 50% 50%, #1A0B33 0, #05030A 70%); }
+.fx-banner[data-fx-look="storm"] .fx-bg { background: linear-gradient(160deg, #0B1C3A, #050A14 70%); }
+.fx-banner[data-fx-look="inferno"] .fx-bg { background: linear-gradient(180deg, #2A0700, #8A2400 60%, #FF7A1A); }
+
+.fx-banner[data-fx-look="solar"] .fx-frame { --fx-frame: #FFF3B0; }
+.fx-banner[data-fx-look="void"] .fx-frame { --fx-frame: #9B5CFF; }
+.fx-banner[data-fx-look="storm"] .fx-frame { --fx-frame: #A8D0FF; }
+.fx-banner[data-fx-look="inferno"] .fx-frame { --fx-frame: #FF7A1A; }
+
+/* Solar: rays turn slowly, the core breathes */
+.fx-banner[data-fx-look="solar"] .fx-deep::before { inset: -30%; background: repeating-conic-gradient(from 0deg, rgba(255, 240, 160, .35) 0 6deg, transparent 6deg 18deg); animation: fx-spin 14s linear infinite; }
+.fx-banner[data-fx-look="solar"] .fx-deep2::before { width: 160px; height: 160px; right: -40px; top: -40px; border-radius: 50%; background: radial-gradient(circle, #FFFBE0, #FFD21F 60%, transparent 70%); animation: fx-core 2.6s ease-in-out infinite; }
+@keyframes fx-core { 0%, 100% { transform: scale(.92); } 50% { transform: scale(1.08); } }
+
+/* Void rift: a tilted ring orbits, a violet core pulses */
+.fx-banner[data-fx-look="void"] .fx-deep::before { inset: 20px; border-radius: 50%; border: 3px solid #9B5CFF; box-shadow: 0 0 24px #9B5CFF; animation: fx-orbit 5s linear infinite; }
+@keyframes fx-orbit { from { transform: rotate(0deg) scaleY(.4); } to { transform: rotate(360deg) scaleY(.4); } }
+.fx-banner[data-fx-look="void"] .fx-deep2::before { left: 50%; top: 50%; width: 90px; height: 90px; margin: -45px 0 0 -45px; border-radius: 50%; background: radial-gradient(circle, #E9DBFF, #7A3CFF 45%, transparent 70%); animation: fx-core 3s ease-in-out infinite; }
+
+/* Storm: rain falls (20 px repeat, so the loop has no jump), one lightning flash */
+.fx-banner[data-fx-look="storm"] .fx-deep::before { inset: -20px 0 0 0; background: repeating-linear-gradient(180deg, transparent 0 17px, rgba(160, 200, 255, .45) 17px 20px); animation: fx-rain .5s linear infinite; }
+@keyframes fx-rain { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(0, 20px, 0); } }
+.fx-banner[data-fx-look="storm"] .fx-deep2::before { inset: 0; background: rgba(230, 240, 255, .85); opacity: 0; animation: fx-flash 4.2s steps(1) infinite; }
+@keyframes fx-flash { 0%, 86%, 100% { opacity: 0; } 87% { opacity: .55; } 89% { opacity: .08; } 91% { opacity: .45; } 94% { opacity: 0; } }
+
+/* Inferno: flames rise from the bottom, embers drift up */
+.fx-banner[data-fx-look="inferno"] .fx-deep::before { left: -10%; right: -10%; bottom: -30%; height: 90%; border-radius: 50% 50% 0 0; background: radial-gradient(ellipse at 50% 100%, #FFE07A, #FF5C00 45%, transparent 70%); transform-origin: 50% 100%; animation: fx-flame-deep 1.2s ease-in-out infinite alternate; }
+@keyframes fx-flame-deep { from { transform: scaleY(.92); } to { transform: scaleY(1.06); } }
+.fx-banner[data-fx-look="inferno"] .fx-deep2::before { inset: 0; background: radial-gradient(circle, #FFD27A 1.5px, transparent 2px) 0 0 / 38px 38px; opacity: .9; animation: fx-emb 3.2s linear infinite; }
+@keyframes fx-emb { to { transform: translate3d(0, -38px, 0); } }
+
+/* Epic (lighter): same four looks, flat gradient, no deep layers.
+   One sheen loop, and only on the equipped banner (data-fx-equipped="1"). */
+.fx-banner[data-fx-tier="epic"][data-fx-look="solar"] .fx-bg { background: radial-gradient(circle at 70% 40%, #FFE9A0, #B66BFF 45%, #1B0A33 80%); }
+.fx-banner[data-fx-tier="epic"][data-fx-look="void"] .fx-bg { background: radial-gradient(ellipse at 50% 50%, #2A1450, #0A0614 75%); }
+.fx-banner[data-fx-tier="epic"][data-fx-look="storm"] .fx-bg { background: linear-gradient(160deg, #16305C, #0A1220); }
+.fx-banner[data-fx-tier="epic"][data-fx-look="inferno"] .fx-bg { background: linear-gradient(180deg, #3A1000, #B43A00 70%, #FF8A2A); }
+.fx-banner[data-fx-tier="epic"] .fx-deep, .fx-banner[data-fx-tier="epic"] .fx-deep2 { display: none; }
+.fx-sheen { position: absolute; inset: 0; background: linear-gradient(115deg, transparent 40%, rgba(255, 255, 255, .4) 50%, transparent 60%); transform: translate3d(-100%, 0, 0); pointer-events: none; }
+.fx-banner[data-fx-tier="epic"][data-fx-equipped="1"] .fx-sheen { animation: fx-sheen 5s ease-in-out infinite; }
+@keyframes fx-sheen { 0%, 55% { transform: translate3d(-100%, 0, 0); } 100% { transform: translate3d(100%, 0, 0); } }
+
+/* Equip: the banner wipes from the old look to the new one (one shot, 320 ms) */
+.fx-wipe { animation: fx-wipe .32s ease-out 1 both; }
+@keyframes fx-wipe { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+
+/* Score pop (Live strip): one bump, 220 ms */
+.fx-pop { animation: fx-pop .22s ease-out 1; }
+@keyframes fx-pop { 0% { transform: scale(1); } 40% { transform: scale(1.12); } 100% { transform: scale(1); } }
+
+/* ---------- 4. Moments: unlock, equip reveal, prestige (queued, tap to skip) ---------- */
+.fx-moment { position: fixed; inset: 0; z-index: 60; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px; background: rgba(14, 14, 14, .85); cursor: pointer; color: #F4F5F7; font-family: "Barlow", system-ui, sans-serif; }
+.fx-moment-card { position: relative; overflow: hidden; width: min(320px, 100%); border-radius: 18px; background: #17181B; padding: 22px 18px; text-align: center; animation: fx-rise .45s var(--fx-ease) 1 both; }
+.fx-moment-word { font-size: 14px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--fx-y); }
+.fx-moment[data-fx-tier="rare"] .fx-moment-word { color: var(--fx-rare); }
+.fx-moment[data-fx-tier="epic"] .fx-moment-word { color: var(--fx-y); }
+.fx-moment[data-fx-tier="legend"] .fx-moment-word { color: var(--fx-legend); }
+.fx-moment-name { margin-top: 8px; font: 700 28px/1.05 "Barlow Condensed", "Barlow", system-ui, sans-serif; text-transform: uppercase; letter-spacing: .03em; }
+.fx-moment-line { margin-top: 8px; font-size: 16px; color: #A9ADB4; }
+.fx-moment-skip { margin-top: 16px; font-size: 14px; color: #A9ADB4; }
+.fx-moment-sweep { position: absolute; inset: 0; background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, .45) 50%, transparent 70%); transform: translate3d(-120%, 0, 0); pointer-events: none; animation: fx-sweep .8s var(--fx-ease) .2s 1 both; }
+.fx-moment-star { position: relative; font-size: 120px; line-height: 1; color: var(--fx-y); text-shadow: 0 0 36px rgba(255, 210, 31, .9); animation: fx-slam .6s .15s var(--fx-ease) 1 both; }
+.fx-moment-prestige .fx-moment-card { background: transparent; }
+.fx-ring { position: absolute; left: 50%; top: 40%; width: 120px; height: 120px; margin: -60px 0 0 -60px; border-radius: 50%; border: 3px solid var(--fx-y); opacity: 0; animation: fx-ring 1.4s var(--fx-ease) 1 both; }
+.fx-ring.fx-r2 { animation-delay: .25s; }
+.fx-ring.fx-r3 { animation-delay: .5s; }
+@keyframes fx-rise { from { transform: translate3d(0, 16px, 0); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes fx-slam { 0% { transform: scale(3) rotate(-30deg); opacity: 0; } 60% { transform: scale(.92) rotate(4deg); opacity: 1; } 100% { transform: scale(1) rotate(0); opacity: 1; } }
+@keyframes fx-ring { 0% { transform: scale(.2); opacity: 1; } 100% { transform: scale(4.5); opacity: 0; } }
+
+/* ---------- 5. Calm, low power, reduced motion, hidden tab ---------- */
+/* Calm and low power: every loop, slide, sweep and tilt off. The look stays. */
+html[data-calm="1"] [class*="fx-"], html[data-calm="1"] [class*="fx-"]::before, html[data-calm="1"] [class*="fx-"]::after,
+html[data-fx="low"] [class*="fx-"], html[data-fx="low"] [class*="fx-"]::before, html[data-fx="low"] [class*="fx-"]::after {
+  animation: none !important;
+  transition: none !important;
+}
+html[data-calm="1"] .fx-card, html[data-fx="low"] .fx-card,
+html[data-calm="1"] .fx-layer, html[data-fx="low"] .fx-layer { transform: none !important; }
+html[data-calm="1"] .fx-moment-sweep, html[data-fx="low"] .fx-moment-sweep { display: none; }
+
+/* Reduced motion (OS setting) behaves the same as Calm */
+@media (prefers-reduced-motion: reduce) {
+  [class*="fx-"], [class*="fx-"]::before, [class*="fx-"]::after { animation: none !important; transition: none !important; }
+  .fx-card, .fx-layer { transform: none !important; }
+  .fx-moment-sweep { display: none; }
+}
+
+/* Hidden tab: loops pause, then resume when the tab is back */
+html[data-fx-hidden="1"] [class*="fx-"], html[data-fx-hidden="1"] [class*="fx-"]::before, html[data-fx-hidden="1"] [class*="fx-"]::after { animation-play-state: paused !important; }

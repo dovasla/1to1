@@ -4,7 +4,7 @@
 // Only same-origin GET requests are handled and saved. The online database and any other
 // cross-origin call go straight to the network and are never saved.
 importScripts('brand/names.js');
-const CACHE = 'player-shell-1-next72k';
+const CACHE = 'player-shell-1-next72p-final-r5';
 const SHELL = [
   './', 'signup.html', 'app.html', 'night.html', 'offline.html',
   'manifest.webmanifest', 'pwa.js', 'pwa.css', 'pwa-push.js',
@@ -28,6 +28,7 @@ const SHELL = [
   'share-card/share-card.js', 'screens/calendar/calendar.js', 'screens/calendar/calendar.css', 'screens/invite/invite.js', 'screens/invite/invite.css',
   'screens/my-account/my-account.js', 'screens/my-account/my-account.css',
   'shop/shop.html', 'shop/shop.js', 'shop/shop.css', 'shop/shop-backend.js', 'shop/shop-rules.js',
+  'shop/shop-v2.html', 'shop/shop-v2.js', 'shop/shop-v2.css', 'shop/shop-rules-v2.js', 'shop/catalogue.js', 'shop/shop-effects.css', 'shop/shop-effects.js',
   'fonts/barlow-400.woff2', 'fonts/barlow-600.woff2', 'fonts/barlow-700.woff2', 'fonts/barlowcondensed-700.woff2',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/maskable-512.png', 'icons/apple-touch-icon-180.png',
   'icons/characters/picker.css', 'icons/icon-32.png', 'lib/lineup-gate.js', 'lib/night-shape.js', 'lib/run-day.js', 'mvp-backend.js', 'screens/head-to-head/head-to-head.css', 'screens/head-to-head/head-to-head.js', 'screens/mvp/mvp.css', 'screens/mvp/mvp.js', 'screens/push/push.css', 'screens/push/push.js', 'screens/recap/recap.css', 'screens/recap/recap.js', 'screens/recap/recap-loader.js', 'screens/recap/recap-box.js', 'screens/stats-board/stats-board.css', 'screens/stats-board/stats-board.js', 'screens/streaks/streaks.css', 'screens/streaks/streaks.js', 'shop-visible/shop-strip.css', 'shop-visible/shop-strip.js', 'wording-56.js',

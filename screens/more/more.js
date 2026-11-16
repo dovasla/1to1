@@ -27,12 +27,11 @@
 
    handlers (each optional; the shell supplies them):
      claimPaid(nightId)          -> Promise { ok, reason }   sends the "I've paid" claim (shell holds the PIN)
-     saveUsername(raw)           -> Promise { ok, username } or { ok: false, reason }   reasons: bad-name, taken, blocked, too-soon, not-signed-in
+     saveUsername(raw)           -> Promise { ok, username } or { ok: false, reason }   reasons: bad-name, taken, blocked, not-signed-in
      saveProfile({ nickname, teamPref }) -> Promise { ok, reason }
      saveSkill(answers)          -> Promise { ok, reason }   the skill questions, asked once (shell holds the token)
      setBright(bool)
      setShowMe(bool)             -> Promise { ok }   hides the player as "Player" when off
-     setAlertPref(key, bool)     -> Promise { ok }   key: 'dayBefore' | 'mvp' | 'achievements'
      enableAlerts() -> Promise { ok, state }   turns run alerts on (asks the phone). There is no off switch.
      sendTestAlert() -> Promise { ok, reason }   one test to this player's own phones only
      logOut()
@@ -47,7 +46,7 @@
   'use strict';
 
   var G = typeof window !== 'undefined' ? window : globalThis;
-  var VERSION = 'next-72k';  // build tag shown in the More footer; bump with each build
+  var VERSION = 'next-72p-final-r5';  // build tag shown in the More footer; bump with each build
   var NICK_MIN = 2;
   var NICK_MAX = 12;
   var PANELS = ['pay', 'details', 'alerts', 'rules', 'help', 'settings', 'skill', 'achievements', 'invite', 'account', 'reminders'];
@@ -94,9 +93,7 @@
     'I am best at defending', 'I am best at rebounding', 'I am best at working hard and running the floor'];
   var HEIGHT_MIN = 53, HEIGHT_MAX = 84, HEIGHT_DEFAULT = 69;   // inches: 4 ft 5 in to 7 ft 0 in, default 5 ft 9 in
 
-  // Extra alert switches (R65). Run alerts have no switch: the phone's own setting is the off switch.
-  // R87 (d): the three extra switches are hidden until the server stores them. Re-add here when it does.
-  var ALERT_PREFS = [];
+  // Run alerts have no switch: the phone's own setting is the off switch.
 
   // Words for each server answer on Your username (R63: 30 day rule).
   var USERNAME_MSG = {
@@ -327,14 +324,10 @@
       unsupported: 'This browser cannot send run alerts. Open the app from the Home Screen or in Chrome.',
       'no-key': 'Run alerts are not set up yet.'
     }[state] || '';
-    var extras = ALERT_PREFS.map(function (p) {
-      return switchHtml('pref', prefOn(d, p.key), p.title, p.sub, p.key);
-    }).join('');
     return '<h1>' + PANEL_TITLE.alerts + '</h1>' +
       '<div class="card"><p>' + esc(text) + '</p>' +
         (state === 'off' ? '<button class="btn yellow" type="button" data-act="alerts-on">Turn on run alerts</button>' : '') +
       '</div>' +
-      '<div class="more-group">' + extras + '</div>' +
       '<div class="card">' +
         '<p class="muted">Sends one test to this phone only. Nobody else gets it.</p>' +
         '<button class="btn ghost" type="button" data-act="test-alert">Send me a test alert</button>' +
@@ -602,6 +595,7 @@
       if (t.hasAttribute('data-go')) return go(t.getAttribute('data-go'));
       var act = t.getAttribute('data-act');
       if (act === 'back') return go(t.getAttribute('data-to') || '');
+      if (act === 'save-details') return saveDetails();
       if (act === 'save-skill') return saveSkill();
       if (act === 'bright') {
         st.data.bright = !st.data.bright;
@@ -614,24 +608,12 @@
           set: function (v) { st.data.showMe = v; }
         }, !(st.data.showMe !== false), h.setShowMe);
       }
-      if (act === 'pref') {
-        var key = t.getAttribute('data-key');
-        return flip({
-          get: function () { return prefOn(st.data, key); },
-          set: function (v) {
-            var prefs = Object.assign({}, st.data.alertPrefs || {});
-            prefs[key] = v;
-            st.data.alertPrefs = prefs;
-          }
-        }, !prefOn(st.data, key), function (v) { return h.setAlertPref ? h.setAlertPref(key, v) : { ok: true }; });
-      }
       if (act === 'test-alert') return testAlert();
       // Run alerts can only be turned ON here (no off switch). The app updates this panel when the phone answers.
       if (act === 'alerts-on') {
         if (h.enableAlerts) h.enableAlerts();
         return;
       }
-      if (act === 'save-details') return saveDetails();
       if (act === 'logout') { if (h.logOut) h.logOut(); return; }
     }
 
@@ -660,7 +642,6 @@
     RULES: RULES,
     TEAM_OPTIONS: TEAM_OPTIONS,
     PAY_STATUS: PAY_STATUS,
-    ALERT_PREFS: ALERT_PREFS,
     PANELS: PANELS,
     USERNAME_MSG: USERNAME_MSG,
     TEST_MSG: TEST_MSG,

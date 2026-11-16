@@ -27,8 +27,10 @@
 
   function itemOf(id) {
     var C = dep('ShopCosmetics');
-    if (!id || !C || !C.ITEMS) return null;
-    for (var i = 0; i < C.ITEMS.length; i++) { if (C.ITEMS[i].id === id) return C.ITEMS[i]; }
+    var K = window.ShopCatalogue;
+    if (!id) return null;
+    if (C && C.ITEMS) for (var i = 0; i < C.ITEMS.length; i++) { if (C.ITEMS[i].id === id) return C.ITEMS[i]; }
+    if (K && K.ITEMS) for (var j = 0; j < K.ITEMS.length; j++) { if (K.ITEMS[j].id === id) return K.ITEMS[j]; }
     return null;
   }
 
@@ -148,7 +150,7 @@
       '<p class="tk-real">' + esc(firstName + (initial ? ' ' + initial : '')) + ' · Level ' + v.level +
       ' · <span class="tk-stars" role="img" aria-label="' + v.stars + ' of ' + STAR_MAX + ' stars">' + starsHtml(v.stars) + '</span></p></div></div>' +
       '<div class="tk-rule"></div>' +
-      '<button class="btn-outline" type="button" data-change-look>Change look</button>' +
+      '<button class="btn-outline" type="button" data-change-look>Update my picture</button>' +
       '</div></section>';
 
     // Level and XP.

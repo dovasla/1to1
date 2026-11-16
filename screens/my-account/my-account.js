@@ -76,7 +76,7 @@
     'wrong-pin': 'That PIN is not right.',
     'locked': 'Too many tries. Wait a few minutes and try again.',
     'bad-pin': 'A PIN is 4 numbers.',
-    'too-soon': 'You can change your name once every 30 days.',
+    'too-soon': 'Your username is set and can’t be changed.',
     'name-taken': 'Someone already has that name. Add one more letter.',
     'bad-name': 'Use letters only for the first name.',
     'bad-initial': 'The last initial is one letter.',

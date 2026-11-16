@@ -502,6 +502,12 @@
       nightVersion: function (id) {
         return call('POST', '/rest/v1/rpc/night_version', { p_id: id }).then(function (v) { return v || null; });
       },
+      // Auto runs (JORD-PASTE-62): the next upcoming run from the runs table. { date, start } or null.
+      nextRun: function () {
+        return call('POST', '/rest/v1/rpc/player_next_run', {}).then(function (j) {
+          return j && j.date ? { date: j.date, start: j.start || '' } : null;
+        }, function () { return null; });
+      },
     };
   }
 

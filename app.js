@@ -179,9 +179,20 @@
   }
   // The Shop frame asks for this same instance (same origin), so a purchase updates Home and Profile at once.
   // name() gives the Shop frame the signed-in player's own name (never the demo name).
+  // 72r4: the shop reports its equipped state here, so Profile shows what the shop shows.
+  var SHOP_SLOT_LAYER = { banner: 'background', name: 'name', calling: 'card', row: 'row', clan: 'title' };
+  function slotsFromShop(eq) {
+    var out = {};
+    Object.keys(SHOP_SLOT_LAYER).forEach(function (slot) {
+      var id = eq[SHOP_SLOT_LAYER[slot] && ('l_' + SHOP_SLOT_LAYER[slot])] || eq[slot];
+      if (id) out[slot] = id;
+    });
+    return out;
+  }
   window.PlayerShop = {
     get: ensureShop,
-    name: function () { return fullName(); }
+    name: function () { return fullName(); },
+    report: function (eq) { S.shopEquipped = slotsFromShop(eq || {}); var pb = $('profile'); if (pb && pb.childNodes.length) renderProfile(); }
   };
   function refreshCoins() {
     if (S.home) S.home.update(homeData(Date.now()));
@@ -288,6 +299,17 @@
     return NightShape.nextUpFor(game, S.me);
   }
 
+  // Auto runs (JORD-PASTE-62): "Thu 19 Nov, 8:00pm" from S.nextRun, the same format the organiser writes.
+  function nextRunText() {
+    var r = S.nextRun;
+    if (!r || !r.date || !r.start) return '';
+    var DN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    var MN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    var y = +r.date.slice(0, 4), m = +r.date.slice(5, 7) - 1, d = +r.date.slice(8, 10);
+    var hh = +r.start.slice(0, 2), mm = r.start.slice(3, 5);
+    return DN[new Date(Date.UTC(y, m, d)).getUTCDay()] + ' ' + d + ' ' + MN[m] + ', ' + ((hh % 12) || 12) + ':' + mm + (hh >= 12 ? 'pm' : 'am');
+  }
+
   function homeData(now) {
     var game = nextGame(now);
     var games = (S.night && S.night.games) || [];
@@ -299,7 +321,7 @@
       coins: typeof S.coins === 'number' ? S.coins : null,   // 72g: null until the shop read answers, so Home shows a dash, not 0
       next: game ? nextCard(game, games) : null,
       runState: runStateText(games, now),
-      nextRunLabel: (S.night && S.night.nextRun) || '',
+      nextRunLabel: nextRunText() || (S.night && S.night.nextRun) || '',
       teamsIn: !!(game && LineupGate.published(game)),
       schedule: games.map(function (g) {
         var state = game && g.id === game.id ? 'next' : 'todo';
@@ -376,8 +398,9 @@
   function amountNow() {
     var inRun = S.serverRun === 'open';
     // R318: when the server answered, its amount is used, and only for a booked player (amount_pence null otherwise).
+    // 72p: a booked player still owes after End run, so the booking alone decides once the server has answered.
     if (S.pay && S.pay.state) {
-      if (!inRun || S.pay.state === 'none' || !S.pay.booked || S.pay.amountPence == null) return '';
+      if (S.pay.state === 'none' || !S.pay.booked || S.pay.amountPence == null) return '';
       var pounds = S.pay.amountPence / 100;
       return '£' + (pounds % 1 === 0 ? String(pounds) : pounds.toFixed(2));
     }
@@ -471,14 +494,19 @@
   // 72i: the paid check runs every 2 s while a cash claim is waiting (up to 10 minutes after the claim), else every 15 s.
   // 72k: the server's run state. 'open' = the organiser's code is up (Start run); 'ended', 'none', 'cancelled' = not on.
   // Until that answer comes, the night's own run flag decides.
+  // 72p: once the server has answered and it is not 'open' (End run, none, cancelled, removed, anything else), the run is not on.
   function runOnNow(now) {
     if (S.serverRun === 'open') return true;
-    if (S.serverRun === 'ended' || S.serverRun === 'none' || S.serverRun === 'cancelled' || S.serverRun === 'removed') return false;
+    if (S.serverRun && S.serverRun !== 'signin') return false;
     return NightShape.runOn(S.night, now);
   }
   // A run day: the run is open on the server, or the night is dated today.
   function runDay() {
     if (S.serverRun === 'open') return true;
+    // 72l: the fast tick also runs from 30 minutes before the start until 6 hours after it.
+    var st = Date.parse(runStartNow());
+    var now = Date.now();
+    if (!isNaN(st) && now >= st - 30 * 60 * 1000 && now <= st + 6 * 60 * 60 * 1000) return true;
     return !!(S.night && S.night.date && S.night.date === NightShape.londonDayKey(Date.now()));
   }
   // 72k: one tick. On a run day (tab visible) every 2 s: the server's run state, the night's stamp (full read only when it moved),
@@ -492,10 +520,11 @@
     return st.then(function (r) {
       if (r && r.ok === true && r.state && r.state !== S.serverRun) {
         S.serverRun = r.state;
+        if (r.state === 'open') S.sawOpen = true;
         if (S.home) S.home.update(homeData(Date.now()));
         liveStripUpdate();
         checkJoinState();
-      } else if (r && r.ok === true && r.state) { S.serverRun = r.state; }
+      } else if (r && r.ok === true && r.state) { S.serverRun = r.state; if (r.state === 'open') S.sawOpen = true; }
       if (!be.getNightStamp) return refreshNight();
       return be.getNightStamp(NIGHT_ID).then(function (s) {
         if (s && s.ok && s.stamp !== lastNightStamp) { lastNightStamp = s.stamp; return refreshNight(); }
@@ -753,7 +782,9 @@
     if (!window.PlayerRunState || !games || !games.length) return '';
     var starts = games.map(function (g) { return Date.parse(g.startsAt); }).filter(function (t) { return t > 0; });
     if (!starts.length) return '';
-    var st = PlayerRunState.homeState(Math.min.apply(null, starts), now, runOnNow(now), PlayerRunState.statusOf(S.night));
+    // 72p: a run that was open this session and is now not open (End run) reads as over, even if the published night still says live.
+    var ended = !!S.sawOpen && !!S.serverRun && S.serverRun !== 'open' && S.serverRun !== 'signin';
+    var st = PlayerRunState.homeState(Math.min.apply(null, starts), now, runOnNow(now), ended ? 'ended' : PlayerRunState.statusOf(S.night));
     return st ? PlayerRunState.labelFor(st) : '';
   }
 
@@ -785,11 +816,18 @@
     d.run = myRun();
     d.coins = S.coins || 0;
     d.clanTag = '';
-    d.equipped = {};
-    d.totals = { points: 0, wins: 0, games: 0, nights: 0 };
+    if (!S.shopEquipped && !S.shopEquippedAsked) {
+      S.shopEquippedAsked = true;
+      ensureShop().load().then(function (r) {
+        if (r && r.ok && r.state) { window.PlayerShop.report(r.state.equipped || {}); }
+      }, function () { /* offline: Profile shows nothing equipped until the shop answers */ });
+    }
+    d.equipped = S.shopEquipped || {};
+    var st = S.profileStats || {};
+    d.totals = Object.assign({ points: 0, wins: 0, games: 0, nights: 0 }, st.totals || {});
     if (vipState.icons.length) d.vip = { icons: vipState.icons, current: vipState.current };
     var box = $('profile');
-    d.character = charState.current;
+    d.character = charState.current || vipState.current;
     box.innerHTML = PlayerProfile.render(d) +
       (window.ShareCard ? '<p class="profile-links"><button type="button" class="btn yellow" id="shareCard">Share my card</button></p>' : '');
     var shareBtn = box.querySelector('#shareCard');
@@ -815,7 +853,7 @@
     var t = readToken();
     if (!t || !be.setVipIcon) return;
     be.setVipIcon(t, id).then(function (r) {
-      if (r && r.ok) { vipState.current = id; renderProfile(); }
+      if (r && r.ok) { vipState.current = id; charState.current = id; renderProfile(); }
     });
   }
 
@@ -859,7 +897,7 @@
     var box = $('sub');
     box.innerHTML = '';
     if (name === 'shop') {
-      box.innerHTML = '<iframe class="sub-frame" src="shop/shop.html" title="Shop"></iframe>';
+      box.innerHTML = '<iframe class="sub-frame" src="shop/shop-v2.html" title="Shop"></iframe>';
     }
     if (name === 'history') renderHistory();
   }
@@ -1144,30 +1182,12 @@
       if (!S.me || !be.achievements) return Promise.resolve({ ok: false });
       return (window.PlayerLoadTimeout ? PlayerLoadTimeout.withTimeout(be.achievements(readToken())) : be.achievements(readToken()));
     },
-    // Settings > Your username. The format is checked here; the server checks taken, blocked and the 30-day wait.
-    saveUsername: function (raw) {
-      var v = window.PlayerRules.validateUsername(raw);
-      if (!v.ok) return Promise.resolve({ ok: false, reason: 'bad-name' });
-      if (!S.me) return Promise.resolve({ ok: false, reason: 'not-signed-in' });
-      return be.setUsername(readToken(), v.value).then(function (r) {
-        if (!(r && r.ok)) return { ok: false, reason: (r && r.reason) || 'error' };
-        S.username = r.username || v.value;
-        saveUsernameHere(S.username);
-        return { ok: true, username: S.username };
-      }, function () { return { ok: false, reason: 'error' }; });
-    },
     setShowMe: function (on) {
       if (!S.me) return Promise.resolve({ ok: false });
       return be.setVisible(readToken(), on).then(function (r) {
         if (r && r.ok) S.showMe = !!on;
         return { ok: !!(r && r.ok) };
       }, function () { return { ok: false }; });
-    },
-    // Extra alert switches (R65). Memory only until the server has a setting for them.
-    setAlertPref: function (key, on) {
-      S.alertPrefs = Object.assign({}, S.alertPrefs || {});
-      S.alertPrefs[key] = !!on;
-      return Promise.resolve({ ok: true });
     },
     sendTestAlert: function () {
       if (!S.me) return Promise.resolve({ ok: false, reason: 'signed-out' });
@@ -1457,6 +1477,10 @@
       return seeded.then(function () {
         var LT0 = window.PlayerLoadTimeout;
         var pn = be.getNight(NIGHT_ID);
+        // 72r4: the next run is its own read with its own limit. It never holds up or fails the night read.
+        var nrP = (be.nextRun ? be.nextRun() : Promise.resolve(null)).catch(function () { return null; });
+        var nrLimit = new Promise(function (res) { setTimeout(function () { res(null); }, 5000); });
+        Promise.race([nrP, nrLimit]).then(function (nr) { S.nextRun = nr || null; if (S.home) S.home.update(homeData(Date.now())); }, function () { S.nextRun = null; });
         return (LT0 ? LT0.withTimeout(pn, LT0.LIMIT, 'night') : pn).then(function (nt) { setHomeError(false); if (nt && nt.payload) { lastNightSig = JSON.stringify(nt.payload); S.night = NightShape.applyNight(nt.payload); checkJoinState(); PlayerLoading.saveLast(nt.payload); } }).catch(function () { setHomeError(!!S.me); });
       });
     }
