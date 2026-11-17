@@ -140,8 +140,8 @@
       '<ol class="lv-games">' + rows.map(function (r) {
         return '<li class="lv-game is-' + r.state + '">' +
           '<span class="lv-no">' + esc(r.no) + '</span>' +
-          '<span class="lv-gbody"><b>' + esc(r.vs ? 'vs ' + teamWord(r.vs) : (r.versus || 'Game ' + r.no)) + '</b>' +
-          '<span class="lv-muted">' + esc(r.time) + '</span></span>' +
+          // r8: one line per game, "Game 1 · time". The opponent is not repeated on every row (it shows once, in Next up).
+          '<span class="lv-gbody"><b>' + esc('Game ' + r.no + (r.time ? ' · ' + r.time : '')) + '</b></span>' +
           '<span class="lv-state">' + esc(r.label) + '</span></li>';
       }).join('') + '</ol></section>';
   }

@@ -251,15 +251,35 @@
       Object.keys(extra || {}).forEach(function (k) { h[k] = extra[k]; });
       return h;
     }
-    function call(method, path, body, extra) {
-      return fetchFn(base + path, { method: method, headers: headers(extra), body: body === undefined ? undefined : JSON.stringify(body) })
+    // r8: one try has a hard time limit (TIMEOUT_MS), so a weak signal cannot hang a tap.
+    // A failed signal or a time-out is marked e.network = true. The server answering with an error is not.
+    var TIMEOUT_MS = typeof opts.timeoutMs === 'number' ? opts.timeoutMs : 8000;
+    function once(method, path, body, extra) {
+      var ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+      var timer = null;
+      var limit = new Promise(function (resolve, reject) {
+        timer = setTimeout(function () {
+          if (ctrl) ctrl.abort();
+          var e = new Error('timeout'); e.network = true; reject(e);
+        }, TIMEOUT_MS);
+      });
+      var req = fetchFn(base + path, { method: method, headers: headers(extra), body: body === undefined ? undefined : JSON.stringify(body),
+        signal: ctrl ? ctrl.signal : undefined })
         .then(function (res) {
           if (!res.ok) {
             return res.text().then(function (t) { var e = new Error('http-' + res.status); e.body = t || ''; throw e; });
           }
           var t = res.status === 204 ? '' : res.text();
           return Promise.resolve(t).then(function (txt) { return txt ? JSON.parse(txt) : null; });
-        });
+        }, function () { var e = new Error('network'); e.network = true; throw e; });
+      return Promise.race([req, limit]).then(function (v) { clearTimeout(timer); return v; }, function (err) { clearTimeout(timer); throw err; });
+    }
+    // One retry, and only after a signal failure or a time-out. Each call here sets a value on the server, so a repeat is safe.
+    function call(method, path, body, extra) {
+      return once(method, path, body, extra).catch(function (e) {
+        if (!e || !e.network) throw e;
+        return once(method, path, body, extra);
+      });
     }
     function toRow(r) {
       return { id: r.id, first: r.first, lastInitial: r.last_initial, status: r.status,
@@ -295,7 +315,7 @@
           .then(function (j) {
             if (j && j.ok) return { ok: true };
             return { ok: false, reason: (j && j.reason) || 'error' };
-          }, function () { return { ok: false, reason: 'error' }; });
+          }, function (e) { return { ok: false, reason: (e && e.network) ? 'network' : 'error' }; });
       },
       // Automatic Square pay (Edge Functions). Only used when config payAuto is on.
       // payLink -> { ok: true, url } or { ok: false, reason }. The Square link is made per player on the server.
@@ -400,7 +420,7 @@
       },
       // Read-only RPC for the stats and history screens (P6). Failure gives { ok: false }, never a throw.
       rpc: function (name, body) {
-        return call('POST', '/rest/v1/rpc/' + name, body).then(function (j) { return j; }, function () { return { ok: false }; });
+        return call('POST', '/rest/v1/rpc/' + name, body).then(function (j) { return j; }, function (e) { return { ok: false, reason: (e && e.network) ? 'network' : 'error' }; });
       },
       // Board (R87 a): player_leaderboard with all six arguments. Hidden rows come back as "Player" with no value.
       // P6c: season is 'current' (default), 'last' or 'all'. Anything else falls back to 'current'.

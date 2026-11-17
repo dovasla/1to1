@@ -4,7 +4,7 @@
 // Only same-origin GET requests are handled and saved. The online database and any other
 // cross-origin call go straight to the network and are never saved.
 importScripts('brand/names.js');
-const CACHE = 'player-shell-1-next72z-r7';
+const CACHE = 'player-shell-1-next72z-r8';
 const SHELL = [
   './', 'signup.html', 'app.html', 'night.html', 'offline.html',
   'manifest.webmanifest', 'pwa.js', 'pwa.css', 'pwa-push.js',
@@ -81,17 +81,31 @@ self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET') return;
   if (new URL(req.url).origin !== self.location.origin) return;
-  e.respondWith(
-    fetch(req).then(res => {
-      if (res.ok && res.type === 'basic') {
-        const copy = res.clone();
-        caches.open(CACHE).then(c => c.put(req, copy)).catch(() => {});
-      }
-      return res;
-    }).catch(() =>
-      caches.match(req, { ignoreSearch: true }).then(hit =>
-        hit || (req.mode === 'navigate' ? caches.match('offline.html') : Response.error())
-      )
-    )
-  );
+  e.respondWith(fromNetworkOrSaved(req));
 });
+
+// r8: the network gets a short head start. After SLOW_MS with no answer the saved copy is shown (if there is one),
+// and the network answer still arrives in the background and refreshes the saved copy. A failed network uses the saved copy at once.
+const SLOW_MS = 3000;
+function fromNetworkOrSaved(req) {
+  return new Promise(resolve => {
+    let done = false;
+    const finish = res => { if (!done) { done = true; resolve(res); } };
+    const saved = () => caches.match(req, { ignoreSearch: true }).then(hit =>
+      hit || (req.mode === 'navigate' ? caches.match('offline.html') : null) || Response.error()
+    );
+    const timer = setTimeout(() => {
+      caches.match(req, { ignoreSearch: true }).then(hit => { if (hit) finish(hit); }).catch(() => {});
+    }, SLOW_MS);
+    fetch(req).then(res => {
+      clearTimeout(timer);
+      if (res.ok && res.type === 'basic') {
+        caches.open(CACHE).then(c => c.put(req, res.clone())).catch(() => {});
+      }
+      finish(res);
+    }).catch(() => {
+      clearTimeout(timer);
+      saved().then(finish);
+    });
+  });
+}

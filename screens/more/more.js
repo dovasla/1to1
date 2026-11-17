@@ -112,7 +112,8 @@
     'signed-out': 'Sign in again to send a test.'
   };
 
-  var MSG_SAVE_FAIL = 'Could not save. Check your connection and try again.';
+  var MSG_SAVE_FAIL = 'Couldn’t save, try again.';
+  var MSG_NO_SIGNAL = 'No signal right now. Check your connection and try again.';
 
   // Checks the answers from the form. Returns { ok, answers } or { ok: false, missing: [keys] }.
   // best is optional and is not scored.
@@ -520,12 +521,12 @@
       var next = { nickname: (st.data.me && st.data.me.nickname) || '', teamPref: teamPref };
       st.msg = 'Saving…';
       paint();
-      Promise.resolve(h.saveProfile ? h.saveProfile(next) : { ok: true }).then(function (r) {
-        if (r && r.ok) {
+      Promise.resolve(h.saveProfile ? h.saveProfile(next) : { ok: false }).then(function (r) {
+        if (r && r.ok === true) {
           st.data.me = Object.assign({}, st.data.me || {}, next);
           st.msg = 'Saved.';
         } else {
-          st.msg = MSG_SAVE_FAIL;
+          st.msg = (r && r.reason === 'network') ? MSG_NO_SIGNAL : MSG_SAVE_FAIL;
         }
         paint();
       }).catch(function () {

@@ -132,6 +132,13 @@
     return mins + (mins === 1 ? ' minute' : ' minutes');
   }
 
+  // r8: Home shows one "Enter the code" button. The keypad opens on tap, so the card is calm until it is needed.
+  function keyHtml(kp) {
+    if (!kp) return '';
+    if (kp.joined || kp.open) return keypadHtml(kp);
+    return '<button type="button" class="ph-btn ph-kp-open" data-key="open">Enter the code</button>';
+  }
+
   function keypadHtml(kp) {
     if (kp.joined) return '<p class="ph-kp-done" role="status">You’re in. See you at the run.</p>';
     var left = kp.lockedUntil ? kp.lockedUntil - Date.now() : 0;
@@ -177,7 +184,7 @@
           '<h2>Run is on</h2>' +
           (d.runLabel ? '<p class="ph-vs">' + esc(d.runLabel) + '</p>' : '') +
           '<p class="ph-note">Teams show when the organiser sends them.</p>' +
-          (kp ? keypadHtml(kp) : '') +
+          keyHtml(kp) +
         '</div>';
     }
     if (kind === 'none') {
@@ -210,11 +217,14 @@
     if (n.notIn && kind !== 'on') {
       action = '<p class="ph-note">You’re not in this game.' + (n.playsIn ? ' You play in Game ' + esc(n.playsIn) + '.' : '') + '</p>';
     }
+    // r8: while the code keypad is open, the extra buttons step aside so the keypad is the one job on the card.
+    var kpOpen = !!(kp && kp.open && !kp.joined);
+    if (kpOpen) action = '';
     // Add to calendar (P8): only while the night is still to come, and never for a night you are not in.
-    var calHtml = (hasCalendar() && !n.notIn) ? PlayerCalendar.calendarButtonHtml(calNight(n), { now: now }) : '';
+    var calHtml = (hasCalendar() && !n.notIn && !kpOpen) ? PlayerCalendar.calendarButtonHtml(calNight(n), { now: now }) : '';
     var rsLine = d.runState ? '<p class="ph-runstate" role="status">' + esc(d.runState) + '</p>' : '';
     return '<div class="ph-card ph-card--hero">' + head + rsLine +
-      '<div class="ph-count">' + count + '</div>' + action + calHtml + rsvpHtml(d, kind, busy) + (kp ? keypadHtml(kp) : '') + '</div>';
+      '<div class="ph-count">' + count + '</div>' + action + calHtml + rsvpHtml(d, kind, busy) + keyHtml(kp) + '</div>';
   }
 
   // The one Pay line in the app (Home only). "I’ve paid cash" is a claim for the organiser to check, not a payment.
@@ -275,7 +285,7 @@
   function mount(el, data, handlers) {
     handlers = handlers || {};
     var state = { data: data || {}, kind: null, timer: null, busy: false,
-      kp: { code: '', busy: false, msg: null, sub: null, action: null, lockedUntil: 0, joined: !!(data && data.checkedIn) } };
+      kp: { code: '', busy: false, msg: null, sub: null, action: null, lockedUntil: 0, open: false, joined: !!(data && data.checkedIn) } };
     var showKp = typeof handlers.join === 'function';
     if (hasCalendar()) PlayerCalendar.attach(el, function () { return calNight(state.data.next); });
 
@@ -308,6 +318,7 @@
         clearTimeout(timer);
         var o = joinOutcome(r);
         kp.busy = false;
+        kp.open = true;   // the answer is always shown, so the keypad stays open after a join attempt
         if (o.joined) { kp.joined = true; kp.code = ''; kp.msg = null; kp.sub = null; kp.action = null; }
         else {
           if (o.clear) kp.code = '';
@@ -321,6 +332,7 @@
     function tapKey(k) {
       var kp = state.kp;
       if (kp.busy || kp.joined) return;
+      if (k === 'open') { kp.open = true; render(); return; }
       if (k === 'retry') { submitJoin(); return; }
       if (kp.lockedUntil && Date.now() < kp.lockedUntil) return;
       if (k === 'del') { kp.code = kp.code.slice(0, -1); kp.msg = null; kp.sub = null; kp.action = null; render(); return; }

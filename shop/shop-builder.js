@@ -150,7 +150,8 @@
           if (it) worn.push(it.name);
         });
         var on = S.group === g.key;
-        var value = worn.length ? esc(worn.join(' + ')) : 'Nothing yet';
+        // r8: an empty part shows no "Nothing yet" text. It stays a tab (so the parts can still be opened) but reads as blank.
+        var value = worn.length ? esc(worn.join(' + ')) : '';
         return '<button type="button" class="sb-slot' + (worn.length ? '' : ' is-empty') + '" role="tab" aria-selected="' + on + '" ' +
           'data-action="group" data-group="' + g.key + '">' +
           '<span class="sb-slot-k">' + esc(g.label) + '</span>' +
@@ -244,7 +245,8 @@
       var list = groupItems(S.group);
       mount.innerHTML =
         '<section class="sb">' +
-          '<h2 class="sb-title">Your card</h2>' +
+          '<h2 class="sb-title">Shop</h2>' +
+          '<p class="sb-sub">Tap an item to try it on.</p>' +
           '<div class="sb-stick">' + cardHtml() + '</div>' +
           '<div class="sb-on-label">On your card</div>' +
           '<div class="sb-slots" role="tablist" aria-label="Card parts">' + slotsHtml() + '</div>' +

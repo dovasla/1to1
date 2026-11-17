@@ -1327,12 +1327,14 @@
     saveProfile: function (next) {
       S.nickname = next.nickname;
       S.teamPref = next.teamPref;
+      // r8: "Saved." only when the server says ok. No sign-in, no signal or any other failure is reported as a failure.
+      if (!be.rpc) return Promise.resolve({ ok: true });   // test (mock) backend only: kept in memory
       var t = readToken();
-      if (!t || !be.rpc) return Promise.resolve({ ok: true });
+      if (!t) return Promise.resolve({ ok: false, reason: 'signin' });
       return be.rpc('player_save_profile', { p_token: t, p_nickname: next.nickname || '', p_team_pref: next.teamPref || 'any' }).then(function (r) {
-        if (r && r.reason === 'bad-nickname') return { ok: false, reason: 'bad-nickname' };
-        return { ok: true };
-      }, function () { return { ok: true }; });
+        if (r && r.ok === true) return { ok: true };
+        return { ok: false, reason: (r && r.reason) || 'error' };
+      }, function () { return { ok: false, reason: 'error' }; });
     },
     setBright: function (on) { var v = on ? 'light' : 'dark'; applyTheme(v); saveTheme(v); },
     // Run alerts: there is no off switch in the app. This only turns them on (asks the phone for permission).
