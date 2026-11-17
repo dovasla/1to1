@@ -58,7 +58,7 @@
     var err = el('p', 'pay-err', '');
     err.setAttribute('role', 'alert');
     err.hidden = true;
-    var cashBtn = el('button', 'btn ghost pay-other', 'Paid another way (cash)?');
+    var cashBtn = el('button', 'btn ghost pay-other', 'I paid another way (cash)');
     cashBtn.type = 'button';
     var cashMsg = el('p', 'pay-hint', 'Thanks. The organiser will check and confirm it at the run.');
     cashMsg.hidden = true;

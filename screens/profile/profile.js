@@ -148,7 +148,7 @@
       '<div class="tk-name"><span class="tk-user">' + esc(String(d && d.name || '')) + '</span>' +
       (v.playerName.clanTag ? ' <span class="pn-clan tk-clan">' + esc(v.playerName.clanTag) + '</span>' : '') +
       '<p class="tk-real">' + esc(firstName + (initial ? ' ' + initial : '')) + ' · Level ' + v.level +
-      ' · <span class="tk-stars" role="img" aria-label="' + v.stars + ' of ' + STAR_MAX + ' stars">' + starsHtml(v.stars) + '</span></p></div></div>' +
+      '</p></div></div>' +
       '<div class="tk-rule"></div>' +
       '<button class="btn-outline" type="button" data-change-look>Update my picture</button>' +
       '</div></section>';
@@ -179,10 +179,11 @@
     // No skill rating here (R60, R62): players never see their skill number. viewOf still carries it for the organiser side.
 
     // Equipped look and shop link.
-    var rows = v.equipped.map(function (e) {
-      return '<li><span>' + esc(e.label) + '</span><span class="muted">' +
-        (e.name ? esc(e.name) : 'Nothing equipped') + '</span></li>';
-    }).join('');
+    // r9: list only the looks that are on. With none, one line instead of six empty rows.
+    var worn = v.equipped.filter(function (e) { return !!e.name; });
+    var rows = worn.length ? worn.map(function (e) {
+      return '<li><span>' + esc(e.label) + '</span><span class="muted">' + esc(e.name) + '</span></li>';
+    }).join('') : '<li><span class="muted">Nothing equipped yet. Pick a look in the shop.</span></li>';
     h += '<section class="card" aria-labelledby="lkT"><h2 class="cap" id="lkT">Your look</h2>' +
       '<ul class="list">' + rows + '</ul>' +
       '<a class="btn-outline" href="../../shop/shop.html">Open shop</a></section>';

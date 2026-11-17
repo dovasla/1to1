@@ -216,6 +216,13 @@
       '<button type="button" data-sort="points" aria-pressed="' + (mode === 'points') + '">Points</button>' +
       '</div>';
 
+    // r9: with no teams and no players, one empty card instead of two.
+    if (!teams.length && !players.length) {
+      return '<header>' +
+        '<p class="muted">' + esc(opts.updatedText || 'Updates after each run.') + '</p>' +
+        '</header>' +
+        '<p class="lb-empty">Stats appear after the first game.</p>';
+    }
     // No <h1> here: the app shell already shows the screen title.
     return '<header>' +
       '<p class="muted">' + esc(opts.updatedText || 'Updates after each run.') + '</p>' +

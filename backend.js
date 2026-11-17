@@ -281,6 +281,33 @@
         return once(method, path, body, extra);
       });
     }
+    // r9 night reads. Keep the return shape the same as r8: { id, payload, updatedAt } or null.
+    function readNight(id) {
+      return call('POST', '/rest/v1/rpc/player_night', { p_id: id }).then(function (doc) {
+        if (doc === null) return null;                       // rpc ran: no such night
+        if (typeof doc !== 'object' || Array.isArray(doc)) return legacyGetNight(id);
+        return { id: id, payload: doc, updatedAt: null };
+      }, function () {
+        return legacyGetNight(id);                           // rpc missing (before the SQL) or signal error
+      });
+    }
+    function legacyGetNight(id) {
+      return call('GET', '/rest/v1/nights?select=*&id=eq.' + encodeURIComponent(id)).then(function (rows) {
+        var r = rows && rows[0];
+        return r ? { id: r.id, payload: r.payload, updatedAt: r.updated_at } : null;
+      });
+    }
+    function legacyNightStamp(id) {
+      return call('GET', '/rest/v1/nights?select=updated_at&id=eq.' + encodeURIComponent(id)).then(function (rows) {
+        var r = rows && rows[0];
+        return { ok: true, stamp: r ? String(r.updated_at || '') : '' };
+      }, function () {
+        // Last resort: the stamp is the night's own JSON, so it still moves when the night changes.
+        return readNight(id).then(function (n) {
+          return { ok: true, stamp: n && n.payload ? JSON.stringify(n.payload) : '' };
+        }, function () { return { ok: false }; });
+      });
+    }
     function toRow(r) {
       return { id: r.id, first: r.first, lastInitial: r.last_initial, status: r.status,
         under18: r.under18, level: r.skill_level, xpLevel: r.xp_level || 1, createdAt: r.created_at };
@@ -520,19 +547,19 @@
           return r ? { payload: r.payload, updatedAt: r.updated_at } : null;
         });
       },
-      // 72k: a tiny read (updated_at only) every 2 s on a run day. The full night is read only when the stamp moved.
+      // 72k: a tiny read (the night's updated_at only) every 2 s on a run day. The full night is read only when the stamp moved.
+      // r9: the anon key can no longer read the nights table once JORD-PASTE-NIGHTS-SAFE-READ.sql runs. So the stamp comes from
+      // rpc/night_version (security definer, already granted). Chain: rpc -> direct table read (before the SQL) -> full night.
       getNightStamp: function (id) {
-        return call('GET', '/rest/v1/nights?select=updated_at&id=eq.' + encodeURIComponent(id)).then(function (rows) {
-          var r = rows && rows[0];
-          return { ok: true, stamp: r ? String(r.updated_at || '') : '' };
-        }, function () { return { ok: false }; });
-      },
-      getNight: function (id) {
-        return call('GET', '/rest/v1/nights?select=*&id=eq.' + encodeURIComponent(id)).then(function (rows) {
-          var r = rows && rows[0];
-          return r ? { id: r.id, payload: r.payload, updatedAt: r.updated_at } : null;
+        return call('POST', '/rest/v1/rpc/night_version', { p_id: id }).then(function (v) {
+          return { ok: true, stamp: v ? String(v) : '' };
+        }, function () {
+          return legacyNightStamp(id);
         });
       },
+      // r9: players read the night through rpc/player_night (names hidden until a game starts). It returns the night itself,
+      // or null when there is no such night. Before the SQL runs the rpc is missing (404), so fall back to the r8 table read.
+      getNight: function (id) { return readNight(id); },
       // One small value (migration 3, night_version). Fetch the full night only when it changes (Fable A9).
       nightVersion: function (id) {
         return call('POST', '/rest/v1/rpc/night_version', { p_id: id }).then(function (v) { return v || null; });

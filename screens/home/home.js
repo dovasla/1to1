@@ -192,7 +192,7 @@
         '<div class="ph-card">' +
           '<span class="ph-cap">Run</span>' +
           '<h2>No run on</h2>' +
-          '<p class="ph-muted">Next run: <b class="ph-ink">' + esc(d.nextRunLabel || 'soon') + '</b></p>' +
+          '<p class="ph-muted">Next run: <b class="ph-ink">' + esc(d.nextRunLabel || 'Date not set yet') + '</b></p>' +
         '</div>';
     }
     var n = d.next;
@@ -203,7 +203,7 @@
     var count;
     var action = '';
     if (kind === 'on') {
-      count = '<span class="ph-count-label">Game on</span><b class="ph-count-num">Now</b>';
+      count = '<span class="ph-count-label">Game on</span>';
       action = '<a class="ph-btn ph-btn--ghost" href="#live" data-go="live">Watch live</a>';
     } else if (kind === 'next') {
       count = '<span class="ph-count-label">Game is next</span>';
