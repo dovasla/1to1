@@ -1,0 +1,150 @@
+/* 1TO1 player app, look R12 ("bold redesign"). Loaded LAST in app.html, so it only changes how things look.
+   No game, payment, sign-up or config logic lives here. Colours come from brand/tokens.css only (no raw colours).
+   What changes: bigger condensed headings with a yellow bar, one accent per screen, bigger numbers,
+   floating bottom bar with a yellow pill for the open tab, bigger buttons, calmer rows, no chevrons. */
+
+/* Shared card surface: a soft top-lit panel instead of a flat box. */
+.card, .ph-card, .ph-hero, .sb-row, .menu-row, .more-row {
+  border-radius: 22px;
+}
+.card, .ph-card {
+  background: linear-gradient(180deg, var(--raised) 0%, var(--card) 70%);
+  border: 1px solid var(--line);
+  box-shadow: 0 14px 30px -20px var(--bg);
+}
+
+/* Headings: big condensed caps with a short yellow bar under the screen title. */
+.view h1, .ph h1, .sb-h1, main > h1 {
+  font-family: var(--font-head);
+  font-size: 40px;
+  line-height: 0.95;
+  letter-spacing: 0.01em;
+  padding-bottom: 12px;
+  margin: 6px 0 16px;
+  position: relative;
+}
+.view h1::after, .ph h1::after, .sb-h1::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 44px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--brand);
+}
+h2 { letter-spacing: 0.04em; }
+
+/* Top bar: coins pill and the page title sit on one line. */
+.ph-top { min-height: 56px; }
+.ph-coins {
+  min-height: 48px;
+  padding: 0 16px;
+  border: 2px solid var(--brand);
+  background: var(--card);
+  border-radius: 99px;
+}
+.ph-coins b { font-family: var(--font-head); font-size: 22px; }
+
+/* Hero: one accent, a yellow top edge. */
+.ph-hero, .ph-card--hero {
+  border: 2px solid var(--brand);
+  box-shadow: inset 0 4px 0 var(--brand), 0 14px 30px -20px var(--bg);
+}
+.ph-hero-name { font-family: var(--font-head); font-size: 34px; line-height: 1; }
+.ph-count-num, .sb-big, .sb-val {
+  font-family: var(--font-head);
+  font-size: 52px;
+  line-height: 1;
+  letter-spacing: 0.01em;
+}
+
+/* Buttons: taller, bolder, one clear main action. */
+.btn, .ph-btn, .btn-main, .pay-top {
+  min-height: 56px;
+  border-radius: 18px;
+  font-family: var(--font-head);
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.btn.yellow, .ph-btn:not(.ph-btn--ghost), .btn-main {
+  box-shadow: 0 10px 22px -14px var(--brand);
+}
+.btn.ghost, .ph-btn--ghost, .btn-line {
+  border-width: 2px;
+  background: transparent;
+}
+.btn.small { min-height: 48px; font-size: 18px; }
+
+/* Bottom bar: a floating dock. The open tab is a yellow pill. */
+.tabs {
+  left: 10px;
+  right: 10px;
+  bottom: calc(10px + env(safe-area-inset-bottom));
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: var(--tabs-bg);
+  box-shadow: 0 16px 34px -18px var(--bg);
+}
+.tabs a { min-height: 56px; border-radius: 18px; }
+.tabs a[aria-current="page"] {
+  background: var(--brand);
+  color: var(--on-brand);
+}
+.tabs a[aria-current="page"] svg { stroke: var(--on-brand); }
+.tabs a.has-dot::after { top: 10px; left: calc(50% + 12px); }
+.shell-main { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
+
+/* Season switch: one track, one yellow pill. */
+.sb-seg {
+  background: var(--raised);
+  border-radius: 20px;
+  padding: 5px;
+  gap: 4px;
+}
+.sb-seg-btn { border-radius: 16px; min-height: 48px; border: 0; background: transparent; }
+.sb-seg-btn.is-on { background: var(--brand); color: var(--on-brand); }
+.sb-chip { border-radius: 16px; min-height: 48px; }
+.sb-chip.is-on { background: var(--brand); color: var(--on-brand); }
+
+/* Leaderboard rows: calm, with a yellow edge on your own row. */
+.sb-row { border-radius: 18px; min-height: 56px; }
+.sb-row.is-me { border: 2px solid var(--brand); }
+
+/* Menu rows (More, Profile links): big titles, a left edge, no chevrons. */
+.menu-row, .more-row {
+  min-height: 72px;
+  padding: 14px 18px 14px 20px;
+  background: linear-gradient(180deg, var(--raised) 0%, var(--card) 80%);
+  box-shadow: inset 5px 0 0 var(--line);
+}
+.menu-row:active, .more-row:active { box-shadow: inset 5px 0 0 var(--brand); }
+.menu-row, .more-row { font-family: var(--font-head); }
+.menu-row { font-size: 22px; letter-spacing: 0.03em; text-transform: uppercase; }
+.menu-row .muted, .more-row .muted { font-family: var(--font-body); font-weight: 400; text-transform: none; letter-spacing: 0; }
+
+/* Stats: your card pinned on top reads as the hero. */
+.stats-me {
+  padding: 18px;
+  border-radius: 22px;
+  border: 2px solid var(--brand);
+  background: linear-gradient(180deg, var(--raised) 0%, var(--card) 80%);
+}
+.stats-bar { height: 12px; border-radius: 12px; }
+.stats-bar i { border-radius: 12px; }
+
+/* Phone widths 360 and 390: nothing wider than the screen. */
+@media (max-width: 380px) {
+  .view h1, .ph h1, .sb-h1 { font-size: 36px; }
+  .btn, .ph-btn, .btn-main { font-size: 19px; }
+  .menu-row { font-size: 20px; }
+  .ph-hero-name { font-size: 30px; }
+  .ph-count-num, .sb-big, .sb-val { font-size: 44px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tabs, .btn, .ph-btn { transition: none !important; }
+}

@@ -1,0 +1,243 @@
+/* shop-looks.css (r11). The looks for the three shop categories: Name effects, Banners, Frames.
+   Loads after shop/shop-effects.css and lib/player-name.css, so it wins on equal specificity.
+
+   How it works: a worn item adds a class such as pn-l-name-name-neon to the chip (or to .sb-name in
+   the card builder). To give an item a look, add its class to the selector list of that look.
+   Item ids come from the shop server; this file only changes how they look.
+
+   Rules: transform and opacity move, slow (2.6 to 4.5 s). No flicker, no jitter, no spinning ring.
+   Reduced motion, data-calm="1" or data-fx="low" stop every motion here and keep the still look. */
+
+/* 1. Switch off the old effects on these three layers (flicker, jitter, orbit dots, spinning ring). */
+[class*="pn-l-name-"]::before, [class*="pn-l-name-"]::after,
+[class*="pn-l-background-"]::before, [class*="pn-l-background-"]::after,
+[class*="pn-l-frame-"]::before, [class*="pn-l-frame-"]::after,
+[class*="pn-l-ring-"]::before, [class*="pn-l-ring-"]::after,
+[class*="pn-l-effect-"]::before, [class*="pn-l-effect-"]::after,
+[class*="pn-l-row-"]::before, [class*="pn-l-row-"]::after {
+  content: none;
+  animation: none;
+}
+[class*="pn-l-name-"], [class*="pn-l-background-"], [class*="pn-l-frame-"],
+[class*="pn-l-ring-"], [class*="pn-l-effect-"], [class*="pn-l-row-"] {
+  animation: none;
+  box-shadow: none;
+}
+
+/* ---------- Keyframes (shared) ---------- */
+@keyframes fxl-glow {
+  0%, 100% { text-shadow: 0 0 4px var(--fxl), 0 0 10px var(--fxl); }
+  50%      { text-shadow: 0 0 8px var(--fxl), 0 0 20px var(--fxl); }
+}
+@keyframes fxl-pulse {
+  0%, 100% { transform: scale(1);    opacity: .88; text-shadow: 0 0 6px var(--fxl); }
+  50%      { transform: scale(1.04); opacity: 1;   text-shadow: 0 0 14px var(--fxl); }
+}
+@keyframes fxl-shine {
+  from { background-position: 120% 0; }
+  to   { background-position: -120% 0; }
+}
+@keyframes fxl-sweep {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(100%); }
+}
+@keyframes fxl-breathe {
+  0%, 100% { opacity: .5; }
+  50%      { opacity: 1; }
+}
+
+/* ---------- 2. NAME EFFECTS (on the name text: .pn-name in the chip, .sb-name in the builder) ---------- */
+
+/* Glow: a soft lit halo. Neon (cyan), Ember (orange). */
+.pn-l-name-name-neon .pn-name, .sb-name.pn-l-name-name-neon,
+.pn-l-name-name-ember .pn-name, .sb-name.pn-l-name-name-ember {
+  animation: fxl-glow 3s ease-in-out infinite;
+}
+.pn-l-name-name-neon .pn-name, .sb-name.pn-l-name-name-neon { --fxl: #00e5ff; }
+.pn-l-name-name-ember .pn-name, .sb-name.pn-l-name-name-ember { --fxl: #ff8a2a; }
+
+/* Pulse: a gentle beat in size and light. Glitch (pink), Void (violet). */
+.pn-l-name-name-glitch .pn-name, .sb-name.pn-l-name-name-glitch,
+.pn-l-name-name-void .pn-name, .sb-name.pn-l-name-name-void {
+  animation: fxl-pulse 2.8s ease-in-out infinite;
+  display: inline-block;
+}
+.pn-l-name-name-glitch .pn-name, .sb-name.pn-l-name-name-glitch { --fxl: #ff3da8; }
+.pn-l-name-name-void .pn-name, .sb-name.pn-l-name-name-void { --fxl: #9b6dff; }
+
+/* Shine: a light sweep through the letters. Ice (icy blue), Chrome (gold). */
+.pn-l-name-name-ice .pn-name, .sb-name.pn-l-name-name-ice,
+.pn-l-name-name-chrome .pn-name, .sb-name.pn-l-name-name-chrome {
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  text-shadow: none;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .35));
+  animation: fxl-shine 4.5s linear infinite;
+}
+.pn-l-name-name-ice .pn-name, .sb-name.pn-l-name-name-ice {
+  background-image: linear-gradient(100deg, #7fd8ff 35%, #eafaff 50%, #7fd8ff 65%);
+}
+.pn-l-name-name-chrome .pn-name, .sb-name.pn-l-name-name-chrome {
+  background-image: linear-gradient(100deg, #ffb800 35%, #fff3a0 50%, #ffb800 65%);
+}
+
+/* Rainbow name: a slow colour sweep (replaces the spinning rainbow circle). */
+.pn-l-name-name-rainbow .pn-name, .sb-name.pn-l-name-name-rainbow {
+  background-size: 250% 100%;
+  background-image: linear-gradient(100deg, #ff2d95, #ffd60a, #4dffb8, #56c8ff, #b388ff, #ff2d95);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  text-shadow: none;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .35));
+  animation: fxl-shine 6s linear infinite;
+}
+
+/* ---------- 3. BANNERS (on the card: the chip, or the builder's overlay) ---------- */
+
+/* Plain banners: a flat colour, no motion. */
+.pn-l-background-bg-court-wood  { background: linear-gradient(120deg, #8a5a2b, #c08a4f); }
+.pn-l-background-bg-chalk       { background: linear-gradient(120deg, #2c3e50, #4b6584); }
+.pn-l-background-bg-street-grit { background: linear-gradient(120deg, #2b2b2b, #555555); }
+.pn-l-background-bg-night       { background: linear-gradient(160deg, #0b1a3a, #1d2f5c); }
+.pn-l-background-bg-hoop-sky    { background: linear-gradient(160deg, #4aa3ff, #0a5cff); }
+.pn-l-background-bg-blue-court  { background: linear-gradient(120deg, #0a5cff, #063a9e); }
+
+/* Effect banners: a base colour plus one soft layer on ::after. */
+.pn-l-background-bg-neon-grid, .pn-l-background-bg-ember, .pn-l-background-bg-void, .pn-l-background-bg-galaxy,
+.pn-l-background-bg-ice, .pn-l-background-bg-gold-foil, .pn-l-background-bg-rainbow-ring, .pn-l-background-bg-vip-crown {
+  position: relative;
+}
+.pn-l-background-bg-neon-grid::after, .pn-l-background-bg-ember::after, .pn-l-background-bg-void::after,
+.pn-l-background-bg-galaxy::after, .pn-l-background-bg-ice::after, .pn-l-background-bg-gold-foil::after,
+.pn-l-background-bg-rainbow-ring::after, .pn-l-background-bg-vip-crown::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Glow banners (cyan, orange). */
+.pn-l-background-bg-neon-grid {
+  background: radial-gradient(120% 90% at 50% 0%, rgba(0, 229, 255, .28), transparent 70%), linear-gradient(160deg, #0d1b2a, #13233a);
+}
+.pn-l-background-bg-neon-grid::after {
+  background: radial-gradient(circle at 50% 0%, rgba(0, 229, 255, .45), transparent 60%);
+  animation: fxl-breathe 3s ease-in-out infinite;
+}
+.pn-l-background-bg-ember {
+  background: radial-gradient(120% 90% at 50% 100%, rgba(255, 138, 42, .35), transparent 70%), linear-gradient(160deg, #1f1410, #2a1a12);
+}
+.pn-l-background-bg-ember::after {
+  background: radial-gradient(circle at 50% 100%, rgba(255, 138, 42, .5), transparent 60%);
+  animation: fxl-breathe 3.2s ease-in-out infinite;
+}
+
+/* Pulse banners (violet, blue-violet). */
+.pn-l-background-bg-void {
+  background: linear-gradient(160deg, #120a24, #1c0f3a);
+}
+.pn-l-background-bg-void::after {
+  background: radial-gradient(circle at 50% 50%, rgba(155, 109, 255, .45), transparent 70%);
+  animation: fxl-breathe 2.8s ease-in-out infinite;
+}
+.pn-l-background-bg-galaxy {
+  background: linear-gradient(160deg, #0a1030, #101a4a);
+}
+.pn-l-background-bg-galaxy::after {
+  background: radial-gradient(circle at 30% 60%, rgba(86, 200, 255, .35), transparent 65%);
+  animation: fxl-breathe 3.4s ease-in-out infinite;
+}
+
+/* Shine banners: a light band sweeps across once every 4.5 s. */
+.pn-l-background-bg-ice { background: linear-gradient(160deg, #17324a, #1f4a6b); }
+.pn-l-background-bg-ice::after {
+  background: linear-gradient(105deg, transparent 40%, rgba(220, 245, 255, .45) 50%, transparent 60%);
+  animation: fxl-sweep 4.5s linear infinite;
+}
+.pn-l-background-bg-gold-foil { background: linear-gradient(160deg, #2a2110, #3d2f12); }
+.pn-l-background-bg-gold-foil::after {
+  background: linear-gradient(105deg, transparent 40%, rgba(255, 214, 10, .5) 50%, transparent 60%);
+  animation: fxl-sweep 4.5s linear infinite;
+}
+.pn-l-background-bg-rainbow-ring { background: linear-gradient(160deg, #1a1a2e, #222244); }
+.pn-l-background-bg-rainbow-ring::after {
+  background: linear-gradient(105deg, transparent 40%, rgba(255, 45, 149, .35) 45%, rgba(255, 214, 10, .35) 50%, rgba(77, 255, 184, .35) 55%, transparent 60%);
+  animation: fxl-sweep 4.5s linear infinite;
+}
+.pn-l-background-bg-vip-crown { background: linear-gradient(160deg, #1c1c24, #2a2a36); }
+.pn-l-background-bg-vip-crown::after {
+  background: linear-gradient(105deg, transparent 40%, rgba(230, 230, 255, .45) 50%, transparent 60%);
+  animation: fxl-sweep 4.5s linear infinite;
+}
+
+/* ---------- 4. FRAMES (a border on the card) ---------- */
+
+/* Plain frames: a still ring in its own colour and width. */
+.pn-l-frame-frame-line     { box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .35); }
+.pn-l-frame-frame-double   { box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .4), inset 0 0 0 5px rgba(255, 255, 255, .12); }
+.pn-l-frame-frame-notched  { box-shadow: inset 0 0 0 3px rgba(255, 214, 10, .55); }
+.pn-l-frame-frame-corner   { box-shadow: inset 0 0 0 3px rgba(86, 200, 255, .5); }
+.pn-l-frame-frame-rail     { box-shadow: inset 0 0 0 3px rgba(154, 164, 178, .7); }
+.pn-l-frame-frame-brass    { box-shadow: inset 0 0 0 3px rgba(201, 161, 59, .85); }
+.pn-l-frame-frame-sharp    { box-shadow: inset 0 0 0 3px #ffffff; }
+
+/* Glowing frames: a still ring plus a soft glow that breathes on ::after. */
+.pn-l-frame-frame-spark, .pn-l-frame-frame-ice, .pn-l-frame-frame-flame,
+.pn-l-frame-frame-plasma, .pn-l-frame-frame-vip-crown {
+  position: relative;
+}
+.pn-l-frame-frame-spark::after, .pn-l-frame-frame-ice::after, .pn-l-frame-frame-flame::after,
+.pn-l-frame-frame-plasma::after, .pn-l-frame-frame-vip-crown::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 0;
+  background: none;
+  box-shadow: inset 0 0 0 2px var(--c), 0 0 14px var(--c);
+  animation: fxl-breathe 2.6s ease-in-out infinite;
+}
+.pn-l-frame-frame-spark::after  { --c: #ffd60a; }
+.pn-l-frame-frame-ice::after    { --c: #7fd8ff; }
+.pn-l-frame-frame-flame::after  { --c: #ff8a2a; }
+.pn-l-frame-frame-plasma::after { --c: #ff3da8; }
+.pn-l-frame-frame-vip-crown::after { --c: #e0c3ff; }
+
+/* ---------- 4b. Avatar ring, card effect and board row (the old rotating rainbow circle and Void) ---------- */
+/* Rainbow ring: a still rainbow edge with a slow light sweep. No spinning. */
+.pn-l-ring-ring-rainbow-ring { position: relative; box-shadow: inset 0 0 0 2px #ff8fc7; }
+.pn-l-ring-ring-rainbow-ring::after, .pn-l-effect-fx-rainbow-ring::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 0; background-size: 100% 100%;
+  background: linear-gradient(105deg, transparent 40%, rgba(255, 45, 149, .3) 45%, rgba(255, 214, 10, .3) 50%, rgba(77, 255, 184, .3) 55%, transparent 60%);
+  animation: fxl-sweep 4.5s linear infinite;
+}
+.pn-l-effect-fx-rainbow-ring { position: relative; }
+/* Void: a soft violet glow that breathes. Card effect and board row. */
+.pn-l-effect-fx-void, .pn-l-row-row-void-rail { position: relative; }
+.pn-l-effect-fx-void::after, .pn-l-row-row-void-rail::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(155, 109, 255, .4), transparent 70%);
+  animation: fxl-breathe 2.8s ease-in-out infinite;
+}
+
+/* ---------- 5. Calm and still: reduced motion, the app's calm switch, or low-power mode ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .pn-name, [class*="pn-l-name-"] .pn-name, .sb-name[class*="pn-l-name-"],
+  [class*="pn-l-background-"]::after, [class*="pn-l-frame-"]::after {
+    animation: none !important;
+  }
+}
+:root[data-calm="1"] .pn-name, :root[data-fx="low"] .pn-name,
+:root[data-calm="1"] [class*="pn-l-background-"]::after, :root[data-fx="low"] [class*="pn-l-background-"]::after,
+:root[data-calm="1"] [class*="pn-l-frame-"]::after, :root[data-fx="low"] [class*="pn-l-frame-"]::after,
+:root[data-calm="1"] .sb-name, :root[data-fx="low"] .sb-name {
+  animation: none !important;
+}

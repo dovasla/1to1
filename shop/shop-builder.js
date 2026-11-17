@@ -4,23 +4,22 @@
 (function (global) {
   'use strict';
 
-  // Five groups on screen. Every one of the 12 item layers belongs to exactly one group.
+  // r11: three categories on screen. Other layers (emblem, title, card, ...) are hidden from the shop,
+  // but a worn item in them still shows on the card and in the app.
   var GROUPS = [
-    { key: 'card', label: 'Card', layers: ['background', 'card'] },
-    { key: 'name', label: 'Name', layers: ['name', 'emblem', 'title'] },
-    { key: 'frame', label: 'Frame', layers: ['frame', 'ring', 'row'] },
-    { key: 'effects', label: 'Effects', layers: ['effect', 'flourish', 'pop'] },
-    { key: 'intro', label: 'Intro', layers: ['intro'] }
+    { key: 'name', label: 'Name effects', layers: ['name'] },
+    { key: 'banner', label: 'Banners', layers: ['background'] },
+    { key: 'frame', label: 'Frames', layers: ['frame'] }
   ];
   var LAYER_LABEL = {
-    background: 'Background', card: 'Card face', name: 'Name style', emblem: 'Badge', title: 'Title shine',
+    background: 'Banner', card: 'Card face', name: 'Name effect', emblem: 'Badge', title: 'Title shine',
     frame: 'Frame', ring: 'Avatar ring', row: 'Board row',
     effect: 'Glow', flourish: 'Corner flourish', pop: 'Score pop', intro: 'Load-in'
   };
   var WHAT = {
-    background: 'The backdrop behind your avatar.',
+    background: 'A coloured banner behind your card.',
     card: 'Lines or texture across the whole card.',
-    name: 'How your name is written.',
+    name: 'Moves and glows on your name everywhere in the app.',
     emblem: 'A glow behind your avatar.',
     title: 'A light sweep over your name.',
     frame: 'A border around your card.',
@@ -72,7 +71,7 @@
   function create(opts) {
     var mount = typeof opts.mount === 'string' ? document.querySelector(opts.mount) : opts.mount;
     if (!mount) throw new Error('ShopBuilder: mount not found');
-    var S = { items: [], owned: {}, worn: {}, player: {}, group: 'card', previewId: null, pending: null, error: '', opts: opts };
+    var S = { items: [], owned: {}, worn: {}, player: {}, group: 'name', previewId: null, pending: null, error: '', opts: opts };
     var reducedMotion = false;
     try { reducedMotion = global.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
 
@@ -121,10 +120,12 @@
     function cardHtml() {
       var pl = S.player;
       var pv = previewItem();
-      var layers = Object.keys(LAYER_LABEL).map(function (layer) {
+      // The name effect goes on the name text itself (see the sb-name line below), not on an overlay.
+      var layers = Object.keys(LAYER_LABEL).filter(function (layer) { return layer !== 'name'; }).map(function (layer) {
         var it = shownOn(layer);
         return it ? '<div class="sb-layer pn-l-' + esc(it.layer) + '-' + esc(it.id) + '" aria-hidden="true"></div>' : '';
       }).join('');
+      var nameIt = shownOn('name');
       var flag = pv
         ? '<div class="sb-flag sb-flag-try">Previewing: ' + esc(pv.name) + '</div>'
         : '<div class="sb-flag">Your card</div>';
@@ -134,7 +135,7 @@
           '<div class="sb-card-top"><span class="sb-level">Level ' + esc(pl.level || 1) + '</span>' +
           '<span class="sb-coins">' + esc(pl.coins || 0) + ' coins</span></div>' +
           '<div class="sb-avatar">' + esc(pl.initials || '?') + '</div>' +
-          '<div class="sb-name">' + esc(pl.name || 'Your name') + '</div>' +
+          '<div class="sb-name' + (nameIt ? ' pn-l-name-' + esc(nameIt.id) : '') + '">' + esc(pl.name || 'Your name') + '</div>' +
           flag +
         '</div></div>';
     }
