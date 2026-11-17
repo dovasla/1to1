@@ -20,7 +20,7 @@
   }
   function num(n) { var v = Number(n); return isFinite(v) ? Math.max(0, Math.floor(v)) : 0; }
   function plural(n, one, many) { return num(n) + ' ' + (num(n) === 1 ? one : many); }
-  function nameOf(p) { return p ? (p.first + ' ' + (p.last_initial || '')).trim() : ''; }
+  function nameOf(p) { return p ? String(p.username || 'Player') : ''; }
 
   // "2 wins, 0 losses" plus "1 draw" only when there are draws.
   function recordText(r) {
@@ -32,7 +32,7 @@
   // Card block: the record with this player and against them.
   function buildCard(h2h) {
     if (!h2h || h2h.ok !== true || !h2h.player) return { html: '' };
-    var name = esc(h2h.player.first);
+    var name = esc(h2h.player.username || 'Player');
     if (h2h.enough !== true) {
       return { html: '<section class="hh-card" aria-label="Head to head">' +
         '<p class="hh-name">With ' + name + '</p>' +

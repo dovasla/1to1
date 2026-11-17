@@ -21,7 +21,7 @@
     });
   }
 
-  function nameOf(p) { return String(p.first || '') + ' ' + String(p.lastInitial || ''); }
+  function nameOf(p) { return p.username || 'Player'; }
 
   // Who the phone may vote for: the night's players, minus the voter.
   function candidatesFor(data) {

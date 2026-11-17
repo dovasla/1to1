@@ -72,6 +72,8 @@
   }
   // ---------- the signed-in player and tonight (real data only) ----------
   function fullName() { return S.me ? S.me.first + ' ' + S.me.lastInitial : ''; }
+  // What the player sees of themselves: their username (never the first name or initial). Other players: usernames only.
+  function displayName() { return S.username || savedUsernameHere() || 'You'; }
   function teamName(t) { return t && t.name ? String(t.name) : 'TBC'; }
   function skillText(level) { return window.PlayerRules ? PlayerRules.levelLabel(level) : ''; }
   function myTeamIn(game) {
@@ -200,7 +202,7 @@
   }
   window.PlayerShop = {
     get: ensureShop,
-    name: function () { return fullName(); },
+    name: function () { return displayName(); },
     report: function (eq) { S.shopEquipped = slotsFromShop(eq || {}); var pb = $('profile'); if (pb && pb.childNodes.length) renderProfile(); }
   };
   function refreshCoins() {
@@ -276,10 +278,28 @@
     loadBoard();
   }
 
+  // The real level is the XP ledger's level (player_state, read by player_xp_summary). Sign-in and resume return
+  // signups.xp_level, which nothing updates, so Home showed Level 1. Take the higher of the two.
+  function loadXpLevel() {
+    var t = readToken();
+    if (!t || !be.rpc || !S.me) return;
+    be.rpc('player_xp_summary', { p_token: t }).then(function (x) {
+      if (!x || x.ok === false || typeof x.level !== 'number') return;
+      S.me.xpLevel = Math.max(Number(S.me.xpLevel) || 1, Math.round(x.level));
+      if (x.username) { S.username = String(x.username); saveUsernameHere(S.username); }
+      var run = myRun();
+      if (typeof x.xp === 'number' && x.xp > run.xp) run.xp = x.xp;
+      S.run = run;
+      if (S.home) S.home.update(homeData(Date.now()));
+      var prof = $('profile'); if (prof && prof.childNodes.length) renderProfile();
+    }).catch(function () { /* keep the level from sign-in */ });
+  }
+
   // Reads player_profile (totals and nights). Fills Home's games, wins and last run, and the Profile numbers.
   function loadProfileStats() {
     var t = readToken();
     if (!t || !be.rpc) return;
+    loadXpLevel();
     be.rpc('player_profile', { p_token: t }).then(function (r) {
       if (!r || r.ok === false) return;
       S.profileStats = r;
@@ -349,7 +369,7 @@
       rsvp: S.rsvp,
       rsvpError: S.rsvpError,
       shopWorn: S.shopEquipped || {},
-      player: Object.assign({ name: fullName(), banner: '', nameStyle: '', clanTag: '', skill: skillText(S.me && S.me.level), games: Number(((S.profileStats || {}).totals || {}).games) || 0, wins: Number(((S.profileStats || {}).totals || {}).wins) || 0 },
+      player: Object.assign({ name: displayName(), banner: '', nameStyle: '', clanTag: '', skill: skillText(S.me && S.me.level), games: Number(((S.profileStats || {}).totals || {}).games) || 0, wins: Number(((S.profileStats || {}).totals || {}).wins) || 0 },
         { banner: '', nameStyle: (S.shopEquipped && S.shopEquipped.name) || '',
           rowEffect: (S.shopEquipped && S.shopEquipped.row) || '', callingCard: (S.shopEquipped && S.shopEquipped.calling) || '',
           layers: (S.shopEquipped && S.shopEquipped.layers) || {} }),
@@ -757,7 +777,7 @@
       var ta = mine || named[0] || null, tb = mine ? theirs : (named[1] || null);
       var pl = function (t) {
         return (t ? t.players : []).map(function (p) {
-          return { id: p.first + p.lastInitial, name: p.first + ' ' + p.lastInitial, level: p.level, stars: 0, banner: '', clanTag: '', captain: false };
+          return { id: p.first + p.lastInitial, name: p.username || 'Player', level: p.level, stars: 0, banner: '', clanTag: '', captain: false };
         });
       };
       lineup = { game: soon.no, teamA: teamName(ta), teamB: teamName(tb), players: {}, left: !mine };
@@ -855,7 +875,7 @@
 
   function renderProfile() {
     var d = JSON.parse(JSON.stringify(PlayerProfile.SCENARIOS['new']));
-    d.name = fullName();
+    d.name = displayName();
     d.skill = Math.max(1, Math.min(30, Math.round(Number(S.me && S.me.level)) || 1));
     d.run = myRun();
     d.coins = S.coins || 0;
@@ -1042,7 +1062,7 @@
     var toNext = prog.isMax ? 'Max level' : prog.xpToNext + ' XP to Level ' + (prog.level + 1);
     box.innerHTML = '<h1>' + NAMES.board + '</h1>' +
       '<a class="stats-me card" href="#profile" aria-label="Your card. Open your profile">' +
-        '<span class="stats-me-name">' + escText(fullName()) + '</span>' +
+        '<span class="stats-me-name">' + escText(displayName()) + '</span>' +
         '<span class="stats-me-line"><b>Level ' + prog.level + '</b><span class="muted">' + escText(toNext) + '</span></span>' +
         '<span class="stats-bar" aria-hidden="true"><i style="width:' + pct + '%"></i></span>' +
       '</a>' +
@@ -1151,7 +1171,7 @@
   // ---------- More tab (screens/more). The PIN is kept in memory for this session only, never stored. ----------
   function moreData() {
     return {
-      me: S.me ? { first: S.me.first, lastInitial: S.me.lastInitial, nickname: S.nickname || '', teamPref: S.teamPref || 'any' } : null,
+      me: S.me ? { first: S.me.first, lastInitial: S.me.lastInitial, username: S.username || savedUsernameHere(), nickname: S.nickname || '', teamPref: S.teamPref || 'any' } : null,
       bright: document.documentElement.getAttribute('data-theme') === 'light',
       alertsState: S.alerts || 'off',
       skillDone: S.skillDone === true,

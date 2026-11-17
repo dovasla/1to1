@@ -93,7 +93,7 @@
 
   // Spoken summary for screen readers: "Game 3. You are on Blue with John, Mo, Sam and Zak. Against Red."
   function summary(lineup) {
-    var mates = lineup.ours.players.filter(function (p) { return !p.me; }).map(function (p) { return p.first; });
+    var mates = lineup.ours.players.filter(function (p) { return !p.me; }).map(function (p) { return p.username || 'Player'; });
     var list = mates.length > 1 ? mates.slice(0, -1).join(', ') + ' and ' + mates[mates.length - 1] : (mates[0] || '');
     var game = lineup.number ? 'Game ' + lineup.number + '. ' : '';
     return game + 'You are on ' + lineup.ours.name + (list ? ' with ' + list : '') + '. Against ' + lineup.theirs.name + '.';
@@ -147,7 +147,7 @@
     var body = el('div', 'lr-p');
     var chip = el('div', 'lr-chip');
     chip.innerHTML = PlayerName.html({
-      name: (p.first || '') + ' ' + (p.lastInitial || ''), level: p.level, stars: p.stars,
+      name: p.username || (p.me ? 'You' : 'Player'), level: p.level, stars: p.stars,
       banner: p.banner, nameStyle: p.nameStyle, clanTag: p.clanTag, emblemSrc: p.emblemSrc, rowEffect: p.rowEffect
     });
     body.appendChild(chip);

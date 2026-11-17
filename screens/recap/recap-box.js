@@ -24,7 +24,7 @@
   // Build the view from a loaded result. Names in top come from the server rows only.
   function viewFrom(data, seenIds, now) {
     var top = (data.top || []).map(function (r) {
-      return { name: String(r.first || '') + ' ' + String(r.last_initial || ''), level: r.level, points: r.points };
+      return { name: String(r.username || 'Player'), level: r.level, points: r.points };
     });
     return RECAP.buildRecap({ profile: data.profile, summary: data.summary, seenIds: seenIds, now: now,
       mvp: data.mvp, top: top });

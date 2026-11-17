@@ -201,7 +201,7 @@
   }
 
   function detailsSummary(me) {
-    var nick = me && me.nickname ? me.nickname : (me && me.first ? me.first : '');
+    var nick = me && me.nickname ? me.nickname : (me && me.username ? me.username : '');
     return nick + ' · ' + teamLabel(me && me.teamPref);
   }
 
@@ -297,13 +297,9 @@
   // Your username card (61, Settings). The app checks the format; the server checks taken, blocked and the 30-day wait.
   // 72h (R305): once set, the username and name are read-only. No change control exists anywhere in the app.
   function usernameCardHtml(d) {
-    var me = d.me || {};
-    var fullName = [me.first || '', me.lastInitial ? me.lastInitial + '.' : ''].join(' ').trim();
     return '<div class="card">' +
       '<span class="more-label">Your username</span>' +
-      '<p class="more-big">' + esc(d.username || fullName || '') + '</p>' +
-      '<span class="more-label">Your name</span>' +
-      '<p>' + esc(fullName) + '</p>' +
+      '<p class="more-big">' + esc(d.username || '') + '</p>' +
       '<p class="muted">Ask the organiser if this is wrong.</p>' +
     '</div>';
   }
