@@ -384,6 +384,20 @@
           return { ok: !!(j && j.ok === true), reason: (j && j.reason) || undefined };
         }, function () { return { ok: false, reason: 'error' }; });
       },
+      // Photos (r7). Upload replaces the player's own photo and waits for the organiser. Rules are on the server.
+      uploadPhoto: function (token, image) {
+        return call('POST', '/rest/v1/rpc/player_upload_photo', { p_token: token || null, p_image: image }).then(function (j) { return j || { ok: false }; }, function () { return { ok: false, reason: 'error' }; });
+      },
+      // Other players' looks (r7): public_id, chosen icon, and the photo only when approved. Anon-safe, hidden players left out.
+      publicLooks: function () {
+        return call('POST', '/rest/v1/rpc/player_public_looks', {}).then(function (j) { return { ok: true, rows: Array.isArray(j) ? j : [] }; }, function () { return { ok: false, rows: [] }; });
+      },
+      setPhotoIcon: function (token, icon) {
+        return call('POST', '/rest/v1/rpc/player_set_photo_icon', { p_token: token || null, p_icon: icon || '' }).then(function (j) { return j || { ok: false }; }, function () { return { ok: false, reason: 'error' }; });
+      },
+      myPhoto: function (token) {
+        return call('POST', '/rest/v1/rpc/player_my_photo', { p_token: token || null }).then(function (j) { return j || { ok: false }; }, function () { return { ok: false }; });
+      },
       // Read-only RPC for the stats and history screens (P6). Failure gives { ok: false }, never a throw.
       rpc: function (name, body) {
         return call('POST', '/rest/v1/rpc/' + name, body).then(function (j) { return j; }, function () { return { ok: false }; });
@@ -396,7 +410,8 @@
           if (!j || !j.ok) return { ok: false, players: [] };
           return { ok: true, players: (j.rows || []).map(function (r) {
             var hidden = r.name === 'Player';
-            return { id: r.public_id || r.name, name: r.name, level: r.level, icon: r.icon || '', stars: 0, points: 0, wins: 0,
+            // "value" is the XP for the xp board (the number the row shows).
+            return { id: r.public_id || r.name, name: r.name, level: r.level, icon: r.icon || '', stars: 0, points: r.value || 0, wins: 0,
               visible: !hidden, under18: false, look: (!hidden && r.equipped) || {}, me: r.me === true };
           }) };
         }, function () { return { ok: false, players: [] }; });

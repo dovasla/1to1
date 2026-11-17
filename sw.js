@@ -4,7 +4,7 @@
 // Only same-origin GET requests are handled and saved. The online database and any other
 // cross-origin call go straight to the network and are never saved.
 importScripts('brand/names.js');
-const CACHE = 'player-shell-1-next72z-r6';
+const CACHE = 'player-shell-1-next72z-r7';
 const SHELL = [
   './', 'signup.html', 'app.html', 'night.html', 'offline.html',
   'manifest.webmanifest', 'pwa.js', 'pwa.css', 'pwa-push.js',
@@ -18,6 +18,8 @@ const SHELL = [
   'shop/cosmetics.js',
   'screens/home/home.js', 'screens/home/home.css',
   'screens/profile/profile.js', 'screens/profile/profile.css',
+  'screens/photo/photo.js', 'screens/photo/photo.css', 'screens/peek/peek.js', 'screens/peek/peek.css',
+  'icons/phosphor/basketball.svg', 'icons/phosphor/sneaker.svg', 'icons/phosphor/sneaker-move.svg', 'icons/phosphor/person-simple-run.svg', 'icons/phosphor/trophy.svg', 'icons/phosphor/flame.svg', 'icons/phosphor/crown.svg', 'icons/phosphor/crown-simple.svg', 'icons/phosphor/medal.svg', 'icons/phosphor/lightning.svg', 'icons/phosphor/lightning-a.svg', 'icons/phosphor/rocket.svg', 'icons/phosphor/barbell.svg', 'icons/phosphor/star.svg', 'icons/phosphor/fire.svg', 'icons/phosphor/target.svg', 'icons/phosphor/hand-fist.svg', 'icons/phosphor/shooting-star.svg', 'icons/phosphor/smiley-sticker.svg', 'icons/phosphor/heart.svg',
   'screens/leaderboard/leaderboard.js', 'screens/leaderboard/leaderboard.css',
   'screens/court-view/court-view.js',
   'icons/characters/picture.js', 'icons/characters/set/a01.svg', 'icons/characters/set/a02.svg', 'icons/characters/set/a03.svg', 'icons/characters/set/a04.svg', 'icons/characters/set/a05.svg', 'icons/characters/set/a06.svg', 'icons/characters/set/a07.svg', 'icons/characters/set/a08.svg', 'icons/characters/set/a09.svg', 'icons/characters/set/a10.svg', 'icons/characters/set/a11.svg', 'icons/characters/set/a12.svg', 'icons/characters/set/a13.svg', 'icons/characters/set/a14.svg', 'icons/characters/set/a15.svg', 'icons/characters/set/a16.svg', 'icons/characters/set/a17.svg', 'icons/characters/set/a18.svg', 'icons/characters/set/a19.svg', 'icons/characters/set/a20.svg', 'icons/characters/set/a21.svg', 'icons/characters/set/a22.svg', 'icons/characters/set/a23.svg', 'icons/characters/set/a24.svg', 'icons/characters/set/a25.svg', 'icons/characters/set/a26.svg', 'icons/characters/set/a27.svg', 'icons/characters/set/a28.svg', 'icons/characters/set/a29.svg', 'icons/characters/set/a30.svg', 'icons/characters/set/a31.svg', 'icons/characters/set/a32.svg', 'icons/characters/set/a33.svg', 'icons/characters/set/a34.svg', 'icons/characters/set/a35.svg', 'icons/characters/set/a36.svg', 'icons/characters/set/a37.svg', 'icons/characters/set/a38.svg', 'icons/characters/set/a39.svg', 'icons/characters/set/a40.svg', 'icons/characters/set/a41.svg', 'icons/characters/set/a42.svg', 'icons/characters/set/a43.svg', 'icons/characters/set/a44.svg', 'icons/characters/set/a45.svg', 'icons/characters/set/a46.svg', 'icons/characters/set/a47.svg', 'icons/characters/set/a48.svg', 'icons/characters/set/a49.svg', 'icons/characters/set/a50.svg',

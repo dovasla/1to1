@@ -892,15 +892,57 @@
     if (vipState.icons.length) d.vip = { icons: vipState.icons, current: vipState.current };
     var box = $('profile');
     d.character = charState.current || vipState.current;
-    box.innerHTML = PlayerProfile.render(d) +
+    box.innerHTML = PlayerProfile.render(d) + (window.PlayerPhoto ? PlayerPhoto.render(photoState) : '') +
       (window.ShareCard ? '<p class="profile-links"><button type="button" class="btn yellow" id="shareCard">Share my card</button></p>' : '');
+    if (window.PlayerPhoto) PlayerPhoto.bind(box, { onFile: onPhotoFile, onIcon: onPhotoIcon });
+    loadPhoto();
     var shareBtn = box.querySelector('#shareCard');
     if (shareBtn) shareBtn.addEventListener('click', function () { shareProfile(d); });
     // The shop lives inside Profile: its "Open shop" link opens the shop in the shell, not a separate page.
     box.querySelectorAll('a[href*="shop/shop.html"]').forEach(function (a) { a.setAttribute('href', '#profile/shop'); });
     PlayerProfile.bind(box, onPrestige, onVipIcon);
-    mountCharacterPicker(box);
+    // r7: the old character picker is hidden (its code stays in place). Players pick a Phosphor icon in the photo block instead.
     loadVip();
+  }
+
+  // Photo (r7): the player's own photo status. Other players see approved photos only (server rule).
+  var photoState = { status: 'none', icon: '', note: '' };
+  function loadPhoto() {
+    var t = readToken();
+    if (!t || !be.myPhoto || photoState.loaded || photoState.loading) return;
+    photoState.loading = true;
+    be.myPhoto(t).then(function (r) {
+      photoState.loading = false;
+      if (r && r.ok && r.status) { photoState.loaded = true; photoState.status = r.status; photoState.icon = r.icon || ''; photoState.image = r.status === 'rejected' ? '' : (r.image_data || ''); renderProfile(); }
+      else { setTimeout(loadPhoto, 3000); }
+    }, function () { photoState.loading = false; setTimeout(loadPhoto, 3000); });
+  }
+  function onPhotoFile(dataUrl) {
+    var t = readToken();
+    if (!t || !be.uploadPhoto) return;
+    photoState.note = 'Sending…';
+    be.uploadPhoto(t, dataUrl).then(function (r) {
+      if (r && r.ok) { photoState.status = 'pending'; photoState.note = 'Sent. The organiser will check it.'; }
+      else { photoState.note = r && r.reason === 'signed-out' ? 'Sign in again to upload.' : 'Could not send. Try again.'; }
+      renderProfile();
+    });
+  }
+  // Icon pick: saved to the server (player_set_photo_icon) and shown to other players.
+  function onPhotoIcon(id) {
+    var t = readToken();
+    photoState.icon = id; renderProfile();
+    if (t && be.setPhotoIcon) be.setPhotoIcon(t, id).then(function (r) { if (!r || !r.ok) { photoState.note = 'Icon not saved. Try again.'; renderProfile(); } });
+  }
+  // Other players' looks, by public_id (photo only when approved). S.looks is set after each board load.
+  function lookOf(p) { var k = p && (p.public_id || p.id); return (S.looks && k && S.looks[k]) || {}; }
+  function loadLooks() {
+    if (!be.publicLooks) { renderStats(); return; }
+    be.publicLooks().then(function (r) {
+      var map = {};
+      ((r && r.rows) || []).forEach(function (row) { if (row && row.public_id) map[row.public_id] = { photo: row.image_data || '', icon: row.photo_icon || '' }; });
+      S.looks = map;
+      renderStats();
+    }, function () { renderStats(); });
   }
 
   // VIP extras (migration-48): the server sends VIP players their pictures and nothing else goes to anyone else.
@@ -948,9 +990,10 @@
     return {
       teams: standingsOf().map(function (t) { return { id: t.name, name: t.name, played: t.played || 0, wins: t.wins || 0, points: t.points || 0 }; }),
       // Looks and stars come from migration 47 (player_leaderboard). Until the board data is loaded, no player rows.
-      players: ((S.board && S.board.players) || []).map(function (p) {
-        return { id: p.id, name: p.name, level: p.level, stars: p.stars, points: p.points, wins: p.wins,
-          icon: p.icon, look: p.look || {}, clanTag: p.clanTag, emblemSrc: p.emblemSrc,
+      players: ((S.seasonBoard && S.seasonBoard.players) || []).map(function (p) {
+        // The board sends public_id (never the internal id) and "value" (the number for the chosen board).
+        return { id: p.public_id || p.id, name: p.name, level: p.level, stars: p.stars, points: p.points != null ? p.points : p.value, wins: p.wins,
+          icon: p.icon, photo: lookOf(p).photo, phIcon: lookOf(p).icon, look: p.look || {}, clanTag: p.clanTag, emblemSrc: p.emblemSrc,
           visible: p.visible, under18: p.under18 };
       })
     };
@@ -1041,8 +1084,8 @@
     renderStats();
     var work = LT ? LT.withTimeout(p, LT.LIMIT, 'board') : p;
     return work.then(function (r) {
-      S.board = { players: (r && r.players) || [] }; S.boardState = 'ok';
-    }, function () { S.boardState = 'error'; }).then(renderStats);
+      S.seasonBoard = { players: (r && r.players) || [] }; S.boardState = 'ok';
+    }, function () { S.boardState = 'error'; }).then(loadLooks);
   }
 
   // Stats tab (R62): your card pinned on top (tap it to open Profile), then the season picker and the board.
@@ -1077,8 +1120,10 @@
     }
     var mt = myTeamNow();
     Leaderboard.mount($('lb'), leaderboardData(), { meId: S.me ? S.me.id : null, myTeamId: mt ? teamName(mt) : null, sort: 'level',
-      iconHtml: function (id) { return window.PlayerIconSvg ? window.PlayerIconSvg(id, { size: 36 }) : ''; } });
-    if (!(S.board && S.board.players && S.board.players.length)) {
+      valueLabel: 'XP', iconHtml: function (id) { return window.PlayerIconSvg ? window.PlayerIconSvg(id, { size: 36 }) : ''; } });
+    // Tap a player row to see their card (overlay; the stats screen underneath stays as it is).
+    if (window.PlayerPeek) PlayerPeek.bind($('lb'), { call: function (publicId) { return be.rpc('player_card', { p_token: readToken(), p_public_id: publicId }).then(function (d) { var L = lookOf({ id: publicId, public_id: publicId }); if (d && typeof d === 'object') { d.photo = L.photo; d.phIcon = L.icon; } return d; }); } });
+    if (!(S.seasonBoard && S.seasonBoard.players && S.seasonBoard.players.length)) {
       $('lb').insertAdjacentHTML('afterbegin', '<p class="sb-note">Nobody is on this board for this season yet.</p>');
     }
   }

@@ -136,6 +136,13 @@
 
   // The small picture left of the name. Characters are cropped to head and upper body (CSS).
   function avatarHtml(p, opts, hidden) {
+    // r7: approved photo first, then the chosen Phosphor icon. Both only come from public_id looks (never names).
+    if (!hidden && /^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(String(p.photo || ''))) {
+      return '<span class="lb-av lb-av--photo" aria-hidden="true"><img src="' + p.photo + '" alt="" loading="lazy" decoding="async"></span>';
+    }
+    if (!hidden && /^[a-z-]{3,30}$/.test(String(p.phIcon || ''))) {
+      return '<span class="lb-av" aria-hidden="true"><span class="ph-glyph" style="-webkit-mask-image:url(icons/phosphor/' + p.phIcon + '.svg);mask-image:url(icons/phosphor/' + p.phIcon + '.svg)"></span></span>';
+    }
     var id = hidden ? '' : String(p.icon || '');
     var inner = '';
     if (ICON_RE.test(id)) {
@@ -168,7 +175,7 @@
     });
     var stat = hidden
       ? '<span class="lb-stat"></span>'
-      : '<span class="lb-stat"><b>' + fmt(p.points) + '</b> pts' +
+      : '<span class="lb-stat"><b>' + fmt(p.points) + '</b> ' + esc(opts.valueLabel || 'pts') +
         (me ? '<span class="lb-you">You</span>' : '') + '</span>';
     var cls = 'lb-row lb-row--player' + (me ? ' lb-row--me' : '') + (hidden ? ' lb-row--hidden' : '');
     var tap = hidden ? '' : ' data-player="' + esc(String(p.id)) + '"';
@@ -237,7 +244,8 @@
         myTeamId: opts.myTeamId,
         sort: state.sort,
         updatedText: opts.updatedText,
-        iconHtml: opts.iconHtml
+        iconHtml: opts.iconHtml,
+        valueLabel: opts.valueLabel
       });
       var btns = el.querySelectorAll('[data-sort]');
       Array.prototype.forEach.call(btns, function (b) {

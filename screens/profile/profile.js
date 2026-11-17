@@ -250,7 +250,7 @@
     if (look) {
       look.addEventListener('click', function () {
         if (onChangeLook) { onChangeLook(); return; }
-        var sec = container.querySelector('.character');
+        var sec = container.querySelector('.photo-card') || container.querySelector('.character');  // r7: the photo block replaces the old picker
         if (!sec) return;
         sec.setAttribute('tabindex', '-1');
         if (sec.scrollIntoView) sec.scrollIntoView({ behavior: reduceMotion() ? 'auto' : 'smooth', block: 'start' });

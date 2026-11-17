@@ -1,0 +1,17 @@
+/* Photo and icon block on My Profile (r7). Yellow icons via CSS mask. 48px tap targets, 390px safe. */
+.photo-card .ph-upload{display:inline-block;margin:8px 0;cursor:pointer;min-height:48px;line-height:48px;padding:0 18px}
+.photo-card .muted{font-size:14px;margin:6px 0}
+.ph-grid{display:grid;grid-template-columns:repeat(5,minmax(48px,1fr));gap:8px;margin-top:10px}
+.ph-pick{min-height:48px;min-width:48px;border-radius:12px;border:2px solid #2a2a2a;background:#0b0b0b;display:flex;align-items:center;justify-content:center;padding:0}
+.ph-pick.on{border-color:#FFD60A}
+.ph-pick:focus-visible{outline:3px solid #0A5CFF;outline-offset:2px}
+.ph-glyph{display:block;width:28px;height:28px;background:#FFD60A;-webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center}
+@media (max-width:360px){.ph-grid{grid-template-columns:repeat(4,minmax(48px,1fr))}}
+
+/* r7: avatars on the board and the card (photo or Phosphor icon) */
+.lb-av img,.pk-av img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}
+.pk-av{display:inline-flex;width:44px;height:44px;border-radius:50%;overflow:hidden;align-items:center;justify-content:center;background:#0b0b0b;margin-right:8px;vertical-align:middle}
+.pk-av .ph-glyph{width:24px;height:24px}
+/* r7: the old character picker is hidden on My Profile (its code stays in the build) */
+[data-character-picker],[data-character-note]{display:none !important}
+.ph-preview{width:96px;height:96px;border-radius:50%;object-fit:cover;display:block;margin:8px 0}
