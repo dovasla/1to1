@@ -1,237 +1,750 @@
-/* ==========================================================
-   Check Ball shop effects (production module)
-   Load after the player app CSS, with shop-effects.js.
-   Hooks are data attributes set from items.json (see INTEGRATION.md):
-     data-fx-tier   common | rare | epic | legend
-     data-fx-depth  0-3   (3 = Legend only; tilt on banners with data-fx-look)
-     data-fx-glow   one of the 14 glow families (no attribute = Plain)
-     data-fx-look   solar | void | storm | inferno   (banner backgrounds)
-   Only transform and opacity loop. Calm, low power and reduced
-   motion stop every loop and keep the look. Loops pause when the tab is hidden.
-   ========================================================== */
-
-:root {
-  --fx-y: #FFD21F;
-  --fx-rare: #3D8BFF;
-  --fx-epic: #B66BFF;
-  --fx-legend: #FF9A1F;
-  --fx-ease: cubic-bezier(.2, .8, .2, 1);
-}
-
-/* ---------- 1. Surfaces and rarity ---------- */
-.fx-surface { position: relative; isolation: isolate; }
-.fx-halo { position: absolute; inset: 0; border-radius: inherit; z-index: -1; pointer-events: none; }
-
-.fx-surface[data-fx-tier="common"] { outline: 2px solid rgba(255, 255, 255, .2); outline-offset: -2px; }
-.fx-surface[data-fx-tier="rare"] { outline: 2px solid var(--fx-rare); outline-offset: -2px; }
-.fx-surface[data-fx-tier="epic"] { outline: 2px solid var(--fx-epic); outline-offset: -2px; }
-.fx-surface[data-fx-tier="legend"] { outline: 3px solid var(--fx-legend); outline-offset: -3px; }
-:root[data-bright] .fx-surface[data-fx-tier="common"] { outline-color: rgba(14, 14, 14, .2); }
-
-.fx-surface[data-fx-tier="rare"] > .fx-halo { box-shadow: 0 0 14px rgba(61, 139, 255, .35); }
-.fx-surface[data-fx-tier="epic"] > .fx-halo { box-shadow: 0 0 18px rgba(182, 107, 255, .45); }
-.fx-surface[data-fx-tier="legend"] > .fx-halo { box-shadow: 0 0 24px rgba(255, 154, 31, .55); animation: fx-breathe 2.4s ease-in-out infinite; }
-@keyframes fx-breathe { 0%, 100% { opacity: .75; } 50% { opacity: 1; } }
-
-.fx-surface[data-fx-tier="rare"] .fx-word { color: var(--fx-rare); }
-.fx-surface[data-fx-tier="epic"] .fx-word { color: var(--fx-y); }
-.fx-surface[data-fx-tier="legend"] .fx-word { color: var(--fx-legend); }
-.fx-surface[data-fx-tier="common"] .fx-word { color: #A9ADB4; }
-
-/* ---------- 2. Glow families (14, plus Plain = no attribute) ---------- */
-/* aura: warm static halo */
-[data-fx-glow="aura"] { box-shadow: 0 0 0 1px rgba(255, 210, 31, .25), 0 0 28px rgba(255, 210, 31, .35); }
-
-/* neon: pink edge with a one-step flicker */
-[data-fx-glow="neon"] { box-shadow: 0 0 0 2px #FF3EA5, 0 0 18px #FF3EA5; }
-[data-fx-glow="neon"]::after { content: ""; position: absolute; inset: 0; border-radius: inherit; border: 2px solid #FF3EA5; pointer-events: none; animation: fx-neon 3s steps(1) infinite; }
-@keyframes fx-neon { 0%, 92%, 100% { opacity: 1; } 93% { opacity: .55; } 95% { opacity: 1; } }
-
-/* pulse: cyan heartbeat halo (opacity only) */
-[data-fx-glow="pulse"] { isolation: auto; }
-[data-fx-glow="pulse"]::before { content: ""; position: absolute; inset: -2px; border-radius: inherit; z-index: -1; box-shadow: 0 0 0 2px #2BD9FF, 0 0 14px #2BD9FF; animation: fx-pulse 2.2s ease-in-out infinite; }
-@keyframes fx-pulse { 0%, 100% { opacity: .6; } 50% { opacity: 1; } }
-
-/* flame: rising warm layer behind the surface */
-[data-fx-glow="flame"] { box-shadow: 0 0 22px rgba(255, 92, 0, .5); isolation: auto; }
-[data-fx-glow="flame"]::before { content: ""; position: absolute; inset: -6px; border-radius: 18px; z-index: -1; background: linear-gradient(0deg, #FF5C00, #FFB300 55%, transparent 80%); transform-origin: 50% 100%; opacity: .7; animation: fx-flame 1.1s ease-in-out infinite alternate; }
-@keyframes fx-flame { from { transform: scaleY(.94) translateY(2px); opacity: .6; } to { transform: scaleY(1.04) translateY(-2px); opacity: .95; } }
-
-/* ice: frost surface and one slow glint */
-[data-fx-glow="ice"] { background: linear-gradient(160deg, #EAF8FF, #9AD8F5 45%, #2C6C8F); color: #06202E; box-shadow: 0 0 20px rgba(154, 216, 245, .6), inset 0 0 0 2px #E8FAFF; overflow: hidden; }
-[data-fx-glow="ice"]::after { content: ""; position: absolute; inset: 0; background: linear-gradient(115deg, transparent 40%, rgba(255, 255, 255, .7) 50%, transparent 60%); transform: translate3d(-100%, 0, 0); pointer-events: none; animation: fx-glint 4s ease-in-out infinite; }
-@keyframes fx-glint { 0%, 60% { transform: translate3d(-100%, 0, 0); } 100% { transform: translate3d(100%, 0, 0); } }
-
-/* electric: a rare blue flash ring */
-[data-fx-glow="electric"] { box-shadow: 0 0 0 2px #7FA8FF; }
-[data-fx-glow="electric"]::after { content: ""; position: absolute; inset: -2px; border-radius: inherit; box-shadow: 0 0 0 2px #E6F0FF, 0 0 16px #7FA8FF; opacity: 0; pointer-events: none; animation: fx-zap 4.5s steps(1) infinite; }
-@keyframes fx-zap { 0%, 88%, 100% { opacity: 0; } 89% { opacity: 1; } 91% { opacity: .2; } 93% { opacity: 1; } 95% { opacity: 0; } }
-
-/* plasma: a spinning violet-pink ring behind the surface */
-/* Spinning rings turn the gradient angle, never the box (a turning box pokes out of the card). */
-@property --fx-angle { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
-@keyframes fx-angle { to { --fx-angle: 360deg; } }
-[data-fx-glow="plasma"] { isolation: auto; }
-[data-fx-glow="plasma"]::before { content: ""; position: absolute; inset: -3px; border-radius: inherit; z-index: -1; background: conic-gradient(from var(--fx-angle), #9B5CFF, #FF4FD8, #3DE0FF, #9B5CFF); animation: fx-angle 6s linear infinite; }
+/* shop-effects.css. GENERATED by effects/gen-effects.js from review/shop-handoff/items.json (pose removed).
+   Animates ::before only (transform/opacity/background-position), plus a glow on the element.
+   Rule: .pn-l-<layer>-<item id>. Respects prefers-reduced-motion. Demo: effects/demo.html. */
+[class*="pn-l-"] { position: relative; isolation: isolate; overflow: hidden; }
+[class*="pn-l-"]::before { content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 0; border-radius: inherit; }
+[class*="pn-l-"] > * { position: relative; z-index: 1; }
+@keyframes fx-breathe { 0%,100% { opacity: .45; transform: scale(.96); } 50% { opacity: 1; transform: scale(1.04); } }
+@keyframes fx-flicker { 0%,100% { opacity: .9; } 20% { opacity: .35; } 40% { opacity: 1; } 60% { opacity: .5; } 80% { opacity: .95; } }
+@keyframes fx-pulse-ring { 0% { transform: scale(.7); opacity: .9; } 100% { transform: scale(1.5); opacity: 0; } }
+@keyframes fx-rise { 0% { background-position: 0 40%; opacity: .4; } 100% { background-position: 0 -60%; opacity: 1; } }
+@keyframes fx-sweep { 0% { transform: translateX(-120%); } 100% { transform: translateX(120%); } }
+@keyframes fx-strobe { 0%,100% { opacity: 0; } 10% { opacity: 1; } 20% { opacity: .1; } 30% { opacity: .9; } 45% { opacity: 0; } }
 @keyframes fx-spin { to { transform: rotate(360deg); } }
-
-/* holo: rainbow foil that follows the finger (JS sets --fx-hp, 0-100) */
-[data-fx-glow="holo"] { overflow: hidden; }
-[data-fx-glow="holo"]::before { content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 200%; z-index: -1; background: linear-gradient(115deg, #2A2A33 20%, #6A8BFF 35%, #FF9AD5 45%, #7CFFD7 55%, #2A2A33 75%); transform: translate3d(calc(var(--fx-hp, 50) * -0.5%), 0, 0); opacity: .9; }
-
-/* gold-foil: static metal bars, no motion */
-[data-fx-glow="gold-foil"] { background: repeating-linear-gradient(100deg, #8A6A1B 0 14px, #FFD86B 18px 24px, #B88B22 28px 40px); box-shadow: inset 0 0 0 2px #FFE9A6; color: #1B1202; }
-
-/* void: near black with a violet drift */
-[data-fx-glow="void"] { background: #07050D; overflow: hidden; box-shadow: inset 0 0 0 2px #5B2BB5, 0 0 24px rgba(120, 60, 255, .5); }
-[data-fx-glow="void"]::before { content: ""; position: absolute; inset: 0; z-index: -1; background: radial-gradient(circle at 30% 40%, rgba(140, 80, 255, .45), transparent 55%); animation: fx-drift 7s ease-in-out infinite alternate; }
-@keyframes fx-drift { from { transform: translate3d(-8%, -4%, 0); } to { transform: translate3d(8%, 6%, 0); } }
-
-/* galaxy: a slow star field turning */
-[data-fx-glow="galaxy"] { background: #090B1F; overflow: hidden; box-shadow: inset 0 0 0 2px #3D4AA8; }
-[data-fx-glow="galaxy"]::before { content: ""; position: absolute; inset: -30%; border-radius: 50%; z-index: -1; background: radial-gradient(circle, #fff 1px, transparent 1.5px) 0 0 / 22px 22px, radial-gradient(circle, #9FB4FF 1px, transparent 1.5px) 11px 11px / 31px 31px; opacity: .8; animation: fx-spin 40s linear infinite; }
-
-/* glitch: one stepped jolt on tap (JS adds .fx-hit), then still */
-[data-fx-glow="glitch"] { box-shadow: inset 0 0 0 2px #E5E5E5, 4px 0 0 #FF2D55, -4px 0 0 #2BD9FF; }
-[data-fx-glow="glitch"].fx-hit { animation: fx-glitch .5s steps(2) 1; }
-@keyframes fx-glitch { 0% { transform: translate3d(0, 0, 0); } 25% { transform: translate3d(-3px, 1px, 0); } 50% { transform: translate3d(2px, -1px, 0); } 75% { transform: translate3d(-1px, 0, 0); } 100% { transform: none; } }
-
-/* rainbow-ring: the border colour travels round the edge */
-[data-fx-glow="rainbow-ring"]::after { content: ""; position: absolute; inset: -3px; border-radius: inherit; padding: 3px; background: conic-gradient(from var(--fx-angle), #FF5C5C, #FFD21F, #7CFF6B, #4FA8FF, #B66BFF, #FF5C5C); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); pointer-events: none; animation: fx-angle 6s linear infinite; }
-
-/* embers: a few sparks rising off the bottom */
-[data-fx-glow="embers"]::after { content: ""; position: absolute; left: 14%; bottom: 0; width: 6px; height: 6px; border-radius: 50%; background: #FFB300; box-shadow: 60px -4px 0 #FF7A1A, 120px -2px 0 #FFB300, 200px -6px 0 #FF5C00; pointer-events: none; animation: fx-rise 2.6s ease-out infinite; }
-@keyframes fx-rise { 0% { transform: translate3d(0, 0, 0); opacity: 0; } 20% { opacity: 1; } 100% { transform: translate3d(0, -70px, 0); opacity: 0; } }
-
-/* ---------- 3. Banners (layers) ---------- */
-.fx-banner { position: relative; height: 112px; border-radius: 18px; isolation: isolate; perspective: 700px; }
-.fx-banner.fx-sample { height: 40px; border-radius: 10px; }
-.fx-card { position: absolute; inset: 0; border-radius: inherit; overflow: hidden; background: #000; transform: rotateX(var(--fx-rx, 0deg)) rotateY(var(--fx-ry, 0deg)); transition: transform .2s var(--fx-ease); }
-.fx-card::after { content: ""; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, .45) 50%, transparent 70%); transform: translate3d(-120%, 0, 0); pointer-events: none; }
-.fx-card.fx-go::after { animation: fx-sweep .8s var(--fx-ease) 1 both; }
-@keyframes fx-sweep { from { transform: translate3d(-120%, 0, 0); } to { transform: translate3d(120%, 0, 0); } }
-
-.fx-layer { position: absolute; inset: 0; border-radius: inherit; pointer-events: none; }
-/* Depth: parallax offsets from JS (--fx-dx, --fx-dy, -1 to 1). Flat when not tilting. */
-.fx-bg { transform: translate3d(calc(var(--fx-dx, 0) * -4px), calc(var(--fx-dy, 0) * -4px), 0) scale(1.08); }
-.fx-deep { transform: translate3d(calc(var(--fx-dx, 0) * -8px), calc(var(--fx-dy, 0) * -8px), 0); }
-.fx-deep2 { transform: translate3d(calc(var(--fx-dx, 0) * -12px), calc(var(--fx-dy, 0) * -12px), 0); }
-.fx-deep::before, .fx-deep2::before { content: ""; position: absolute; }
-.fx-frame { box-shadow: inset 0 0 0 3px var(--fx-frame, #FFD21F), inset 0 0 0 6px rgba(0, 0, 0, .35); }
-.fx-body { display: flex; align-items: center; gap: 14px; padding: 18px; }
-.fx-emblem { width: 64px; height: 64px; flex: 0 0 64px; border-radius: 50%; background: rgba(0, 0, 0, .35); display: grid; place-items: center; font-size: 30px; line-height: 1; }
-.fx-title { font: 700 24px/1 "Barlow Condensed", "Barlow", system-ui, sans-serif; text-transform: uppercase; letter-spacing: .04em; color: #fff; text-shadow: 0 2px 8px rgba(0, 0, 0, .7); }
-.fx-word { display: inline-block; margin-top: 8px; padding: 4px 10px; border-radius: 6px; background: #000; font-size: 14px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
-.fx-banner.fx-sample .fx-body { padding: 0 10px; gap: 8px; }
-.fx-banner.fx-sample .fx-emblem { width: 28px; height: 28px; flex-basis: 28px; font-size: 14px; }
-.fx-banner.fx-sample .fx-title, .fx-banner.fx-sample .fx-word { display: none; }
-
-/* Depth 3 (Legend banners with a look) tilt via JS. Depth 2 (Epic) stays flat. */
-
-/* Background looks: Legend (with motion layers) */
-.fx-banner:not([data-fx-look]) .fx-bg { background: linear-gradient(120deg, #2A2C31, #17181B); }
-.fx-banner[data-fx-look="solar"] .fx-bg { background: radial-gradient(circle at 70% 40%, #FFF3B0 0, #FF9A1F 30%, #2A0F4A 75%); }
-.fx-banner[data-fx-look="void"] .fx-bg { background: radial-gradient(ellipse at 50% 50%, #1A0B33 0, #05030A 70%); }
-.fx-banner[data-fx-look="storm"] .fx-bg { background: linear-gradient(160deg, #0B1C3A, #050A14 70%); }
-.fx-banner[data-fx-look="inferno"] .fx-bg { background: linear-gradient(180deg, #2A0700, #8A2400 60%, #FF7A1A); }
-
-.fx-banner[data-fx-look="solar"] .fx-frame { --fx-frame: #FFF3B0; }
-.fx-banner[data-fx-look="void"] .fx-frame { --fx-frame: #9B5CFF; }
-.fx-banner[data-fx-look="storm"] .fx-frame { --fx-frame: #A8D0FF; }
-.fx-banner[data-fx-look="inferno"] .fx-frame { --fx-frame: #FF7A1A; }
-
-/* Solar: rays turn slowly, the core breathes */
-.fx-banner[data-fx-look="solar"] .fx-deep::before { inset: -30%; background: repeating-conic-gradient(from 0deg, rgba(255, 240, 160, .35) 0 6deg, transparent 6deg 18deg); animation: fx-spin 14s linear infinite; }
-.fx-banner[data-fx-look="solar"] .fx-deep2::before { width: 160px; height: 160px; right: -40px; top: -40px; border-radius: 50%; background: radial-gradient(circle, #FFFBE0, #FFD21F 60%, transparent 70%); animation: fx-core 2.6s ease-in-out infinite; }
-@keyframes fx-core { 0%, 100% { transform: scale(.92); } 50% { transform: scale(1.08); } }
-
-/* Void rift: a tilted ring orbits, a violet core pulses */
-.fx-banner[data-fx-look="void"] .fx-deep::before { inset: 20px; border-radius: 50%; border: 3px solid #9B5CFF; box-shadow: 0 0 24px #9B5CFF; animation: fx-orbit 5s linear infinite; }
-@keyframes fx-orbit { from { transform: rotate(0deg) scaleY(.4); } to { transform: rotate(360deg) scaleY(.4); } }
-.fx-banner[data-fx-look="void"] .fx-deep2::before { left: 50%; top: 50%; width: 90px; height: 90px; margin: -45px 0 0 -45px; border-radius: 50%; background: radial-gradient(circle, #E9DBFF, #7A3CFF 45%, transparent 70%); animation: fx-core 3s ease-in-out infinite; }
-
-/* Storm: rain falls (20 px repeat, so the loop has no jump), one lightning flash */
-.fx-banner[data-fx-look="storm"] .fx-deep::before { inset: -20px 0 0 0; background: repeating-linear-gradient(180deg, transparent 0 17px, rgba(160, 200, 255, .45) 17px 20px); animation: fx-rain .5s linear infinite; }
-@keyframes fx-rain { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(0, 20px, 0); } }
-.fx-banner[data-fx-look="storm"] .fx-deep2::before { inset: 0; background: rgba(230, 240, 255, .85); opacity: 0; animation: fx-flash 4.2s steps(1) infinite; }
-@keyframes fx-flash { 0%, 86%, 100% { opacity: 0; } 87% { opacity: .55; } 89% { opacity: .08; } 91% { opacity: .45; } 94% { opacity: 0; } }
-
-/* Inferno: flames rise from the bottom, embers drift up */
-.fx-banner[data-fx-look="inferno"] .fx-deep::before { left: -10%; right: -10%; bottom: -30%; height: 90%; border-radius: 50% 50% 0 0; background: radial-gradient(ellipse at 50% 100%, #FFE07A, #FF5C00 45%, transparent 70%); transform-origin: 50% 100%; animation: fx-flame-deep 1.2s ease-in-out infinite alternate; }
-@keyframes fx-flame-deep { from { transform: scaleY(.92); } to { transform: scaleY(1.06); } }
-.fx-banner[data-fx-look="inferno"] .fx-deep2::before { inset: 0; background: radial-gradient(circle, #FFD27A 1.5px, transparent 2px) 0 0 / 38px 38px; opacity: .9; animation: fx-emb 3.2s linear infinite; }
-@keyframes fx-emb { to { transform: translate3d(0, -38px, 0); } }
-
-/* Epic (lighter): same four looks, flat gradient, no deep layers.
-   One sheen loop, and only on the equipped banner (data-fx-equipped="1"). */
-.fx-banner[data-fx-tier="epic"][data-fx-look="solar"] .fx-bg { background: radial-gradient(circle at 70% 40%, #FFE9A0, #B66BFF 45%, #1B0A33 80%); }
-.fx-banner[data-fx-tier="epic"][data-fx-look="void"] .fx-bg { background: radial-gradient(ellipse at 50% 50%, #2A1450, #0A0614 75%); }
-.fx-banner[data-fx-tier="epic"][data-fx-look="storm"] .fx-bg { background: linear-gradient(160deg, #16305C, #0A1220); }
-.fx-banner[data-fx-tier="epic"][data-fx-look="inferno"] .fx-bg { background: linear-gradient(180deg, #3A1000, #B43A00 70%, #FF8A2A); }
-.fx-banner[data-fx-tier="epic"] .fx-deep, .fx-banner[data-fx-tier="epic"] .fx-deep2 { display: none; }
-.fx-sheen { position: absolute; inset: 0; background: linear-gradient(115deg, transparent 40%, rgba(255, 255, 255, .4) 50%, transparent 60%); transform: translate3d(-100%, 0, 0); pointer-events: none; }
-.fx-banner[data-fx-tier="epic"][data-fx-equipped="1"] .fx-sheen { animation: fx-sheen 5s ease-in-out infinite; }
-@keyframes fx-sheen { 0%, 55% { transform: translate3d(-100%, 0, 0); } 100% { transform: translate3d(100%, 0, 0); } }
-
-/* Equip: the banner wipes from the old look to the new one (one shot, 320 ms) */
-.fx-wipe { animation: fx-wipe .32s ease-out 1 both; }
-@keyframes fx-wipe { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
-
-/* Score pop (Live strip): one bump, 220 ms */
-.fx-pop { animation: fx-pop .22s ease-out 1; }
-@keyframes fx-pop { 0% { transform: scale(1); } 40% { transform: scale(1.12); } 100% { transform: scale(1); } }
-
-/* ---------- 4. Moments: unlock, equip reveal, prestige (queued, tap to skip) ---------- */
-.fx-moment { position: fixed; inset: 0; z-index: 60; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px; background: rgba(14, 14, 14, .85); cursor: pointer; color: #F4F5F7; font-family: "Barlow", system-ui, sans-serif; }
-.fx-moment-card { position: relative; overflow: hidden; width: min(320px, 100%); border-radius: 18px; background: #17181B; padding: 22px 18px; text-align: center; animation: fx-rise .45s var(--fx-ease) 1 both; }
-.fx-moment-word { font-size: 14px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--fx-y); }
-.fx-moment[data-fx-tier="rare"] .fx-moment-word { color: var(--fx-rare); }
-.fx-moment[data-fx-tier="epic"] .fx-moment-word { color: var(--fx-y); }
-.fx-moment[data-fx-tier="legend"] .fx-moment-word { color: var(--fx-legend); }
-.fx-moment-name { margin-top: 8px; font: 700 28px/1.05 "Barlow Condensed", "Barlow", system-ui, sans-serif; text-transform: uppercase; letter-spacing: .03em; }
-.fx-moment-line { margin-top: 8px; font-size: 16px; color: #A9ADB4; }
-.fx-moment-skip { margin-top: 16px; font-size: 14px; color: #A9ADB4; }
-.fx-moment-sweep { position: absolute; inset: 0; background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, .45) 50%, transparent 70%); transform: translate3d(-120%, 0, 0); pointer-events: none; animation: fx-sweep .8s var(--fx-ease) .2s 1 both; }
-.fx-moment-star { position: relative; font-size: 120px; line-height: 1; color: var(--fx-y); text-shadow: 0 0 36px rgba(255, 210, 31, .9); animation: fx-slam .6s .15s var(--fx-ease) 1 both; }
-.fx-moment-prestige .fx-moment-card { background: transparent; }
-.fx-ring { position: absolute; left: 50%; top: 40%; width: 120px; height: 120px; margin: -60px 0 0 -60px; border-radius: 50%; border: 3px solid var(--fx-y); opacity: 0; animation: fx-ring 1.4s var(--fx-ease) 1 both; }
-.fx-ring.fx-r2 { animation-delay: .25s; }
-.fx-ring.fx-r3 { animation-delay: .5s; }
-@keyframes fx-rise { from { transform: translate3d(0, 16px, 0); opacity: 0; } to { transform: none; opacity: 1; } }
-@keyframes fx-slam { 0% { transform: scale(3) rotate(-30deg); opacity: 0; } 60% { transform: scale(.92) rotate(4deg); opacity: 1; } 100% { transform: scale(1) rotate(0); opacity: 1; } }
-@keyframes fx-ring { 0% { transform: scale(.2); opacity: 1; } 100% { transform: scale(4.5); opacity: 0; } }
-
-/* ---------- 5. Calm, low power, reduced motion, hidden tab ---------- */
-/* Calm and low power: every loop, slide, sweep and tilt off. The look stays. */
-html[data-calm="1"] [class*="fx-"], html[data-calm="1"] [class*="fx-"]::before, html[data-calm="1"] [class*="fx-"]::after,
-html[data-fx="low"] [class*="fx-"], html[data-fx="low"] [class*="fx-"]::before, html[data-fx="low"] [class*="fx-"]::after {
-  animation: none !important;
-  transition: none !important;
+@keyframes fx-drift { from { background-position: 0 0, 0 0, 0 0; } to { background-position: 40px -30px, -30px 20px, 0 0; } }
+@keyframes fx-jitter { 0%,100% { transform: translateX(0); opacity: .8; } 25% { transform: translateX(-3px); opacity: .4; } 50% { transform: translateX(2px); opacity: 1; } 75% { transform: translateX(-1px); opacity: .6; } }
+@keyframes fx-bob { 0%,100% { transform: translateY(-3px); opacity: .7; } 50% { transform: translateY(3px); opacity: 1; } }
+@keyframes fx-slide { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+@keyframes fx-enter { 0% { transform: translateY(-40px) scale(1.15); opacity: 0; } 60% { transform: translateY(4px) scale(.98); opacity: 1; } 100% { transform: none; opacity: 1; } }
+@keyframes fx-burst { 0% { transform: scale(.2); opacity: 1; } 100% { transform: scale(2.2); opacity: 0; } }
+@keyframes fx-orbit { to { transform: rotate(360deg); } }
+@keyframes fx-burst-sparks { 0% { transform: scale(.3) rotate(0deg); opacity: 0; } 25% { opacity: 1; } 100% { transform: scale(1.6) rotate(90deg); opacity: 0; } }
+@keyframes fx-aura { 0%,100% { box-shadow: 0 0 22px rgba(255,214,10,.45), inset 0 0 28px rgba(10,92,255,.35); } 50% { box-shadow: 0 0 46px rgba(255,214,10,.85), inset 0 0 50px rgba(255,214,10,.45); } }
+@keyframes fx-unlock-flash { 0% { opacity: 0; } 15% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes fx-unlock-pop { 0% { transform: scale(.8); } 40% { transform: scale(1.06); } 100% { transform: scale(1); } }
+.fx-unlock { animation: fx-unlock-pop .6s ease-out both; }
+.fx-unlock::after { content: ""; position: absolute; inset: -6px; border-radius: 18px; background: radial-gradient(circle, rgba(255,214,10,.9), rgba(10,92,255,.4) 60%, transparent 75%); animation: fx-unlock-flash 1.1s ease-out both; pointer-events: none; z-index: 2; }
+.pn-l-background-bg-court-wood > * {}
+.pn-l-background-bg-court-wood::before { background: linear-gradient(120deg, rgba(10,92,255,.28), transparent 60%); animation: fx-drift 14.4s ease-in-out infinite; }
+.pn-l-background-bg-chalk > * {}
+.pn-l-background-bg-chalk::before { background: linear-gradient(120deg, rgba(10,92,255,.28), transparent 60%); animation: fx-drift 14.4s ease-in-out infinite; }
+.pn-l-background-bg-street-grit > * {}
+.pn-l-background-bg-street-grit::before { background: linear-gradient(120deg, rgba(10,92,255,.28), transparent 60%); animation: fx-drift 14.4s ease-in-out infinite; }
+.pn-l-background-bg-night > * {}
+.pn-l-background-bg-night::before { background: linear-gradient(120deg, rgba(10,92,255,.28), transparent 60%); animation: fx-drift 12s ease-in-out infinite; }
+.pn-l-background-bg-night { 
+  box-shadow: 0 0 8px rgba(10,92,255,.5);
 }
-html[data-calm="1"] .fx-card, html[data-fx="low"] .fx-card,
-html[data-calm="1"] .fx-layer, html[data-fx="low"] .fx-layer { transform: none !important; }
-html[data-calm="1"] .fx-moment-sweep, html[data-fx="low"] .fx-moment-sweep { display: none; }
+.pn-l-background-bg-hoop-sky > * {}
+.pn-l-background-bg-hoop-sky::before { background: linear-gradient(120deg, rgba(10,92,255,.28), transparent 60%); animation: fx-drift 12s ease-in-out infinite; }
+.pn-l-background-bg-hoop-sky { 
+  box-shadow: 0 0 8px rgba(10,92,255,.5);
+}
+.pn-l-background-bg-blue-court > * {}
+.pn-l-background-bg-blue-court::before { background: linear-gradient(120deg, rgba(10,92,255,.28), transparent 60%); animation: fx-drift 12s ease-in-out infinite; }
+.pn-l-background-bg-blue-court { 
+  box-shadow: 0 0 8px rgba(10,92,255,.5);
+}
+.pn-l-background-bg-neon-grid > * {}
+.pn-l-background-bg-neon-grid::before { background: linear-gradient(90deg, transparent, rgba(0,255,224,.55), transparent); animation: fx-flicker 2.34s ease-in-out infinite; }
+.pn-l-background-bg-neon-grid { 
+  box-shadow: 0 0 14px rgba(124,77,255,.6), inset 0 0 14px rgba(124,77,255,.3);
+}
+.pn-l-background-bg-neon-grid::after { inset: -25%; background: radial-gradient(circle at 25% 25%, #c9b8ff 0 2px, transparent 4px), radial-gradient(circle at 78% 70%, #c9b8ff 0 2px, transparent 4px); animation: fx-orbit 3.4s linear infinite; }
+.pn-l-background-bg-ember > * {}
+.pn-l-background-bg-ember::before { background: radial-gradient(circle at 30% 90%, #ffb000 0 2px, transparent 3px), radial-gradient(circle at 70% 95%, #ff5a00 0 2px, transparent 3px); animation: fx-rise 1.8s ease-in-out infinite; }
+.pn-l-background-bg-ember { 
+  box-shadow: 0 0 14px rgba(124,77,255,.6), inset 0 0 14px rgba(124,77,255,.3);
+}
+.pn-l-background-bg-ember::after { inset: -25%; background: radial-gradient(circle at 25% 25%, #c9b8ff 0 2px, transparent 4px), radial-gradient(circle at 78% 70%, #c9b8ff 0 2px, transparent 4px); animation: fx-orbit 3.4s linear infinite; }
+.pn-l-background-bg-ice > * {}
+.pn-l-background-bg-ice::before { background: linear-gradient(115deg, transparent 35%, rgba(190,235,255,.85) 50%, transparent 65%); animation: fx-sweep 2.16s ease-in-out infinite; }
+.pn-l-background-bg-ice { 
+  box-shadow: 0 0 14px rgba(124,77,255,.6), inset 0 0 14px rgba(124,77,255,.3);
+}
+.pn-l-background-bg-ice::after { inset: -25%; background: radial-gradient(circle at 25% 25%, #c9b8ff 0 2px, transparent 4px), radial-gradient(circle at 78% 70%, #c9b8ff 0 2px, transparent 4px); animation: fx-orbit 3.4s linear infinite; }
+.pn-l-background-bg-gold-foil > * {}
+.pn-l-background-bg-gold-foil::before { background: linear-gradient(110deg, transparent 30%, rgba(255,226,120,.95) 48%, transparent 66%); animation: fx-sweep 1.96s ease-in-out infinite; }
+.pn-l-background-bg-gold-foil { 
+  box-shadow: 0 0 26px rgba(255,214,10,.6), 0 0 6px rgba(255,255,255,.4), inset 0 0 22px rgba(255,214,10,.35);
+}
+.pn-l-background-bg-gold-foil::after { inset: -25%; background: radial-gradient(circle at 15% 20%, #fff 0 2px, transparent 4px), radial-gradient(circle at 85% 30%, #ffd60a 0 2px, transparent 4px), radial-gradient(circle at 50% 85%, #fff 0 2px, transparent 4px), radial-gradient(circle at 30% 60%, #56c8ff 0 2px, transparent 4px), radial-gradient(circle at 75% 75%, #ffd60a 0 2px, transparent 4px); animation: fx-orbit 2.2s linear infinite; }
+.pn-l-background-bg-gold-foil { animation: fx-aura 2.4s ease-in-out infinite; }
+.pn-l-background-bg-void > * {}
+.pn-l-background-bg-void::before { background: radial-gradient(circle, rgba(124,77,255,.6), rgba(10,0,30,.9) 70%); animation: fx-breathe 2.52s ease-in-out infinite; }
+.pn-l-background-bg-void { 
+  box-shadow: 0 0 26px rgba(255,214,10,.6), 0 0 6px rgba(255,255,255,.4), inset 0 0 22px rgba(255,214,10,.35);
+}
+.pn-l-background-bg-void::after { inset: -25%; background: radial-gradient(circle at 15% 20%, #fff 0 2px, transparent 4px), radial-gradient(circle at 85% 30%, #ffd60a 0 2px, transparent 4px), radial-gradient(circle at 50% 85%, #fff 0 2px, transparent 4px), radial-gradient(circle at 30% 60%, #56c8ff 0 2px, transparent 4px), radial-gradient(circle at 75% 75%, #ffd60a 0 2px, transparent 4px); animation: fx-orbit 2.2s linear infinite; }
+.pn-l-background-bg-void { animation: fx-aura 2.4s ease-in-out infinite; }
+.pn-l-background-bg-galaxy > * {}
+.pn-l-background-bg-galaxy::before { background: radial-gradient(circle at 20% 30%, #fff 0 1px, transparent 2px), radial-gradient(circle at 70% 60%, #fff 0 1px, transparent 2px), radial-gradient(ellipse at center, rgba(124,77,255,.5), transparent 70%); animation: fx-drift 6.3s ease-in-out infinite; }
+.pn-l-background-bg-galaxy { 
+  box-shadow: 0 0 26px rgba(255,214,10,.6), 0 0 6px rgba(255,255,255,.4), inset 0 0 22px rgba(255,214,10,.35);
+}
+.pn-l-background-bg-galaxy::after { inset: -25%; background: radial-gradient(circle at 15% 20%, #fff 0 2px, transparent 4px), radial-gradient(circle at 85% 30%, #ffd60a 0 2px, transparent 4px), radial-gradient(circle at 50% 85%, #fff 0 2px, transparent 4px), radial-gradient(circle at 30% 60%, #56c8ff 0 2px, transparent 4px), radial-gradient(circle at 75% 75%, #ffd60a 0 2px, transparent 4px); animation: fx-orbit 2.2s linear infinite; }
+.pn-l-background-bg-galaxy { animation: fx-aura 2.4s ease-in-out infinite; }
+.pn-l-background-bg-rainbow-ring > * {}
+.pn-l-background-bg-rainbow-ring::before { background: conic-gradient(from 0deg, #ff2d95, #ffd60a, #4dffb8, #56c8ff, #b388ff, #ff2d95); animation: fx-spin 2.1s ease-in-out infinite; }
+.pn-l-background-bg-rainbow-ring { 
+  box-shadow: 0 0 26px rgba(255,214,10,.6), 0 0 6px rgba(255,255,255,.4), inset 0 0 22px rgba(255,214,10,.35);
+}
+.pn-l-background-bg-rainbow-ring::after { inset: -25%; background: radial-gradient(circle at 15% 20%, #fff 0 2px, transparent 4px), radial-gradient(circle at 85% 30%, #ffd60a 0 2px, transparent 4px), radial-gradient(circle at 50% 85%, #fff 0 2px, transparent 4px), radial-gradient(circle at 30% 60%, #56c8ff 0 2px, transparent 4px), radial-gradient(circle at 75% 75%, #ffd60a 0 2px, transparent 4px); animation: fx-orbit 2.2s linear infinite; }
+.pn-l-background-bg-rainbow-ring { animation: fx-aura 2.4s ease-in-out infinite; }
+.pn-l-background-bg-vip-crown > * {}
+.pn-l-background-bg-vip-crown::before { background: conic-gradient(from 0deg, #ff6ec7, #ffd60a, #4dffb8, #56c8ff, #b388ff, #ff6ec7); animation: fx-spin 4.2s ease-in-out infinite; }
+.pn-l-background-bg-vip-crown { 
+  box-shadow: 0 0 26px rgba(255,214,10,.6), 0 0 6px rgba(255,255,255,.4), inset 0 0 22px rgba(255,214,10,.35);
+}
+.pn-l-background-bg-vip-crown::after { inset: -25%; background: radial-gradient(circle at 15% 20%, #fff 0 2px, transparent 4px), radial-gradient(circle at 85% 30%, #ffd60a 0 2px, transparent 4px), radial-gradient(circle at 50% 85%, #fff 0 2px, transparent 4px), radial-gradient(circle at 30% 60%, #56c8ff 0 2px, transparent 4px), radial-gradient(circle at 75% 75%, #ffd60a 0 2px, transparent 4px); animation: fx-orbit 2.2s linear infinite; }
+.pn-l-background-bg-vip-crown { animation: fx-aura 2.4s ease-in-out infinite; }
+.pn-l-frame-frame-line > * {}
+.pn-l-frame-frame-line::before { background: linear-gradient(100deg, transparent 40%, rgba(255,255,255,.4) 50%, transparent 60%); animation: fx-sweep 4.32s ease-in-out infinite; }
+.pn-l-frame-frame-double > * {}
+.pn-l-frame-frame-double::before { background: linear-gradient(100deg, transparent 40%, rgba(255,255,255,.4) 50%, transparent 60%); animation: fx-sweep 4.32s ease-in-out infinite; }
+.pn-l-frame-frame-notched > * {}
+.pn-l-frame-frame-notched::before { background: linear-gradient(100deg, transparent 40%, rgba(255,255,255,.4) 50%, transparent 60%); animation: fx-sweep 4.32s ease-in-out infinite; }
+.pn-l-frame-frame-corner > * {}
+.pn-l-frame-frame-corner::before { background: linear-gradient(100deg, transparent 40%, rgba(255,255,255,.4) 50%, transparent 60%); animation: fx-sweep 3.6s ease-in-out infinite; }
+.pn-l-frame-frame-corner { 
+  box-shadow: 0 0 8px rgba(10,92,255,.5);
+}
+.pn-l-frame-frame-rail > * {}
+.pn-l-frame-frame-rail::before { background: linear-gradient(100deg, transparent 40%, rgba(255,255,255,.4) 50%, transparent 60%); animation: fx-sweep 3.6s ease-in-out infinite; }
+.pn-l-frame-frame-rail { 
+  box-shadow: 0 0 8px rgba(10,92,255,.5);
+}
+.pn-l-frame-frame-brass > * {}
+.pn-l-frame-frame-brass::before { background: linear-gradient(100deg, transparent 40%, rgba(255,255,255,.4) 50%, transparent 60%); animation: fx-sweep 3.24s ease-in-out infinite; }
+.pn-l-frame-frame-brass { 
+  box-shadow: 0 0 14px rgba(124,77,255,.6), inset 0 0 14px rgba(124,77,255,.3);
+}
+.pn-l-frame-frame-brass::after { inset: -25%; background: radial-gradient(circle at 25% 25%, #c9b8ff 0 2px, transparent 4px), radial-gradient(circle at 78% 70%, #c9b8ff 0 2px, transparent 4px); animation: fx-orbit 3.4s linear infinite; }
+.pn-l-frame-frame-sharp > * {}
+.pn-l-frame-frame-sharp::before { background: linear-gradient(100deg, transparent 40%, rgba(255,255,255,.4) 50%, transparent 60%); animation: fx-sweep 3.24s ease-in-out infinite; }
+.pn-l-frame-frame-sharp { 
+  box-shadow: 0 0 14px rgba(124,77,255,.6), inset 0 0 14px rgba(124,77,255,.3);
+}
+.pn-l-frame-frame-sharp::after { inset: -25%; background: radial-gradient(circle at 25% 25%, #c9b8ff 0 2px, transparent 4px), radial-gradient(circle at 78% 70%, #c9b8ff 0 2px, transparent 4px); animation: fx-orbit 3.4s linear infinite; }
+.pn-l-frame-frame-spark > * {}
+.pn-l-frame-frame-spark::before { background: linear-gradient(90deg, rgba(255,255,255,.9), rgba(255,214,10,.9), rgba(255,255,255,.9)); animation: fx-strobe 0.99s ease-in-out infinite; }
+.pn-l-frame-frame-spark { 
+  box-shadow: 0 0 14px rgba(124,77,255,.6), inset 0 0 14px rgba(124,77,255,.3);
+}
+.pn-l-frame-frame-spark::after { inset: -25%; background: radial-gradient(circle at 25% 25%, #c9b8ff 0 2px, transparent 4px), radial-gradient(circle at 78% 70%, #c9b8ff 0 2px, transparent 4px); animation: fx-orbit 3.4s linear infinite; }
+.pn-l-frame-frame-ice > * {}
+.pn-l-frame-frame-ice::before { background: linear-gradient(115deg, transparent 35%, rgba(190,235,255,.85) 50%, transparent 65%); animation: fx-sweep 1.68s ease-in-out infinite; }
+.pn-l-frame-frame-ice { 
+  box-shadow: 0 0 26px rgba(255,214,10,.6), 0 0 6px rgba(255,255,255,.4), inset 0 0 22px rgba(255,214,10,.35);
+}
+.pn-l-frame-frame-ice::after { inset: -25%; background: radial-gradient(circle at 15% 20%, #fff 0 2px, transparent 4px), radial-gradient(circle at 85% 30%, #ffd60a 0 2px, transparent 4px), radial-gradient(circle at 50% 85%, #fff 0 2px, transparent 4px), radial-gradient(circle at 30% 60%, #56c8ff 0 2px, transparent 4px), radial-gradient(circle at 75% 75%, #ffd60a 0 2px, transparent 4px); animation: fx-orbit 2.2s linear infinite; }
+.pn-l-frame-frame-ice { animation: fx-aura 2.4s ease-in-out infinite; }
+.pn-l-frame-frame-flame > * {}
+.pn-l-frame-frame-flame::before { background: linear-gradient(0deg, rgba(255,90,0,.7), rgba(255,214,10,.25) 60%, transparent); animation: fx-rise 0.98s ease-in-out infinite; }
+.pn-l-frame-frame-flame { 
+  box-shadow: 0 0 26px rgba(255,214,10,.6), 0 0 6px rgba(255,255,255,.4), inset 0 0 22px rgba(255,214,10,.35);
+}
+.pn-l-frame-frame-flame::after { inset: -25%; background: radial-gradient(circle at 15% 20%, #fff 0 2px, transparent 4px), radial-gradient(circle at 85% 30%, #ffd60a 0 2px, transparent 4px), radial-gradient(circle at 50% 85%, #fff 0 2px, transparent 4px), radial-gradient(circle at 30% 60%, #56c8ff 0 2px, transparent 4px), radial-gradient(circle at 75% 75%, #ffd60a 0 2px, transparent 4px); animation: fx-orbit 2.2s linear infinite; }
+.pn-l-frame-frame-flame { animation: fx-aura 2.4s ease-in-out infinite; }
+.pn-l-frame-frame-plasma > * {}
+.pn-l-frame-frame-plasma::before { background: conic-gradient(from 0deg, #ff2d95, #00e5ff, #7c4dff, #ff2d95); animation: fx-spin 2.8s ease-in-out infinite; }
+.pn-l-frame-frame-plasma { 
+  box-shadow: 0 0 26px rgba(255,214,10,.6), 0 0 6px rgba(255,255,255,.4), inset 0 0 22px rgba(255,214,10,.35);
+}
+.pn-l-frame-frame-plasma::after { inset: -25%; background: radial-gradient(circle at 15% 20%, #fff 0 2px, transparent 4px), radial-gradient(circle at 85% 30%, #ffd60a 0 2px, transparent 4px), radial-gradient(circle at 50% 85%, #fff 0 2px, transparent 4px), radial-gradient(circle at 30% 60%, #56c8ff 0 2px, transparent 4px), radial-gradient(circle at 75% 75%, #ffd60a 0 2px, transparent 4px); animation: fx-orbit 2.2s linear infinite; }
+.pn-l-frame-frame-plasma { animation: fx-aura 2.4s ease-in-out infinite; }
+.pn-l-frame-frame-vip-crown > * {}
+.pn-l-frame-frame-vip-crown::before { background: conic-gradient(from 0deg, #ff6ec7, #ffd60a, #4dffb8, #56c8ff, #b388ff, #ff6ec7); animation: fx-spin 4.2s ease-in-out infinite; }
+.pn-l-frame-frame-vip-crown { 
+  box-shadow: 0 0 26px rgba(255,214,10,.6), 0 0 6px rgba(255,255,255,.4), inset 0 0 22px rgba(255,214,10,.35);
+}
+.pn-l-frame-frame-vip-crown::after { inset: -25%; background: radial-gradient(circle at 15% 20%, #fff 0 2px, transparent 4px), radial-gradient(circle at 85% 30%, #ffd60a 0 2px, transparent 4px), radial-gradient(circle at 50% 85%, #fff 0 2px, transparent 4px), radial-gradient(circle at 30% 60%, #56c8ff 0 2px, transparent 4px), radial-gradient(circle at 75% 75%, #ffd60a 0 2px, transparent 4px); animation: fx-orbit 2.2s linear infinite; }
+.pn-l-frame-frame-vip-crown { animation: fx-aura 2.4s ease-in-out infinite; }
+.pn-l-emblem-emblem-ball > * {}
+.pn-l-emblem-emblem-ball::before { background: radial-gradient(circle, rgba(255,214,10,.35), transparent 65%); animation: fx-bob 2.88s ease-in-out infinite; }
+.pn-l-emblem-emblem-whistle > * {}
+.pn-l-emblem-emblem-whistle::before { background: radial-gradient(circle, rgba(255,214,10,.35), transparent 65%); animation: fx-bob 2.88s ease-in-out infinite; }
+.pn-l-emblem-emblem-hoop > * {}
+.pn-l-emblem-emblem-hoop::before { background: radial-gradient(circle, rgba(255,214,10,.35), transparent 65%); animation: fx-bob 2.88s ease-in-out infinite; }
+.pn-l-emblem-emblem-star > * {}
+.pn-l-emblem-emblem-star::before { background: radial-gradient(circle, rgba(255,214,10,.35), transparent 65%); animation: fx-bob 2.4s ease-in-out infinite; }
+.pn-l-emblem-emblem-star { 
+  box-shadow: 0 0 8px rgba(10,92,255,.5);
+}
+.pn-l-emblem-emblem-bolt > * {}
+.pn-l-emblem-emblem-bolt::before { background: radial-gradient(circle, rgba(255,214,10,.35), transparent 65%); animation: fx-bob 2.4s ease-in-out infinite; }
+.pn-l-emblem-emblem-bolt { 
+  box-shadow: 0 0 8px rgba(10,92,255,.5);
+}
+.pn-l-emblem-emblem-diamond > * {}
+.pn-l-emblem-emblem-diamond::before { background: radial-gradient(circle, rgba(255,214,10,.35), transparent 65%); animation: fx-bob 2.16s ease-in-out infinite; }
+.pn-l-emblem-emblem-diamond { 
+  box-shadow: 0 0 14px rgba(124,77,255,.6), inset 0 0 14px rgba(124,77,255,.3);
+}
+.pn-l-emblem-emblem-diamond::after { inset: -25%; background: radial-gradient(circle at 25% 25%, #c9b8ff 0 2px, transparent 4px), radial-gradient(circle at 78% 70%, #c9b8ff 0 2px, transparent 4px); animation: fx-orbit 3.4s linear infinite; }
+.pn-l-emblem-emblem-shield > * {}
+.pn-l-emblem-emblem-shield::before { background: radial-gradient(circle, rgba(255,214,10,.35), transparent 65%); animation: fx-bob 2.16s ease-in-out infinite; }
+.pn-l-emblem-emblem-shield { 
+  box-shadow: 0 0 14px rgba(124,77,255,.6), inset 0 0 14px rgba(124,77,255,.3);
+}
+.pn-l-emblem-emblem-shield::after { inset: -25%; background: radial-gradient(circle at 25% 25%, #c9b8ff 0 2px, transparent 4px), radial-gradient(circle at 78% 70%, #c9b8ff 0 2px, transparent 4px); animation: fx-orbit 3.4s linear infinite; }
+.pn-l-emblem-emblem-flame > * {}
+.pn-l-emblem-emblem-flame::before { background: radial-gradient(circle, rgba(255,214,10,.35), transparent 65%); animation: fx-bob 2.16s ease-in-out infinite; }
+.pn-l-emblem-emblem-flame { 
+  box-shadow: 0 0 14px rgba(124,77,255,.6), inset 0 0 14px rgba(124,77,255,.3);
+}
+.pn-l-emblem-emblem-flame::after { inset: -25%; background: radial-gradient(circle at 25% 25%, #c9b8ff 0 2px, transparent 4px), radial-gradient(circle at 78% 70%, #c9b8ff 0 2px, transparent 4px); animation: fx-orbit 3.4s linear infinite; }
+.pn-l-emblem-emblem-comet > * {}
+.pn-l-emblem-emblem-comet::before { background: radial-gradient(circle, rgba(255,214,10,.35), transparent 65%); animation: fx-bob 1.68s ease-in-out infinite; }
+.pn-l-emblem-emblem-comet { 
+  box-shadow: 0 0 26px rgba(255,214,10,.6), 0 0 6px rgba(255,255,255,.4), inset 0 0 22px rgba(255,214,10,.35);
+}
+.pn-l-emblem-emblem-comet::after { inset: -25%; background: radial-gradient(circle at 15% 20%, #fff 0 2px, transparent 4px), radial-gradient(circle at 85% 30%, #ffd60a 0 2px, transparent 4px), radial-gradient(circle at 50% 85%, #fff 0 2px, transparent 4px), radial-gradient(circle at 30% 60%, #56c8ff 0 2px, transparent 4px), radial-gradient(circle at 75% 75%, #ffd60a 0 2px, transparent 4px); animation: fx-orbit 2.2s linear infinite; }
+.pn-l-emblem-emblem-comet { animation: fx-aura 2.4s ease-in-out infinite; }
+.pn-l-emblem-emblem-orbit > * {}
+.pn-l-emblem-emblem-orbit::before { background: radial-gradient(circle, rgba(255,214,10,.35), transparent 65%); animation: fx-bob 1.68s ease-in-out infinite; }
+.pn-l-emblem-emblem-orbit { 
+  box-shadow: 0 0 26px rgba(255,214,10,.6), 0 0 6px rgba(255,255,255,.4), inset 0 0 22px rgba(255,214,10,.35);
+}
+.pn-l-emblem-emblem-orbit::after { inset: -25%; background: radial-gradient(circle at 15% 20%, #fff 0 2px, transparent 4px), radial-gradient(circle at 85% 30%, #ffd60a 0 2px, transparent 4px), radial-gradient(circle at 50% 85%, #fff 0 2px, transparent 4px), radial-gradient(circle at 30% 60%, #56c8ff 0 2px, transparent 4px), radial-gradient(circle at 75% 75%, #ffd60a 0 2px, transparent 4px); animation: fx-orbit 2.2s linear infinite; }
+.pn-l-emblem-emblem-orbit { animation: fx-aura 2.4s ease-in-out infinite; }
+.pn-l-emblem-emblem-trophy > * {}
+.pn-l-emblem-emblem-trophy::before { background: radial-gradient(circle, rgba(255,214,10,.35), transparent 65%); animation: fx-bob 1.68s ease-in-out infinite; }
+.pn-l-emblem-emblem-trophy { 
+  box-shadow: 0 0 26px rgba(255,214,10,.6), 0 0 6px rgba(255,255,255,.4), inset 0 0 22px rgba(255,214,10,.35);
+}
+.pn-l-emblem-emblem-trophy::after { inset: -25%; background: radial-gradient(circle at 15% 20%, #fff 0 2px, transparent 4px), radial-gradient(circle at 85% 30%, #ffd60a 0 2px, transparent 4px), radial-gradient(circle at 50% 85%, #fff 0 2px, transparent 4px), radial-gradient(circle at 30% 60%, #56c8ff 0 2px, transparent 4px), radial-gradient(circle at 75% 75%, #ffd60a 0 2px, transparent 4px); animation: fx-orbit 2.2s linear infinite; }
+.pn-l-emblem-emblem-trophy { animation: fx-aura 2.4s ease-in-out infinite; }
+.pn-l-emblem-emblem-crown-vip > * {}
+.pn-l-emblem-emblem-crown-vip::before { background: radial-gradient(circle, rgba(255,214,10,.35), transparent 65%); animation: fx-bob 1.68s ease-in-out infinite; }
+.pn-l-emblem-emblem-crown-vip { 
+  box-shadow: 0 0 26px rgba(255,214,10,.6), 0 0 6px rgba(255,255,255,.4), inset 0 0 22px rgba(255,214,10,.35);
+}
+.pn-l-emblem-emblem-crown-vip::after { inset: -25%; background: radial-gradient(circle at 15% 20%, #fff 0 2px, transparent 4px), radial-gradient(circle at 85% 30%, #ffd60a 0 2px, transparent 4px), radial-gradient(circle at 50% 85%, #fff 0 2px, transparent 4px), radial-gradient(circle at 30% 60%, #56c8ff 0 2px, transparent 4px), radial-gradient(circle at 75% 75%, #ffd60a 0 2px, transparent 4px); animation: fx-orbit 2.2s linear infinite; }
+.pn-l-emblem-emblem-crown-vip { animation: fx-aura 2.4s ease-in-out infinite; }
+.pn-l-title-title-player > * {}
+.pn-l-title-title-player::before { background: linear-gradient(100deg, transparent 35%, rgba(255,255,255,.55) 50%, transparent 65%); animation: fx-sweep 4.8s ease-in-out infinite; }
+.pn-l-title-title-gym-rat > * {}
+.pn-l-title-title-gym-rat::before { background: linear-gradient(100deg, transparent 35%, rgba(255,255,255,.55) 50%, transparent 65%); animation: fx-sweep 4.8s ease-in-out infinite; }
+.pn-l-title-title-sharp > * {}
+.pn-l-title-title-sharp::before { background: linear-gradient(100deg, transparent 35%, rgba(255,255,255,.55) 50%, transparent 65%); animation: fx-sweep 4s ease-in-out infinite; }
+.pn-l-title-title-sharp { 
+  box-shadow: 0 0 8px rgba(10,92,255,.5);
+}
+.pn-l-title-title-captain > * {}
+.pn-l-title-title-captain::before { background: linear-gradient(100deg, transparent 35%, rgba(255,255,255,.55) 50%, transparent 65%); animation: fx-sweep 4s ease-in-out infinite; }
+.pn-l-title-title-captain { 
+  box-shadow: 0 0 8px rgba(10,92,255,.5);
+}
+.pn-l-title-title-closer > * {}
+.pn-l-title-title-closer::before { background: linear-gradient(100deg, transparent 35%, rgba(255,255,255,.55) 50%, transparent 65%); animation: fx-sweep 4s ease-in-out infinite; }
+.pn-l-title-title-closer { 
+  box-shadow: 0 0 8px rgba(10,92,255,.5);
+}
+.pn-l-title-title-night-owl > * {}
+.pn-l-title-title-night-owl::before { background: linear-gradient(100deg, transparent 35%, rgba(255,255,255,.55) 50%, transparent 65%); animation: fx-sweep 4s ease-in-out infinite; }
+.pn-l-title-title-night-owl { 
+  box-shadow: 0 0 8px rgba(10,92,255,.5);
+}
+.pn-l-title-title-iron > * {}
+.pn-l-title-title-iron::before { background: linear-gradient(100deg, transparent 35%, rgba(255,255,255,.55) 50%, transparent 65%); animation: fx-sweep 3.6s ease-in-out infinite; }
+.pn-l-title-title-iron { 
+  box-shadow: 0 0 14px rgba(124,77,255,.6), inset 0 0 14px rgba(124,77,255,.3);
+}
+.pn-l-title-title-iron::after { inset: -25%; background: radial-gradient(circle at 25% 25%, #c9b8ff 0 2px, transparent 4px), radial-gradient(circle at 78% 70%, #c9b8ff 0 2px, transparent 4px); animation: fx-orbit 3.4s linear infinite; }
+.pn-l-title-title-floor-general > * {}
+.pn-l-title-title-floor-general::before { background: linear-gradient(100deg, transparent 35%, rgba(255,255,255,.55) 50%, transparent 65%); animation: fx-sweep 3.6s ease-in-out infinite; }
+.pn-l-title-title-floor-general { 
+  box-shadow: 0 0 14px rgba(124,77,255,.6), inset 0 0 14px rgba(124,77,255,.3);
+}
+.pn-l-title-title-floor-general::after { inset: -25%; background: radial-gradient(circle at 25% 25%, #c9b8ff 0 2px, transparent 4px), radial-gradient(circle at 78% 70%, #c9b8ff 0 2px, transparent 4px); animation: fx-orbit 3.4s linear infinite; }
+.pn-l-title-title-ten-run > * {}
+.pn-l-title-title-ten-run::before { background: linear-gradient(100deg, transparent 35%, rgba(255,255,255,.55) 50%, transparent 65%); animation: fx-sweep 3.6s ease-in-out infinite; }
+.pn-l-title-title-ten-run { 
+  box-shadow: 0 0 14px rgba(124,77,255,.6), inset 0 0 14px rgba(124,77,255,.3);
+}
+.pn-l-title-title-ten-run::after { inset: -25%; background: radial-gradient(circle at 25% 25%, #c9b8ff 0 2px, transparent 4px), radial-gradient(circle at 78% 70%, #c9b8ff 0 2px, transparent 4px); animation: fx-orbit 3.4s linear infinite; }
+.pn-l-title-title-legend > * {}
+.pn-l-title-title-legend::before { background: linear-gradient(100deg, transparent 35%, rgba(255,255,255,.55) 50%, transparent 65%); animation: fx-sweep 2.8s ease-in-out infinite; }
+.pn-l-title-title-legend { 
+  box-shadow: 0 0 26px rgba(255,214,10,.6), 0 0 6px rgba(255,255,255,.4), inset 0 0 22px rgba(255,214,10,.35);
+}
+.pn-l-title-title-legend::after { inset: -25%; background: radial-gradient(circle at 15% 20%, #fff 0 2px, transparent 4px), radial-gradient(circle at 85% 30%, #ffd60a 0 2px, transparent 4px), radial-gradient(circle at 50% 85%, #fff 0 2px, transparent 4px), radial-gradient(circle at 30% 60%, #56c8ff 0 2px, transparent 4px), radial-gradient(circle at 75% 75%, #ffd60a 0 2px, transparent 4px); animation: fx-orbit 2.2s linear infinite; }
+.pn-l-title-title-legend { animation: fx-aura 2.4s ease-in-out infinite; }
+.pn-l-title-title-founder > * {}
+.pn-l-title-title-founder::before { background: linear-gradient(100deg, transparent 35%, rgba(255,255,255,.55) 50%, transparent 65%); animation: fx-sweep 2.8s ease-in-out infinite; }
+.pn-l-title-title-founder { 
+  box-shadow: 0 0 26px rgba(255,214,10,.6), 0 0 6px rgba(255,255,255,.4), inset 0 0 22px rgba(255,214,10,.35);
+}
+.pn-l-title-title-founder::after { inset: -25%; background: radial-gradient(circle at 15% 20%, #fff 0 2px, transparent 4px), radial-gradient(circle at 85% 30%, #ffd60a 0 2px, transparent 4px), radial-gradient(circle at 50% 85%, #fff 0 2px, transparent 4px), radial-gradient(circle at 30% 60%, #56c8ff 0 2px, transparent 4px), radial-gradient(circle at 75% 75%, #ffd60a 0 2px, transparent 4px); animation: fx-orbit 2.2s linear infinite; }
+.pn-l-title-title-founder { animation: fx-aura 2.4s ease-in-out infinite; }
+.pn-l-title-title-iron-will > * {}
+.pn-l-title-title-iron-will::before { background: linear-gradient(100deg, transparent 35%, rgba(255,255,255,.55) 50%, transparent 65%); animation: fx-sweep 2.8s ease-in-out infinite; }
+.pn-l-title-title-iron-will { 
+  box-shadow: 0 0 26px rgba(255,214,10,.6), 0 0 6px rgba(255,255,255,.4), inset 0 0 22px rgba(255,214,10,.35);
+}
+.pn-l-title-title-iron-will::after { inset: -25%; background: radial-gradient(circle at 15% 20%, #fff 0 2px, transparent 4px), radial-gradient(circle at 85% 30%, #ffd60a 0 2px, transparent 4px), radial-gradient(circle at 50% 85%, #fff 0 2px, transparent 4px), radial-gradient(circle at 30% 60%, #56c8ff 0 2px, transparent 4px), radial-gradient(circle at 75% 75%, #ffd60a 0 2px, transparent 4px); animation: fx-orbit 2.2s linear infinite; }
+.pn-l-title-title-iron-will { animation: fx-aura 2.4s ease-in-out infinite; }
+.pn-l-effect-fx-pulse > * {}
+.pn-l-effect-fx-pulse::before { background: radial-gradient(circle, rgba(255,214,10,.5) 0 30%, transparent 60%); animation: fx-pulse-ring 2.64s ease-in-out infinite; }
+.pn-l-effect-fx-neon > * {}
+.pn-l-effect-fx-neon::before { background: linear-gradient(90deg, transparent, rgba(0,255,224,.55), transparent); animation: fx-flicker 2.6s ease-in-out infinite; }
+.pn-l-effect-fx-neon { 
+  box-shadow: 0 0 8px rgba(10,92,255,.5);
+}
+.pn-l-effect-fx-ice > * {}
+.pn-l-effect-fx-ice::before { background: linear-gradient(115deg, transparent 35%, rgba(190,235,255,.85) 50%, transparent 65%); animation: fx-sweep 2.4s ease-in-out infinite; }
+.pn-l-effect-fx-ice { 
+  box-shadow: 0 0 8px rgba(10,92,255,.5);
+}
+.pn-l-effect-fx-aura > * {}
+.pn-l-effect-fx-aura::before { background: radial-gradient(circle at 50% 50%, rgba(10,92,255,.55), transparent 70%); animation: fx-breathe 2.88s ease-in-out infinite; }
+.pn-l-effect-fx-aura { 
+  box-shadow: 0 0 14px rgba(124,77,255,.6), inset 0 0 14px rgba(124,77,255,.3);
+}
+.pn-l-effect-fx-aura::after { inset: -25%; background: radial-gradient(circle at 25% 25%, #c9b8ff 0 2px, transparent 4px), radial-gradient(circle at 78% 70%, #c9b8ff 0 2px, transparent 4px); animation: fx-orbit 3.4s linear infinite; }
+.pn-l-effect-fx-electric > * {}
+.pn-l-effect-fx-electric::before { background: linear-gradient(90deg, rgba(255,255,255,.9), rgba(255,214,10,.9), rgba(255,255,255,.9)); animation: fx-strobe 0.99s ease-in-out infinite; }
+.pn-l-effect-fx-electric { 
+  box-shadow: 0 0 14px rgba(124,77,255,.6), inset 0 0 14px rgba(124,77,255,.3);
+}
+.pn-l-effect-fx-electric::after { inset: -25%; background: radial-gradient(circle at 25% 25%, #c9b8ff 0 2px, transparent 4px), radial-gradient(circle at 78% 70%, #c9b8ff 0 2px, transparent 4px); animation: fx-orbit 3.4s linear infinite; }
+.pn-l-effect-fx-embers > * {}
+.pn-l-effect-fx-embers::before { background: radial-gradient(circle at 30% 90%, #ffb000 0 2px, transparent 3px), radial-gradient(circle at 70% 95%, #ff5a00 0 2px, transparent 3px); animation: fx-rise 1.8s ease-in-out infinite; }
+.pn-l-effect-fx-embers { 
+  box-shadow: 0 0 14px rgba(124,77,255,.6), inset 0 0 14px rgba(124,77,255,.3);
+}
+.pn-l-effect-fx-embers::after { inset: -25%; background: radial-gradient(circle at 25% 25%, #c9b8ff 0 2px, transparent 4px), radial-gradient(circle at 78% 70%, #c9b8ff 0 2px, transparent 4px); animation: fx-orbit 3.4s linear infinite; }
+.pn-l-effect-fx-glitch > * {}
+.pn-l-effect-fx-glitch::before { background: repeating-linear-gradient(0deg, rgba(255,45,149,.35) 0 2px, transparent 2px 5px); animation: fx-jitter 1.44s ease-in-out infinite; }
+.pn-l-effect-fx-glitch { 
+  box-shadow: 0 0 14px rgba(124,77,255,.6), inset 0 0 14px rgba(124,77,255,.3);
+}
+.pn-l-effect-fx-glitch::after { inset: -25%; background: radial-gradient(circle at 25% 25%, #c9b8ff 0 2px, transparent 4px), radial-gradient(circle at 78% 70%, #c9b8ff 0 2px, transparent 4px); animation: fx-orbit 3.4s linear infinite; }
+.pn-l-effect-fx-flame > * {}
+.pn-l-effect-fx-flame::before { background: linear-gradient(0deg, rgba(255,90,0,.7), rgba(255,214,10,.25) 60%, transparent); animation: fx-rise 1.26s ease-in-out infinite; }
+.pn-l-effect-fx-flame { 
+  box-shadow: 0 0 14px rgba(124,77,255,.6), inset 0 0 14px rgba(124,77,255,.3);
+}
+.pn-l-effect-fx-flame::after { inset: -25%; background: radial-gradient(circle at 25% 25%, #c9b8ff 0 2px, transparent 4px), radial-gradient(circle at 78% 70%, #c9b8ff 0 2px, transparent 4px); animation: fx-orbit 3.4s linear infinite; }
+.pn-l-effect-fx-plasma > * {}
+.pn-l-effect-fx-plasma::before { background: conic-gradient(from 0deg, #ff2d95, #00e5ff, #7c4dff, #ff2d95); animation: fx-spin 2.8s ease-in-out infinite; }
+.pn-l-effect-fx-plasma { 
+  box-shadow: 0 0 26px rgba(255,214,10,.6), 0 0 6px rgba(255,255,255,.4), inset 0 0 22px rgba(255,214,10,.35);
+}
+.pn-l-effect-fx-plasma::after { inset: -25%; background: radial-gradient(circle at 15% 20%, #fff 0 2px, transparent 4px), radial-gradient(circle at 85% 30%, #ffd60a 0 2px, transparent 4px), radial-gradient(circle at 50% 85%, #fff 0 2px, transparent 4px), radial-gradient(circle at 30% 60%, #56c8ff 0 2px, transparent 4px), radial-gradient(circle at 75% 75%, #ffd60a 0 2px, transparent 4px); animation: fx-orbit 2.2s linear infinite; }
+.pn-l-effect-fx-plasma { animation: fx-aura 2.4s ease-in-out infinite; }
+.pn-l-effect-fx-gold-foil > * {}
+.pn-l-effect-fx-gold-foil::before { background: linear-gradient(110deg, transparent 30%, rgba(255,226,120,.95) 48%, transparent 66%); animation: fx-sweep 1.96s ease-in-out infinite; }
+.pn-l-effect-fx-gold-foil { 
+  box-shadow: 0 0 26px rgba(255,214,10,.6), 0 0 6px rgba(255,255,255,.4), inset 0 0 22px rgba(255,214,10,.35);
+}
+.pn-l-effect-fx-gold-foil::after { inset: -25%; background: radial-gradient(circle at 15% 20%, #fff 0 2px, transparent 4px), radial-gradient(circle at 85% 30%, #ffd60a 0 2px, transparent 4px), radial-gradient(circle at 50% 85%, #fff 0 2px, transparent 4px), radial-gradient(circle at 30% 60%, #56c8ff 0 2px, transparent 4px), radial-gradient(circle at 75% 75%, #ffd60a 0 2px, transparent 4px); animation: fx-orbit 2.2s linear infinite; }
+.pn-l-effect-fx-gold-foil { animation: fx-aura 2.4s ease-in-out infinite; }
+.pn-l-effect-fx-holo > * {}
+.pn-l-effect-fx-holo::before { background: conic-gradient(from 0deg, #ff6ec7, #ffd60a, #4dffb8, #56c8ff, #b388ff, #ff6ec7); animation: fx-spin 4.2s ease-in-out infinite; }
+.pn-l-effect-fx-holo { 
+  box-shadow: 0 0 26px rgba(255,214,10,.6), 0 0 6px rgba(255,255,255,.4), inset 0 0 22px rgba(255,214,10,.35);
+}
+.pn-l-effect-fx-holo::after { inset: -25%; background: radial-gradient(circle at 15% 20%, #fff 0 2px, transparent 4px), radial-gradient(circle at 85% 30%, #ffd60a 0 2px, transparent 4px), radial-gradient(circle at 50% 85%, #fff 0 2px, transparent 4px), radial-gradient(circle at 30% 60%, #56c8ff 0 2px, transparent 4px), radial-gradient(circle at 75% 75%, #ffd60a 0 2px, transparent 4px); animation: fx-orbit 2.2s linear infinite; }
+.pn-l-effect-fx-holo { animation: fx-aura 2.4s ease-in-out infinite; }
+.pn-l-effect-fx-void > * {}
+.pn-l-effect-fx-void::before { background: radial-gradient(circle, rgba(124,77,255,.6), rgba(10,0,30,.9) 70%); animation: fx-breathe 2.52s ease-in-out infinite; }
+.pn-l-effect-fx-void { 
+  box-shadow: 0 0 26px rgba(255,214,10,.6), 0 0 6px rgba(255,255,255,.4), inset 0 0 22px rgba(255,214,10,.35);
+}
+.pn-l-effect-fx-void::after { inset: -25%; background: radial-gradient(circle at 15% 20%, #fff 0 2px, transparent 4px), radial-gradient(circle at 85% 30%, #ffd60a 0 2px, transparent 4px), radial-gradient(circle at 50% 85%, #fff 0 2px, transparent 4px), radial-gradient(circle at 30% 60%, #56c8ff 0 2px, transparent 4px), radial-gradient(circle at 75% 75%, #ffd60a 0 2px, transparent 4px); animation: fx-orbit 2.2s linear infinite; }
+.pn-l-effect-fx-void { animation: fx-aura 2.4s ease-in-out infinite; }
+.pn-l-effect-fx-galaxy > * {}
+.pn-l-effect-fx-galaxy::before { background: radial-gradient(circle at 20% 30%, #fff 0 1px, transparent 2px), radial-gradient(circle at 70% 60%, #fff 0 1px, transparent 2px), radial-gradient(ellipse at center, rgba(124,77,255,.5), transparent 70%); animation: fx-drift 6.3s ease-in-out infinite; }
+.pn-l-effect-fx-galaxy { 
+  box-shadow: 0 0 26px rgba(255,214,10,.6), 0 0 6px rgba(255,255,255,.4), inset 0 0 22px rgba(255,214,10,.35);
+}
+.pn-l-effect-fx-galaxy::after { inset: -25%; background: radial-gradient(circle at 15% 20%, #fff 0 2px, transparent 4px), radial-gradient(circle at 85% 30%, #ffd60a 0 2px, transparent 4px), radial-gradient(circle at 50% 85%, #fff 0 2px, transparent 4px), radial-gradient(circle at 30% 60%, #56c8ff 0 2px, transparent 4px), radial-gradient(circle at 75% 75%, #ffd60a 0 2px, transparent 4px); animation: fx-orbit 2.2s linear infinite; }
+.pn-l-effect-fx-galaxy { animation: fx-aura 2.4s ease-in-out infinite; }
+.pn-l-effect-fx-rainbow-ring > * {}
+.pn-l-effect-fx-rainbow-ring::before { background: conic-gradient(from 0deg, #ff2d95, #ffd60a, #4dffb8, #56c8ff, #b388ff, #ff2d95); animation: fx-spin 2.1s ease-in-out infinite; }
+.pn-l-effect-fx-rainbow-ring { 
+  box-shadow: 0 0 26px rgba(255,214,10,.6), 0 0 6px rgba(255,255,255,.4), inset 0 0 22px rgba(255,214,10,.35);
+}
+.pn-l-effect-fx-rainbow-ring::after { inset: -25%; background: radial-gradient(circle at 15% 20%, #fff 0 2px, transparent 4px), radial-gradient(circle at 85% 30%, #ffd60a 0 2px, transparent 4px), radial-gradient(circle at 50% 85%, #fff 0 2px, transparent 4px), radial-gradient(circle at 30% 60%, #56c8ff 0 2px, transparent 4px), radial-gradient(circle at 75% 75%, #ffd60a 0 2px, transparent 4px); animation: fx-orbit 2.2s linear infinite; }
+.pn-l-effect-fx-rainbow-ring { animation: fx-aura 2.4s ease-in-out infinite; }
+.pn-l-name-name-plain > * {}
+.pn-l-name-name-plain::before { background: linear-gradient(90deg, transparent, rgba(255,214,10,.45), transparent); animation: fx-flicker 3.36s ease-in-out infinite; }
+.pn-l-name-name-caps > * {}
+.pn-l-name-name-caps::before { background: linear-gradient(90deg, transparent, rgba(255,214,10,.45), transparent); animation: fx-flicker 3.36s ease-in-out infinite; }
+.pn-l-name-name-spaced > * {}
+.pn-l-name-name-spaced::before { background: linear-gradient(90deg, transparent, rgba(255,214,10,.45), transparent); animation: fx-flicker 3.36s ease-in-out infinite; }
+.pn-l-name-name-outline > * {}
+.pn-l-name-name-outline::before { background: linear-gradient(90deg, transparent, rgba(255,214,10,.45), transparent); animation: fx-flicker 2.8s ease-in-out infinite; }
+.pn-l-name-name-outline { 
+  box-shadow: 0 0 8px rgba(10,92,255,.5);
+}
+.pn-l-name-name-italic > * {}
+.pn-l-name-name-italic::before { background: linear-gradient(90deg, transparent, rgba(255,214,10,.45), transparent); animation: fx-flicker 2.8s ease-in-out infinite; }
+.pn-l-name-name-italic { 
+  box-shadow: 0 0 8px rgba(10,92,255,.5);
+}
+.pn-l-name-name-slant > * {}
+.pn-l-name-name-slant::before { background: linear-gradient(90deg, transparent, rgba(255,214,10,.45), transparent); animation: fx-flicker 2.8s ease-in-out infinite; }
+.pn-l-name-name-slant { 
+  box-shadow: 0 0 8px rgba(10,92,255,.5);
+}
+.pn-l-name-name-stamp > * {}
+.pn-l-name-name-stamp::before { background: linear-gradient(90deg, transparent, rgba(255,214,10,.45), transparent); animation: fx-flicker 2.52s ease-in-out infinite; }
+.pn-l-name-name-stamp { 
+  box-shadow: 0 0 14px rgba(124,77,255,.6), inset 0 0 14px rgba(124,77,255,.3);
+}
+.pn-l-name-name-stamp::after { inset: -25%; background: radial-gradient(circle at 25% 25%, #c9b8ff 0 2px, transparent 4px), radial-gradient(circle at 78% 70%, #c9b8ff 0 2px, transparent 4px); animation: fx-orbit 3.4s linear infinite; }
+.pn-l-name-name-chrome > * {}
+.pn-l-name-name-chrome::before { background: linear-gradient(110deg, transparent 30%, rgba(255,226,120,.95) 48%, transparent 66%); animation: fx-sweep 2.52s ease-in-out infinite; }
+.pn-l-name-name-chrome { 
+  box-shadow: 0 0 14px rgba(124,77,255,.6), inset 0 0 14px rgba(124,77,255,.3);
+}
+.pn-l-name-name-chrome::after { inset: -25%; background: radial-gradient(circle at 25% 25%, #c9b8ff 0 2px, transparent 4px), radial-gradient(circle at 78% 70%, #c9b8ff 0 2px, transparent 4px); animation: fx-orbit 3.4s linear infinite; }
+.pn-l-name-name-neon > * {}
+.pn-l-name-name-neon::before { background: linear-gradient(90deg, transparent, rgba(0,255,224,.55), transparent); animation: fx-flicker 2.34s ease-in-out infinite; }
+.pn-l-name-name-neon { 
+  box-shadow: 0 0 14px rgba(124,77,255,.6), inset 0 0 14px rgba(124,77,255,.3);
+}
+.pn-l-name-name-neon::after { inset: -25%; background: radial-gradient(circle at 25% 25%, #c9b8ff 0 2px, transparent 4px), radial-gradient(circle at 78% 70%, #c9b8ff 0 2px, transparent 4px); animation: fx-orbit 3.4s linear infinite; }
+.pn-l-name-name-glitch > * {}
+.pn-l-name-name-glitch::before { background: repeating-linear-gradient(0deg, rgba(255,45,149,.35) 0 2px, transparent 2px 5px); animation: fx-jitter 1.12s ease-in-out infinite; }
+.pn-l-name-name-glitch { 
+  box-shadow: 0 0 26px rgba(255,214,10,.6), 0 0 6px rgba(255,255,255,.4), inset 0 0 22px rgba(255,214,10,.35);
+}
+.pn-l-name-name-glitch::after { inset: -25%; background: radial-gradient(circle at 15% 20%, #fff 0 2px, transparent 4px), radial-gradient(circle at 85% 30%, #ffd60a 0 2px, transparent 4px), radial-gradient(circle at 50% 85%, #fff 0 2px, transparent 4px), radial-gradient(circle at 30% 60%, #56c8ff 0 2px, transparent 4px), radial-gradient(circle at 75% 75%, #ffd60a 0 2px, transparent 4px); animation: fx-orbit 2.2s linear infinite; }
+.pn-l-name-name-glitch { animation: fx-aura 2.4s ease-in-out infinite; }
+.pn-l-name-name-ice > * {}
+.pn-l-name-name-ice::before { background: linear-gradient(115deg, transparent 35%, rgba(190,235,255,.85) 50%, transparent 65%); animation: fx-sweep 1.68s ease-in-out infinite; }
+.pn-l-name-name-ice { 
+  box-shadow: 0 0 26px rgba(255,214,10,.6), 0 0 6px rgba(255,255,255,.4), inset 0 0 22px rgba(255,214,10,.35);
+}
+.pn-l-name-name-ice::after { inset: -25%; background: radial-gradient(circle at 15% 20%, #fff 0 2px, transparent 4px), radial-gradient(circle at 85% 30%, #ffd60a 0 2px, transparent 4px), radial-gradient(circle at 50% 85%, #fff 0 2px, transparent 4px), radial-gradient(circle at 30% 60%, #56c8ff 0 2px, transparent 4px), radial-gradient(circle at 75% 75%, #ffd60a 0 2px, transparent 4px); animation: fx-orbit 2.2s linear infinite; }
+.pn-l-name-name-ice { animation: fx-aura 2.4s ease-in-out infinite; }
+.pn-l-name-name-ember > * {}
+.pn-l-name-name-ember::before { background: radial-gradient(circle at 30% 90%, #ffb000 0 2px, transparent 3px), radial-gradient(circle at 70% 95%, #ff5a00 0 2px, transparent 3px); animation: fx-rise 1.4s ease-in-out infinite; }
+.pn-l-name-name-ember { 
+  box-shadow: 0 0 26px rgba(255,214,10,.6), 0 0 6px rgba(255,255,255,.4), inset 0 0 22px rgba(255,214,10,.35);
+}
+.pn-l-name-name-ember::after { inset: -25%; background: radial-gradient(circle at 15% 20%, #fff 0 2px, transparent 4px), radial-gradient(circle at 85% 30%, #ffd60a 0 2px, transparent 4px), radial-gradient(circle at 50% 85%, #fff 0 2px, transparent 4px), radial-gradient(circle at 30% 60%, #56c8ff 0 2px, transparent 4px), radial-gradient(circle at 75% 75%, #ffd60a 0 2px, transparent 4px); animation: fx-orbit 2.2s linear infinite; }
+.pn-l-name-name-ember { animation: fx-aura 2.4s ease-in-out infinite; }
+.pn-l-name-name-rainbow > * {}
+.pn-l-name-name-rainbow::before { background: conic-gradient(from 0deg, #ff2d95, #ffd60a, #4dffb8, #56c8ff, #b388ff, #ff2d95); animation: fx-spin 2.1s ease-in-out infinite; }
+.pn-l-name-name-rainbow { 
+  box-shadow: 0 0 26px rgba(255,214,10,.6), 0 0 6px rgba(255,255,255,.4), inset 0 0 22px rgba(255,214,10,.35);
+}
+.pn-l-name-name-rainbow::after { inset: -25%; background: radial-gradient(circle at 15% 20%, #fff 0 2px, transparent 4px), radial-gradient(circle at 85% 30%, #ffd60a 0 2px, transparent 4px), radial-gradient(circle at 50% 85%, #fff 0 2px, transparent 4px), radial-gradient(circle at 30% 60%, #56c8ff 0 2px, transparent 4px), radial-gradient(circle at 75% 75%, #ffd60a 0 2px, transparent 4px); animation: fx-orbit 2.2s linear infinite; }
+.pn-l-name-name-rainbow { animation: fx-aura 2.4s ease-in-out infinite; }
+.pn-l-name-name-void > * {}
+.pn-l-name-name-void::before { background: radial-gradient(circle, rgba(124,77,255,.6), rgba(10,0,30,.9) 70%); animation: fx-breathe 2.52s ease-in-out infinite; }
+.pn-l-name-name-void { 
+  box-shadow: 0 0 26px rgba(255,214,10,.6), 0 0 6px rgba(255,255,255,.4), inset 0 0 22px rgba(255,214,10,.35);
+}
+.pn-l-name-name-void::after { inset: -25%; background: radial-gradient(circle at 15% 20%, #fff 0 2px, transparent 4px), radial-gradient(circle at 85% 30%, #ffd60a 0 2px, transparent 4px), radial-gradient(circle at 50% 85%, #fff 0 2px, transparent 4px), radial-gradient(circle at 30% 60%, #56c8ff 0 2px, transparent 4px), radial-gradient(circle at 75% 75%, #ffd60a 0 2px, transparent 4px); animation: fx-orbit 2.2s linear infinite; }
+.pn-l-name-name-void { animation: fx-aura 2.4s ease-in-out infinite; }
+.pn-l-card-card-flat-card > * {}
+.pn-l-card-card-flat-card::before { background: linear-gradient(115deg, transparent 40%, rgba(255,255,255,.3) 50%, transparent 60%); animation: fx-sweep 6s ease-in-out infinite; }
+.pn-l-card-card-ticket > * {}
+.pn-l-card-card-ticket::before { background: linear-gradient(115deg, transparent 40%, rgba(255,255,255,.3) 50%, transparent 60%); animation: fx-sweep 6s ease-in-out infinite; }
+.pn-l-card-card-split > * {}
+.pn-l-card-card-split::before { background: linear-gradient(115deg, transparent 40%, rgba(255,255,255,.3) 50%, transparent 60%); animation: fx-sweep 6s ease-in-out infinite; }
+.pn-l-card-card-court-lines > * {}
+.pn-l-card-card-court-lines::before { background: linear-gradient(115deg, transparent 40%, rgba(255,255,255,.3) 50%, transparent 60%); animation: fx-sweep 5s ease-in-out infinite; }
+.pn-l-card-card-court-lines { 
+  box-shadow: 0 0 8px rgba(10,92,255,.5);
+}
+.pn-l-card-card-scoreboard > * {}
+.pn-l-card-card-scoreboard::before { background: linear-gradient(115deg, transparent 40%, rgba(255,255,255,.3) 50%, transparent 60%); animation: fx-sweep 5s ease-in-out infinite; }
+.pn-l-card-card-scoreboard { 
+  box-shadow: 0 0 8px rgba(10,92,255,.5);
+}
+.pn-l-card-card-hoop-arc > * {}
+.pn-l-card-card-hoop-arc::before { background: linear-gradient(115deg, transparent 40%, rgba(255,255,255,.3) 50%, transparent 60%); animation: fx-sweep 5s ease-in-out infinite; }
+.pn-l-card-card-hoop-arc { 
+  box-shadow: 0 0 8px rgba(10,92,255,.5);
+}
+.pn-l-card-card-tape > * {}
+.pn-l-card-card-tape::before { background: linear-gradient(115deg, transparent 40%, rgba(255,255,255,.3) 50%, transparent 60%); animation: fx-sweep 4.5s ease-in-out infinite; }
+.pn-l-card-card-tape { 
+  box-shadow: 0 0 14px rgba(124,77,255,.6), inset 0 0 14px rgba(124,77,255,.3);
+}
+.pn-l-card-card-tape::after { inset: -25%; background: radial-gradient(circle at 25% 25%, #c9b8ff 0 2px, transparent 4px), radial-gradient(circle at 78% 70%, #c9b8ff 0 2px, transparent 4px); animation: fx-orbit 3.4s linear infinite; }
+.pn-l-card-card-badge-plate > * {}
+.pn-l-card-card-badge-plate::before { background: linear-gradient(115deg, transparent 40%, rgba(255,255,255,.3) 50%, transparent 60%); animation: fx-sweep 4.5s ease-in-out infinite; }
+.pn-l-card-card-badge-plate { 
+  box-shadow: 0 0 14px rgba(124,77,255,.6), inset 0 0 14px rgba(124,77,255,.3);
+}
+.pn-l-card-card-badge-plate::after { inset: -25%; background: radial-gradient(circle at 25% 25%, #c9b8ff 0 2px, transparent 4px), radial-gradient(circle at 78% 70%, #c9b8ff 0 2px, transparent 4px); animation: fx-orbit 3.4s linear infinite; }
+.pn-l-card-card-glass > * {}
+.pn-l-card-card-glass::before { background: linear-gradient(115deg, transparent 35%, rgba(190,235,255,.85) 50%, transparent 65%); animation: fx-sweep 2.16s ease-in-out infinite; }
+.pn-l-card-card-glass { 
+  box-shadow: 0 0 14px rgba(124,77,255,.6), inset 0 0 14px rgba(124,77,255,.3);
+}
+.pn-l-card-card-glass::after { inset: -25%; background: radial-gradient(circle at 25% 25%, #c9b8ff 0 2px, transparent 4px), radial-gradient(circle at 78% 70%, #c9b8ff 0 2px, transparent 4px); animation: fx-orbit 3.4s linear infinite; }
+.pn-l-card-card-night-pass > * {}
+.pn-l-card-card-night-pass::before { background: radial-gradient(circle at 20% 30%, #fff 0 1px, transparent 2px), radial-gradient(circle at 70% 60%, #fff 0 1px, transparent 2px), radial-gradient(ellipse at center, rgba(124,77,255,.5), transparent 70%); animation: fx-drift 6.3s ease-in-out infinite; }
+.pn-l-card-card-night-pass { 
+  box-shadow: 0 0 26px rgba(255,214,10,.6), 0 0 6px rgba(255,255,255,.4), inset 0 0 22px rgba(255,214,10,.35);
+}
+.pn-l-card-card-night-pass::after { inset: -25%; background: radial-gradient(circle at 15% 20%, #fff 0 2px, transparent 4px), radial-gradient(circle at 85% 30%, #ffd60a 0 2px, transparent 4px), radial-gradient(circle at 50% 85%, #fff 0 2px, transparent 4px), radial-gradient(circle at 30% 60%, #56c8ff 0 2px, transparent 4px), radial-gradient(circle at 75% 75%, #ffd60a 0 2px, transparent 4px); animation: fx-orbit 2.2s linear infinite; }
+.pn-l-card-card-night-pass { animation: fx-aura 2.4s ease-in-out infinite; }
+.pn-l-card-card-trophy-case > * {}
+.pn-l-card-card-trophy-case::before { background: linear-gradient(110deg, transparent 30%, rgba(255,226,120,.95) 48%, transparent 66%); animation: fx-sweep 1.96s ease-in-out infinite; }
+.pn-l-card-card-trophy-case { 
+  box-shadow: 0 0 26px rgba(255,214,10,.6), 0 0 6px rgba(255,255,255,.4), inset 0 0 22px rgba(255,214,10,.35);
+}
+.pn-l-card-card-trophy-case::after { inset: -25%; background: radial-gradient(circle at 15% 20%, #fff 0 2px, transparent 4px), radial-gradient(circle at 85% 30%, #ffd60a 0 2px, transparent 4px), radial-gradient(circle at 50% 85%, #fff 0 2px, transparent 4px), radial-gradient(circle at 30% 60%, #56c8ff 0 2px, transparent 4px), radial-gradient(circle at 75% 75%, #ffd60a 0 2px, transparent 4px); animation: fx-orbit 2.2s linear infinite; }
+.pn-l-card-card-trophy-case { animation: fx-aura 2.4s ease-in-out infinite; }
+.pn-l-card-card-holo-card > * {}
+.pn-l-card-card-holo-card::before { background: conic-gradient(from 0deg, #ff6ec7, #ffd60a, #4dffb8, #56c8ff, #b388ff, #ff6ec7); animation: fx-spin 4.2s ease-in-out infinite; }
+.pn-l-card-card-holo-card { 
+  box-shadow: 0 0 26px rgba(255,214,10,.6), 0 0 6px rgba(255,255,255,.4), inset 0 0 22px rgba(255,214,10,.35);
+}
+.pn-l-card-card-holo-card::after { inset: -25%; background: radial-gradient(circle at 15% 20%, #fff 0 2px, transparent 4px), radial-gradient(circle at 85% 30%, #ffd60a 0 2px, transparent 4px), radial-gradient(circle at 50% 85%, #fff 0 2px, transparent 4px), radial-gradient(circle at 30% 60%, #56c8ff 0 2px, transparent 4px), radial-gradient(circle at 75% 75%, #ffd60a 0 2px, transparent 4px); animation: fx-orbit 2.2s linear infinite; }
+.pn-l-card-card-holo-card { animation: fx-aura 2.4s ease-in-out infinite; }
+.pn-l-flourish-flourish-corner-tick > * {}
+.pn-l-flourish-flourish-corner-tick::before { background: radial-gradient(circle at 20% 50%, #ffd60a 0 1.5px, transparent 2.5px); animation: fx-drift 7.2s ease-in-out infinite; }
+.pn-l-flourish-flourish-dot-trail > * {}
+.pn-l-flourish-flourish-dot-trail::before { background: radial-gradient(circle at 20% 50%, #ffd60a 0 1.5px, transparent 2.5px); animation: fx-drift 7.2s ease-in-out infinite; }
+.pn-l-flourish-flourish-scanline > * {}
+.pn-l-flourish-flourish-scanline::before { background: radial-gradient(circle at 20% 50%, #ffd60a 0 1.5px, transparent 2.5px); animation: fx-drift 6s ease-in-out infinite; }
+.pn-l-flourish-flourish-scanline { 
+  box-shadow: 0 0 8px rgba(10,92,255,.5);
+}
+.pn-l-flourish-flourish-sparkle-corners > * {}
+.pn-l-flourish-flourish-sparkle-corners::before { background: radial-gradient(circle at 20% 50%, #ffd60a 0 1.5px, transparent 2.5px); animation: fx-drift 6s ease-in-out infinite; }
+.pn-l-flourish-flourish-sparkle-corners { 
+  box-shadow: 0 0 8px rgba(10,92,255,.5);
+}
+.pn-l-flourish-flourish-pixel-dust > * {}
+.pn-l-flourish-flourish-pixel-dust::before { background: radial-gradient(circle at 20% 50%, #ffd60a 0 1.5px, transparent 2.5px); animation: fx-drift 6s ease-in-out infinite; }
+.pn-l-flourish-flourish-pixel-dust { 
+  box-shadow: 0 0 8px rgba(10,92,255,.5);
+}
+.pn-l-flourish-flourish-frost-ring > * {}
+.pn-l-flourish-flourish-frost-ring::before { background: linear-gradient(115deg, transparent 35%, rgba(190,235,255,.85) 50%, transparent 65%); animation: fx-sweep 2.16s ease-in-out infinite; }
+.pn-l-flourish-flourish-frost-ring { 
+  box-shadow: 0 0 14px rgba(124,77,255,.6), inset 0 0 14px rgba(124,77,255,.3);
+}
+.pn-l-flourish-flourish-frost-ring::after { inset: -25%; background: radial-gradient(circle at 25% 25%, #c9b8ff 0 2px, transparent 4px), radial-gradient(circle at 78% 70%, #c9b8ff 0 2px, transparent 4px); animation: fx-orbit 3.4s linear infinite; }
+.pn-l-flourish-flourish-flame-trail > * {}
+.pn-l-flourish-flourish-flame-trail::before { background: linear-gradient(0deg, rgba(255,90,0,.7), rgba(255,214,10,.25) 60%, transparent); animation: fx-rise 1.26s ease-in-out infinite; }
+.pn-l-flourish-flourish-flame-trail { 
+  box-shadow: 0 0 14px rgba(124,77,255,.6), inset 0 0 14px rgba(124,77,255,.3);
+}
+.pn-l-flourish-flourish-flame-trail::after { inset: -25%; background: radial-gradient(circle at 25% 25%, #c9b8ff 0 2px, transparent 4px), radial-gradient(circle at 78% 70%, #c9b8ff 0 2px, transparent 4px); animation: fx-orbit 3.4s linear infinite; }
+.pn-l-flourish-flourish-star-on-level > * {}
+.pn-l-flourish-flourish-star-on-level::before { background: radial-gradient(circle at 20% 50%, #ffd60a 0 1.5px, transparent 2.5px); animation: fx-drift 5.4s ease-in-out infinite; }
+.pn-l-flourish-flourish-star-on-level { 
+  box-shadow: 0 0 14px rgba(124,77,255,.6), inset 0 0 14px rgba(124,77,255,.3);
+}
+.pn-l-flourish-flourish-star-on-level::after { inset: -25%; background: radial-gradient(circle at 25% 25%, #c9b8ff 0 2px, transparent 4px), radial-gradient(circle at 78% 70%, #c9b8ff 0 2px, transparent 4px); animation: fx-orbit 3.4s linear infinite; }
+.pn-l-flourish-flourish-aura-pulse > * {}
+.pn-l-flourish-flourish-aura-pulse::before { background: radial-gradient(circle at 50% 50%, rgba(10,92,255,.55), transparent 70%); animation: fx-breathe 2.24s ease-in-out infinite; }
+.pn-l-flourish-flourish-aura-pulse { 
+  box-shadow: 0 0 26px rgba(255,214,10,.6), 0 0 6px rgba(255,255,255,.4), inset 0 0 22px rgba(255,214,10,.35);
+}
+.pn-l-flourish-flourish-aura-pulse::after { inset: -25%; background: radial-gradient(circle at 15% 20%, #fff 0 2px, transparent 4px), radial-gradient(circle at 85% 30%, #ffd60a 0 2px, transparent 4px), radial-gradient(circle at 50% 85%, #fff 0 2px, transparent 4px), radial-gradient(circle at 30% 60%, #56c8ff 0 2px, transparent 4px), radial-gradient(circle at 75% 75%, #ffd60a 0 2px, transparent 4px); animation: fx-orbit 2.2s linear infinite; }
+.pn-l-flourish-flourish-aura-pulse { animation: fx-aura 2.4s ease-in-out infinite; }
+.pn-l-flourish-flourish-plasma-trail > * {}
+.pn-l-flourish-flourish-plasma-trail::before { background: conic-gradient(from 0deg, #ff2d95, #00e5ff, #7c4dff, #ff2d95); animation: fx-spin 2.8s ease-in-out infinite; }
+.pn-l-flourish-flourish-plasma-trail { 
+  box-shadow: 0 0 26px rgba(255,214,10,.6), 0 0 6px rgba(255,255,255,.4), inset 0 0 22px rgba(255,214,10,.35);
+}
+.pn-l-flourish-flourish-plasma-trail::after { inset: -25%; background: radial-gradient(circle at 15% 20%, #fff 0 2px, transparent 4px), radial-gradient(circle at 85% 30%, #ffd60a 0 2px, transparent 4px), radial-gradient(circle at 50% 85%, #fff 0 2px, transparent 4px), radial-gradient(circle at 30% 60%, #56c8ff 0 2px, transparent 4px), radial-gradient(circle at 75% 75%, #ffd60a 0 2px, transparent 4px); animation: fx-orbit 2.2s linear infinite; }
+.pn-l-flourish-flourish-plasma-trail { animation: fx-aura 2.4s ease-in-out infinite; }
+.pn-l-intro-intro-tip-off-card > * {}
+.pn-l-intro-intro-tip-off-card::before { background: linear-gradient(180deg, rgba(255,255,255,.5), transparent); animation: fx-enter 1.44s ease-in-out both; }
+.pn-l-intro-intro-door-swing > * {}
+.pn-l-intro-intro-door-swing::before { background: linear-gradient(180deg, rgba(255,255,255,.5), transparent); animation: fx-enter 1.44s ease-in-out both; }
+.pn-l-intro-intro-spotlight > * {}
+.pn-l-intro-intro-spotlight::before { background: linear-gradient(180deg, rgba(255,255,255,.5), transparent); animation: fx-enter 1.2s ease-in-out both; }
+.pn-l-intro-intro-spotlight { 
+  box-shadow: 0 0 8px rgba(10,92,255,.5);
+}
+.pn-l-intro-intro-ticket-punch > * {}
+.pn-l-intro-intro-ticket-punch::before { background: linear-gradient(180deg, rgba(255,255,255,.5), transparent); animation: fx-enter 1.2s ease-in-out both; }
+.pn-l-intro-intro-ticket-punch { 
+  box-shadow: 0 0 8px rgba(10,92,255,.5);
+}
+.pn-l-intro-intro-floodlights > * {}
+.pn-l-intro-intro-floodlights::before { background: linear-gradient(180deg, rgba(255,255,255,.5), transparent); animation: fx-enter 1.08s ease-in-out both; }
+.pn-l-intro-intro-floodlights { 
+  box-shadow: 0 0 14px rgba(124,77,255,.6), inset 0 0 14px rgba(124,77,255,.3);
+}
+.pn-l-intro-intro-floodlights::after { inset: -25%; background: radial-gradient(circle, #fff 0 2px, transparent 3px), radial-gradient(circle at 50% 0%, #ffd60a 0 3px, transparent 4px), radial-gradient(circle at 50% 100%, #ffd60a 0 3px, transparent 4px), radial-gradient(circle at 0% 50%, #56c8ff 0 3px, transparent 4px), radial-gradient(circle at 100% 50%, #56c8ff 0 3px, transparent 4px); animation: fx-burst-sparks 1.2s ease-out both; }
+.pn-l-intro-intro-scoreboard-flip > * {}
+.pn-l-intro-intro-scoreboard-flip::before { background: linear-gradient(180deg, rgba(255,255,255,.5), transparent); animation: fx-enter 1.08s ease-in-out both; }
+.pn-l-intro-intro-scoreboard-flip { 
+  box-shadow: 0 0 14px rgba(124,77,255,.6), inset 0 0 14px rgba(124,77,255,.3);
+}
+.pn-l-intro-intro-scoreboard-flip::after { inset: -25%; background: radial-gradient(circle, #fff 0 2px, transparent 3px), radial-gradient(circle at 50% 0%, #ffd60a 0 3px, transparent 4px), radial-gradient(circle at 50% 100%, #ffd60a 0 3px, transparent 4px), radial-gradient(circle at 0% 50%, #56c8ff 0 3px, transparent 4px), radial-gradient(circle at 100% 50%, #56c8ff 0 3px, transparent 4px); animation: fx-burst-sparks 1.2s ease-out both; }
+.pn-l-intro-intro-court-slam > * {}
+.pn-l-intro-intro-court-slam::before { background: linear-gradient(90deg, rgba(255,255,255,.9), rgba(255,214,10,.9), rgba(255,255,255,.9)); animation: fx-strobe 0.77s ease-in-out both; }
+.pn-l-intro-intro-court-slam { 
+  box-shadow: 0 0 26px rgba(255,214,10,.6), 0 0 6px rgba(255,255,255,.4), inset 0 0 22px rgba(255,214,10,.35);
+}
+.pn-l-intro-intro-court-slam::after { inset: -25%; background: radial-gradient(circle, #fff 0 2px, transparent 3px), radial-gradient(circle at 50% 0%, #ffd60a 0 3px, transparent 4px), radial-gradient(circle at 50% 100%, #ffd60a 0 3px, transparent 4px), radial-gradient(circle at 0% 50%, #56c8ff 0 3px, transparent 4px), radial-gradient(circle at 100% 50%, #56c8ff 0 3px, transparent 4px); animation: fx-burst-sparks 0.9s ease-out both; }
+.pn-l-intro-intro-silent-fade > * {}
+.pn-l-intro-intro-silent-fade::before { background: radial-gradient(circle, rgba(124,77,255,.6), rgba(10,0,30,.9) 70%); animation: fx-breathe 2.52s ease-in-out both; }
+.pn-l-intro-intro-silent-fade { 
+  box-shadow: 0 0 26px rgba(255,214,10,.6), 0 0 6px rgba(255,255,255,.4), inset 0 0 22px rgba(255,214,10,.35);
+}
+.pn-l-intro-intro-silent-fade::after { inset: -25%; background: radial-gradient(circle, #fff 0 2px, transparent 3px), radial-gradient(circle at 50% 0%, #ffd60a 0 3px, transparent 4px), radial-gradient(circle at 50% 100%, #ffd60a 0 3px, transparent 4px), radial-gradient(circle at 0% 50%, #56c8ff 0 3px, transparent 4px), radial-gradient(circle at 100% 50%, #56c8ff 0 3px, transparent 4px); animation: fx-burst-sparks 0.9s ease-out both; }
+.pn-l-pop-pop-plain-pop > * {}
+.pn-l-pop-pop-plain-pop::before { background: radial-gradient(circle, rgba(255,214,10,.6), transparent 60%); animation: fx-burst 0.96s ease-in-out both; }
+.pn-l-pop-pop-bubble > * {}
+.pn-l-pop-pop-bubble::before { background: radial-gradient(circle, rgba(255,214,10,.6), transparent 60%); animation: fx-burst 0.96s ease-in-out both; }
+.pn-l-pop-pop-double-pop > * {}
+.pn-l-pop-pop-double-pop::before { background: radial-gradient(circle, rgba(255,214,10,.6), transparent 60%); animation: fx-burst 0.8s ease-in-out both; }
+.pn-l-pop-pop-double-pop { 
+  box-shadow: 0 0 8px rgba(10,92,255,.5);
+}
+.pn-l-pop-pop-neon-pop > * {}
+.pn-l-pop-pop-neon-pop::before { background: linear-gradient(90deg, transparent, rgba(0,255,224,.55), transparent); animation: fx-flicker 2.6s ease-in-out both; }
+.pn-l-pop-pop-neon-pop { 
+  box-shadow: 0 0 8px rgba(10,92,255,.5);
+}
+.pn-l-pop-pop-ember-burst > * {}
+.pn-l-pop-pop-ember-burst::before { background: radial-gradient(circle at 30% 90%, #ffb000 0 2px, transparent 3px), radial-gradient(circle at 70% 95%, #ff5a00 0 2px, transparent 3px); animation: fx-rise 1.8s ease-in-out both; }
+.pn-l-pop-pop-ember-burst { 
+  box-shadow: 0 0 14px rgba(124,77,255,.6), inset 0 0 14px rgba(124,77,255,.3);
+}
+.pn-l-pop-pop-ember-burst::after { inset: -25%; background: radial-gradient(circle, #fff 0 2px, transparent 3px), radial-gradient(circle at 50% 0%, #ffd60a 0 3px, transparent 4px), radial-gradient(circle at 50% 100%, #ffd60a 0 3px, transparent 4px), radial-gradient(circle at 0% 50%, #56c8ff 0 3px, transparent 4px), radial-gradient(circle at 100% 50%, #56c8ff 0 3px, transparent 4px); animation: fx-burst-sparks 1.2s ease-out both; }
+.pn-l-pop-pop-ice-shatter > * {}
+.pn-l-pop-pop-ice-shatter::before { background: linear-gradient(115deg, transparent 35%, rgba(190,235,255,.85) 50%, transparent 65%); animation: fx-sweep 2.16s ease-in-out both; }
+.pn-l-pop-pop-ice-shatter { 
+  box-shadow: 0 0 14px rgba(124,77,255,.6), inset 0 0 14px rgba(124,77,255,.3);
+}
+.pn-l-pop-pop-ice-shatter::after { inset: -25%; background: radial-gradient(circle, #fff 0 2px, transparent 3px), radial-gradient(circle at 50% 0%, #ffd60a 0 3px, transparent 4px), radial-gradient(circle at 50% 100%, #ffd60a 0 3px, transparent 4px), radial-gradient(circle at 0% 50%, #56c8ff 0 3px, transparent 4px), radial-gradient(circle at 100% 50%, #56c8ff 0 3px, transparent 4px); animation: fx-burst-sparks 1.2s ease-out both; }
+.pn-l-pop-pop-glitch-pop > * {}
+.pn-l-pop-pop-glitch-pop::before { background: repeating-linear-gradient(0deg, rgba(255,45,149,.35) 0 2px, transparent 2px 5px); animation: fx-jitter 1.12s ease-in-out both; }
+.pn-l-pop-pop-glitch-pop { 
+  box-shadow: 0 0 26px rgba(255,214,10,.6), 0 0 6px rgba(255,255,255,.4), inset 0 0 22px rgba(255,214,10,.35);
+}
+.pn-l-pop-pop-glitch-pop::after { inset: -25%; background: radial-gradient(circle, #fff 0 2px, transparent 3px), radial-gradient(circle at 50% 0%, #ffd60a 0 3px, transparent 4px), radial-gradient(circle at 50% 100%, #ffd60a 0 3px, transparent 4px), radial-gradient(circle at 0% 50%, #56c8ff 0 3px, transparent 4px), radial-gradient(circle at 100% 50%, #56c8ff 0 3px, transparent 4px); animation: fx-burst-sparks 0.9s ease-out both; }
+.pn-l-pop-pop-gold-burst > * {}
+.pn-l-pop-pop-gold-burst::before { background: linear-gradient(110deg, transparent 30%, rgba(255,226,120,.95) 48%, transparent 66%); animation: fx-sweep 1.96s ease-in-out both; }
+.pn-l-pop-pop-gold-burst { 
+  box-shadow: 0 0 26px rgba(255,214,10,.6), 0 0 6px rgba(255,255,255,.4), inset 0 0 22px rgba(255,214,10,.35);
+}
+.pn-l-pop-pop-gold-burst::after { inset: -25%; background: radial-gradient(circle, #fff 0 2px, transparent 3px), radial-gradient(circle at 50% 0%, #ffd60a 0 3px, transparent 4px), radial-gradient(circle at 50% 100%, #ffd60a 0 3px, transparent 4px), radial-gradient(circle at 0% 50%, #56c8ff 0 3px, transparent 4px), radial-gradient(circle at 100% 50%, #56c8ff 0 3px, transparent 4px); animation: fx-burst-sparks 0.9s ease-out both; }
+.pn-l-row-row-plain-row > * {}
+.pn-l-row-row-plain-row::before { background: linear-gradient(90deg, transparent, rgba(10,92,255,.45), transparent); animation: fx-slide 2.64s ease-in-out infinite; }
+.pn-l-row-row-striped > * {}
+.pn-l-row-row-striped::before { background: linear-gradient(90deg, transparent, rgba(10,92,255,.45), transparent); animation: fx-slide 2.64s ease-in-out infinite; }
+.pn-l-row-row-tape-row > * {}
+.pn-l-row-row-tape-row::before { background: linear-gradient(90deg, transparent, rgba(10,92,255,.45), transparent); animation: fx-slide 2.2s ease-in-out infinite; }
+.pn-l-row-row-tape-row { 
+  box-shadow: 0 0 8px rgba(10,92,255,.5);
+}
+.pn-l-row-row-gradient-bar > * {}
+.pn-l-row-row-gradient-bar::before { background: linear-gradient(90deg, transparent, rgba(10,92,255,.45), transparent); animation: fx-slide 2.2s ease-in-out infinite; }
+.pn-l-row-row-gradient-bar { 
+  box-shadow: 0 0 8px rgba(10,92,255,.5);
+}
+.pn-l-row-row-split-bar > * {}
+.pn-l-row-row-split-bar::before { background: linear-gradient(90deg, transparent, rgba(10,92,255,.45), transparent); animation: fx-slide 1.98s ease-in-out infinite; }
+.pn-l-row-row-split-bar { 
+  box-shadow: 0 0 14px rgba(124,77,255,.6), inset 0 0 14px rgba(124,77,255,.3);
+}
+.pn-l-row-row-split-bar::after { inset: -25%; background: radial-gradient(circle at 25% 25%, #c9b8ff 0 2px, transparent 4px), radial-gradient(circle at 78% 70%, #c9b8ff 0 2px, transparent 4px); animation: fx-orbit 3.4s linear infinite; }
+.pn-l-row-row-gold-rail > * {}
+.pn-l-row-row-gold-rail::before { background: linear-gradient(110deg, transparent 30%, rgba(255,226,120,.95) 48%, transparent 66%); animation: fx-sweep 2.52s ease-in-out infinite; }
+.pn-l-row-row-gold-rail { 
+  box-shadow: 0 0 14px rgba(124,77,255,.6), inset 0 0 14px rgba(124,77,255,.3);
+}
+.pn-l-row-row-gold-rail::after { inset: -25%; background: radial-gradient(circle at 25% 25%, #c9b8ff 0 2px, transparent 4px), radial-gradient(circle at 78% 70%, #c9b8ff 0 2px, transparent 4px); animation: fx-orbit 3.4s linear infinite; }
+.pn-l-row-row-ice-rail > * {}
+.pn-l-row-row-ice-rail::before { background: linear-gradient(115deg, transparent 35%, rgba(190,235,255,.85) 50%, transparent 65%); animation: fx-sweep 2.16s ease-in-out infinite; }
+.pn-l-row-row-ice-rail { 
+  box-shadow: 0 0 14px rgba(124,77,255,.6), inset 0 0 14px rgba(124,77,255,.3);
+}
+.pn-l-row-row-ice-rail::after { inset: -25%; background: radial-gradient(circle at 25% 25%, #c9b8ff 0 2px, transparent 4px), radial-gradient(circle at 78% 70%, #c9b8ff 0 2px, transparent 4px); animation: fx-orbit 3.4s linear infinite; }
+.pn-l-row-row-neon-rail > * {}
+.pn-l-row-row-neon-rail::before { background: linear-gradient(90deg, transparent, rgba(0,255,224,.55), transparent); animation: fx-flicker 1.82s ease-in-out infinite; }
+.pn-l-row-row-neon-rail { 
+  box-shadow: 0 0 26px rgba(255,214,10,.6), 0 0 6px rgba(255,255,255,.4), inset 0 0 22px rgba(255,214,10,.35);
+}
+.pn-l-row-row-neon-rail::after { inset: -25%; background: radial-gradient(circle at 15% 20%, #fff 0 2px, transparent 4px), radial-gradient(circle at 85% 30%, #ffd60a 0 2px, transparent 4px), radial-gradient(circle at 50% 85%, #fff 0 2px, transparent 4px), radial-gradient(circle at 30% 60%, #56c8ff 0 2px, transparent 4px), radial-gradient(circle at 75% 75%, #ffd60a 0 2px, transparent 4px); animation: fx-orbit 2.2s linear infinite; }
+.pn-l-row-row-neon-rail { animation: fx-aura 2.4s ease-in-out infinite; }
+.pn-l-row-row-ember-rail > * {}
+.pn-l-row-row-ember-rail::before { background: radial-gradient(circle at 30% 90%, #ffb000 0 2px, transparent 3px), radial-gradient(circle at 70% 95%, #ff5a00 0 2px, transparent 3px); animation: fx-rise 1.4s ease-in-out infinite; }
+.pn-l-row-row-ember-rail { 
+  box-shadow: 0 0 26px rgba(255,214,10,.6), 0 0 6px rgba(255,255,255,.4), inset 0 0 22px rgba(255,214,10,.35);
+}
+.pn-l-row-row-ember-rail::after { inset: -25%; background: radial-gradient(circle at 15% 20%, #fff 0 2px, transparent 4px), radial-gradient(circle at 85% 30%, #ffd60a 0 2px, transparent 4px), radial-gradient(circle at 50% 85%, #fff 0 2px, transparent 4px), radial-gradient(circle at 30% 60%, #56c8ff 0 2px, transparent 4px), radial-gradient(circle at 75% 75%, #ffd60a 0 2px, transparent 4px); animation: fx-orbit 2.2s linear infinite; }
+.pn-l-row-row-ember-rail { animation: fx-aura 2.4s ease-in-out infinite; }
+.pn-l-row-row-void-rail > * {}
+.pn-l-row-row-void-rail::before { background: radial-gradient(circle, rgba(124,77,255,.6), rgba(10,0,30,.9) 70%); animation: fx-breathe 2.52s ease-in-out infinite; }
+.pn-l-row-row-void-rail { 
+  box-shadow: 0 0 26px rgba(255,214,10,.6), 0 0 6px rgba(255,255,255,.4), inset 0 0 22px rgba(255,214,10,.35);
+}
+.pn-l-row-row-void-rail::after { inset: -25%; background: radial-gradient(circle at 15% 20%, #fff 0 2px, transparent 4px), radial-gradient(circle at 85% 30%, #ffd60a 0 2px, transparent 4px), radial-gradient(circle at 50% 85%, #fff 0 2px, transparent 4px), radial-gradient(circle at 30% 60%, #56c8ff 0 2px, transparent 4px), radial-gradient(circle at 75% 75%, #ffd60a 0 2px, transparent 4px); animation: fx-orbit 2.2s linear infinite; }
+.pn-l-row-row-void-rail { animation: fx-aura 2.4s ease-in-out infinite; }
+.pn-l-ring-ring-thin-ring > * {}
+.pn-l-ring-ring-thin-ring::before { background: conic-gradient(from 0deg, transparent 0 70%, rgba(255,214,10,.9) 80%, transparent 90%); animation: fx-spin 4.8s ease-in-out infinite; }
+.pn-l-ring-ring-dashed-ring > * {}
+.pn-l-ring-ring-dashed-ring::before { background: conic-gradient(from 0deg, transparent 0 70%, rgba(255,214,10,.9) 80%, transparent 90%); animation: fx-spin 4.8s ease-in-out infinite; }
+.pn-l-ring-ring-double-ring > * {}
+.pn-l-ring-ring-double-ring::before { background: conic-gradient(from 0deg, transparent 0 70%, rgba(255,214,10,.9) 80%, transparent 90%); animation: fx-spin 4s ease-in-out infinite; }
+.pn-l-ring-ring-double-ring { 
+  box-shadow: 0 0 8px rgba(10,92,255,.5);
+}
+.pn-l-ring-ring-hoop-ring > * {}
+.pn-l-ring-ring-hoop-ring::before { background: conic-gradient(from 0deg, transparent 0 70%, rgba(255,214,10,.9) 80%, transparent 90%); animation: fx-spin 4s ease-in-out infinite; }
+.pn-l-ring-ring-hoop-ring { 
+  box-shadow: 0 0 8px rgba(10,92,255,.5);
+}
+.pn-l-ring-ring-pulse-ring > * {}
+.pn-l-ring-ring-pulse-ring::before { background: radial-gradient(circle, rgba(255,214,10,.5) 0 30%, transparent 60%); animation: fx-pulse-ring 1.98s ease-in-out infinite; }
+.pn-l-ring-ring-pulse-ring { 
+  box-shadow: 0 0 14px rgba(124,77,255,.6), inset 0 0 14px rgba(124,77,255,.3);
+}
+.pn-l-ring-ring-pulse-ring::after { inset: -25%; background: radial-gradient(circle at 25% 25%, #c9b8ff 0 2px, transparent 4px), radial-gradient(circle at 78% 70%, #c9b8ff 0 2px, transparent 4px); animation: fx-orbit 3.4s linear infinite; }
+.pn-l-ring-ring-flame-ring > * {}
+.pn-l-ring-ring-flame-ring::before { background: linear-gradient(0deg, rgba(255,90,0,.7), rgba(255,214,10,.25) 60%, transparent); animation: fx-rise 1.26s ease-in-out infinite; }
+.pn-l-ring-ring-flame-ring { 
+  box-shadow: 0 0 14px rgba(124,77,255,.6), inset 0 0 14px rgba(124,77,255,.3);
+}
+.pn-l-ring-ring-flame-ring::after { inset: -25%; background: radial-gradient(circle at 25% 25%, #c9b8ff 0 2px, transparent 4px), radial-gradient(circle at 78% 70%, #c9b8ff 0 2px, transparent 4px); animation: fx-orbit 3.4s linear infinite; }
+.pn-l-ring-ring-ice-ring > * {}
+.pn-l-ring-ring-ice-ring::before { background: linear-gradient(115deg, transparent 35%, rgba(190,235,255,.85) 50%, transparent 65%); animation: fx-sweep 1.68s ease-in-out infinite; }
+.pn-l-ring-ring-ice-ring { 
+  box-shadow: 0 0 26px rgba(255,214,10,.6), 0 0 6px rgba(255,255,255,.4), inset 0 0 22px rgba(255,214,10,.35);
+}
+.pn-l-ring-ring-ice-ring::after { inset: -25%; background: radial-gradient(circle at 15% 20%, #fff 0 2px, transparent 4px), radial-gradient(circle at 85% 30%, #ffd60a 0 2px, transparent 4px), radial-gradient(circle at 50% 85%, #fff 0 2px, transparent 4px), radial-gradient(circle at 30% 60%, #56c8ff 0 2px, transparent 4px), radial-gradient(circle at 75% 75%, #ffd60a 0 2px, transparent 4px); animation: fx-orbit 2.2s linear infinite; }
+.pn-l-ring-ring-ice-ring { animation: fx-aura 2.4s ease-in-out infinite; }
+.pn-l-ring-ring-gold-ring > * {}
+.pn-l-ring-ring-gold-ring::before { background: linear-gradient(110deg, transparent 30%, rgba(255,226,120,.95) 48%, transparent 66%); animation: fx-sweep 1.96s ease-in-out infinite; }
+.pn-l-ring-ring-gold-ring { 
+  box-shadow: 0 0 26px rgba(255,214,10,.6), 0 0 6px rgba(255,255,255,.4), inset 0 0 22px rgba(255,214,10,.35);
+}
+.pn-l-ring-ring-gold-ring::after { inset: -25%; background: radial-gradient(circle at 15% 20%, #fff 0 2px, transparent 4px), radial-gradient(circle at 85% 30%, #ffd60a 0 2px, transparent 4px), radial-gradient(circle at 50% 85%, #fff 0 2px, transparent 4px), radial-gradient(circle at 30% 60%, #56c8ff 0 2px, transparent 4px), radial-gradient(circle at 75% 75%, #ffd60a 0 2px, transparent 4px); animation: fx-orbit 2.2s linear infinite; }
+.pn-l-ring-ring-gold-ring { animation: fx-aura 2.4s ease-in-out infinite; }
+.pn-l-ring-ring-holo-ring > * {}
+.pn-l-ring-ring-holo-ring::before { background: conic-gradient(from 0deg, #ff6ec7, #ffd60a, #4dffb8, #56c8ff, #b388ff, #ff6ec7); animation: fx-spin 4.2s ease-in-out infinite; }
+.pn-l-ring-ring-holo-ring { 
+  box-shadow: 0 0 26px rgba(255,214,10,.6), 0 0 6px rgba(255,255,255,.4), inset 0 0 22px rgba(255,214,10,.35);
+}
+.pn-l-ring-ring-holo-ring::after { inset: -25%; background: radial-gradient(circle at 15% 20%, #fff 0 2px, transparent 4px), radial-gradient(circle at 85% 30%, #ffd60a 0 2px, transparent 4px), radial-gradient(circle at 50% 85%, #fff 0 2px, transparent 4px), radial-gradient(circle at 30% 60%, #56c8ff 0 2px, transparent 4px), radial-gradient(circle at 75% 75%, #ffd60a 0 2px, transparent 4px); animation: fx-orbit 2.2s linear infinite; }
+.pn-l-ring-ring-holo-ring { animation: fx-aura 2.4s ease-in-out infinite; }
+.pn-l-ring-ring-rainbow-ring > * {}
+.pn-l-ring-ring-rainbow-ring::before { background: conic-gradient(from 0deg, #ff2d95, #ffd60a, #4dffb8, #56c8ff, #b388ff, #ff2d95); animation: fx-spin 2.1s ease-in-out infinite; }
+.pn-l-ring-ring-rainbow-ring { 
+  box-shadow: 0 0 26px rgba(255,214,10,.6), 0 0 6px rgba(255,255,255,.4), inset 0 0 22px rgba(255,214,10,.35);
+}
+.pn-l-ring-ring-rainbow-ring::after { inset: -25%; background: radial-gradient(circle at 15% 20%, #fff 0 2px, transparent 4px), radial-gradient(circle at 85% 30%, #ffd60a 0 2px, transparent 4px), radial-gradient(circle at 50% 85%, #fff 0 2px, transparent 4px), radial-gradient(circle at 30% 60%, #56c8ff 0 2px, transparent 4px), radial-gradient(circle at 75% 75%, #ffd60a 0 2px, transparent 4px); animation: fx-orbit 2.2s linear infinite; }
+.pn-l-ring-ring-rainbow-ring { animation: fx-aura 2.4s ease-in-out infinite; }
 
-/* Reduced motion (OS setting) behaves the same as Calm */
+/* Reduced motion: keep the static look, stop all motion */
 @media (prefers-reduced-motion: reduce) {
-  [class*="fx-"], [class*="fx-"]::before, [class*="fx-"]::after { animation: none !important; transition: none !important; }
-  .fx-card, .fx-layer { transform: none !important; }
-  .fx-moment-sweep { display: none; }
+  [class*="pn-l-"], [class*="pn-l-"]::before, [class*="pn-l-"]::after, .fx-unlock, .fx-unlock::after { animation: none !important; }
 }
 
-/* Hidden tab: loops pause, then resume when the tab is back */
-html[data-fx-hidden="1"] [class*="fx-"], html[data-fx-hidden="1"] [class*="fx-"]::before, html[data-fx-hidden="1"] [class*="fx-"]::after { animation-play-state: paused !important; }
+/* 16 Nov fix: gold foil must read gold, not the default blue card base. */
+.pn-l-background-bg-gold-foil { background: linear-gradient(135deg, #3a2e00 0%, #14110a 60%, #0E0E0E 100%) !important; }
 
-/* 72t: the top preview shows every worn art layer. Tinted by the item's tier. */
-.banner.pv-effect { box-shadow: 0 0 18px 4px var(--pv, #FFD400) inset, 0 0 12px 2px var(--pv, #FFD400); }
-.banner.pv-card .fx-card { outline: 2px dashed var(--pv, #FFD400); outline-offset: -8px; }
-.banner.pv-name .fx-title { color: var(--pv, #FFD400); letter-spacing: .12em; }
-.banner.pv-row::after { content: ""; position: absolute; left: 12px; right: 12px; bottom: 6px; height: 4px; border-radius: 2px; background: var(--pv, #FFD400); }
-.banner.pv-emblem .fx-emblem { background: var(--pv, #FFD400); color: #0E0E0E; }
-.banner { position: relative; }
-.banner.pv-tier-common { --pv: #B8B8B0; }
-.banner.pv-tier-rare { --pv: #4DA3FF; }
-.banner.pv-tier-epic { --pv: #FFD400; }
-.banner.pv-tier-legend { --pv: #FF8A00; }
-
-.banner .pv-tag { position: absolute; right: 10px; top: 8px; font-size: 14px; background: #0E0E0E; color: #F5F5F0; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--pv, #FFD400); max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* 16 Nov fix: gold foil must read gold, not the default blue card base. */
+.pn-l-background-bg-gold-foil { background: linear-gradient(135deg, #3a2e00 0%, #14110a 60%, #0E0E0E 100%) !important; }

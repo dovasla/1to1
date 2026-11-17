@@ -60,13 +60,22 @@
     try { return PN.html(props); } catch (e) { return ''; }
   }
 
+  // The worn card: the player's own look (banner, name, row, and every worn layer), drawn by PlayerName.
+  function wornHtml(state) {
+    var PN = window.PlayerName, w = state && state.worn;
+    if (!PN || !w || (!w.banner && !w.nameStyle && !w.rowEffect && !(w.layers && Object.keys(w.layers).length))) return '';
+    var props = { name: state.name || 'You', level: Number(state.level) || 1, stars: Number(state.stars) || 0, size: 'compact',
+      banner: '', nameStyle: w.nameStyle || '', rowEffect: w.rowEffect || '', layers: w.layers || {} };
+    try { return PN.html(props); } catch (e) { return ''; }
+  }
+
   // The strip. Hidden (returns '') while a game is live. One tap opens the Shop (#shop).
   // The picture is the next look (lookHtml). If there is no real look to draw, there is no picture box at all.
   function html(state) {
     if (!state || state.live) return '';
     var coins = Number(state.coins) || 0;
     var ln = line(state);
-    var pic = lookHtml(nextLook(state), state);
+    var pic = wornHtml(state) || lookHtml(nextLook(state), state);
     return '<a class="sv-strip" href="#shop" data-go="shop" aria-label="Shop, ' + esc(coins) + ' coins">' +
       (pic ? '<span class="sv-pic" aria-hidden="true">' + pic + '</span>' : '') +
       '<span class="sv-body"><b class="sv-title">Shop</b>' +

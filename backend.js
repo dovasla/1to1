@@ -397,7 +397,7 @@
           return { ok: true, players: (j.rows || []).map(function (r) {
             var hidden = r.name === 'Player';
             return { id: r.public_id || r.name, name: r.name, level: r.level, icon: r.icon || '', stars: 0, points: 0, wins: 0,
-              visible: !hidden, under18: false, look: {}, me: r.me === true };
+              visible: !hidden, under18: false, look: (!hidden && r.equipped) || {}, me: r.me === true };
           }) };
         }, function () { return { ok: false, players: [] }; });
       },

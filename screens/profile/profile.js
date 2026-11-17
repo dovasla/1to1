@@ -88,7 +88,7 @@
 
   function starsHtml(n) {
     var s = '';
-    for (var i = 1; i <= STAR_MAX; i++) s += i <= n ? '★' : '<span class="off">☆</span>';
+    for (var i = 1; i <= STAR_MAX; i++) s += i <= n ? '★' : '<span class="off" aria-hidden="true">☆</span>';
     return s;
   }
 

@@ -162,7 +162,9 @@
   // in mock mode there is one in-memory copy that follows the demo player's level and stars.
   var shopBe = null;
   function readCoinsFrom(r) {
+    if (r && r.state && r.state.equipped) { S.shopEquipped = slotsFromShop(r.state.equipped); }
     if (r && r.state && typeof r.state.coins === 'number') { S.coins = r.state.coins; refreshCoins(); }
+    else if (S.shopEquipped) { refreshCoins(); }
     return r;
   }
   function ensureShop() {
@@ -181,11 +183,18 @@
   // name() gives the Shop frame the signed-in player's own name (never the demo name).
   // 72r4: the shop reports its equipped state here, so Profile shows what the shop shows.
   var SHOP_SLOT_LAYER = { banner: 'background', name: 'name', calling: 'card', row: 'row', clan: 'title' };
+  // Stage 1 (card builder): every worn layer reaches the card, not only the five old slots.
+  var SHOP_LAYERS = ['background', 'frame', 'emblem', 'title', 'effect', 'name', 'card', 'flourish', 'row', 'ring', 'intro', 'pop'];
   function slotsFromShop(eq) {
     var out = {};
     Object.keys(SHOP_SLOT_LAYER).forEach(function (slot) {
       var id = eq[SHOP_SLOT_LAYER[slot] && ('l_' + SHOP_SLOT_LAYER[slot])] || eq[slot];
       if (id) out[slot] = id;
+    });
+    out.layers = {};
+    SHOP_LAYERS.forEach(function (layer) {
+      var id = eq['l_' + layer];
+      if (id) out.layers[layer] = id;
     });
     return out;
   }
@@ -267,6 +276,22 @@
     loadBoard();
   }
 
+  // Reads player_profile (totals and nights). Fills Home's games, wins and last run, and the Profile numbers.
+  function loadProfileStats() {
+    var t = readToken();
+    if (!t || !be.rpc) return;
+    be.rpc('player_profile', { p_token: t }).then(function (r) {
+      if (!r || r.ok === false) return;
+      S.profileStats = r;
+      if (S.home) S.home.update(homeData(Date.now()));
+      // Gap 4 (72v): my details come back from the server on sign-in (player_get_profile, migration-56).
+      be.rpc('player_get_profile', { p_token: t }).then(function (p) {
+        if (p && p.ok === true) { S.nickname = p.nickname || ''; S.teamPref = p.team_pref || 'any'; if (S.moreScreen) S.moreScreen.update(moreData()); }
+      }).catch(function () { /* no saved details yet: keep what the phone has */ });
+      var prof = $('profile'); if (prof && prof.childNodes.length) renderProfile();
+    }).catch(function () { /* Home keeps its zeros and no last-run card when the read fails */ });
+  }
+
   function loadRsvp() {
     var t = readToken();
     if (!t || !be.rsvpList) return;
@@ -310,13 +335,24 @@
     return DN[new Date(Date.UTC(y, m, d)).getUTCDay()] + ' ' + d + ' ' + MN[m] + ', ' + ((hh % 12) || 12) + ':' + mm + (hh >= 12 ? 'pm' : 'am');
   }
 
+  // Fix 2: last run card from the newest night in player_profile (no card when no games yet).
+  function lastNightOf() {
+    var n = ((S.profileStats || {}).nights || [])[0];
+    if (!n || !(Number(n.games) > 0)) return null;
+    return { xp: Number(n.xp || n.points) || 0, games: Number(n.games) || 0, wins: Number(n.wins) || 0 };
+  }
+
   function homeData(now) {
     var game = nextGame(now);
     var games = (S.night && S.night.games) || [];
     return {
       rsvp: S.rsvp,
       rsvpError: S.rsvpError,
-      player: { name: fullName(), banner: '', nameStyle: '', clanTag: '', skill: skillText(S.me && S.me.level), games: 0, wins: 0 },
+      shopWorn: S.shopEquipped || {},
+      player: Object.assign({ name: fullName(), banner: '', nameStyle: '', clanTag: '', skill: skillText(S.me && S.me.level), games: Number(((S.profileStats || {}).totals || {}).games) || 0, wins: Number(((S.profileStats || {}).totals || {}).wins) || 0 },
+        { banner: '', nameStyle: (S.shopEquipped && S.shopEquipped.name) || '',
+          rowEffect: (S.shopEquipped && S.shopEquipped.row) || '', callingCard: (S.shopEquipped && S.shopEquipped.calling) || '',
+          layers: (S.shopEquipped && S.shopEquipped.layers) || {} }),
       run: S.run,
       coins: typeof S.coins === 'number' ? S.coins : null,   // 72g: null until the shop read answers, so Home shows a dash, not 0
       next: game ? nextCard(game, games) : null,
@@ -328,7 +364,7 @@
         var lab = NightShape.rowLabel(g, S.me);
         return { no: g.no, time: hhmm(g.startsAt), vs: lab.vs, versus: lab.versus, state: state };
       }),
-      lastNight: null,
+      lastNight: lastNightOf(),
       live: S.live,
       pay: payData(),
       checkedIn: readCheckedIn(),
@@ -413,10 +449,18 @@
     if (!m) return '';
     return new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' });
   }
+  // Gap 3 (72v): one claim at a time (no double send on a double tap), and a failed read shows the error instead of nothing.
   function claimFromHome() {
+    if (S.claimBusy) return;
+    S.claimBusy = true;
     S.payErr = false;
+    // Review fix (72z): a hung request on a bad signal must not block the button for good. Free it after 15 s.
+    var claimGuard = setTimeout(function () { S.claimBusy = false; }, 15000);
     moreHandlers.claimPaid(NIGHT_ID).then(function (r) {
       S.payErr = !(r && r.ok);
+    }, function () { S.payErr = true; }).then(function () {
+      clearTimeout(claimGuard);
+      S.claimBusy = false;
       if (S.home) S.home.update(homeData(Date.now()));
       placeHomeExtras();
       updateTabDots();
@@ -1213,11 +1257,17 @@
         return r;
       });
     },
+    // Gap 4 (72v): saved to the online database (player_save_profile, migration-56). If that function is not there yet,
+    // the answer is still memory-only and no error is shown, as before.
     saveProfile: function (next) {
-      // Memory only for now. Saving to the online database is not wired yet.
       S.nickname = next.nickname;
       S.teamPref = next.teamPref;
-      return Promise.resolve({ ok: true });
+      var t = readToken();
+      if (!t || !be.rpc) return Promise.resolve({ ok: true });
+      return be.rpc('player_save_profile', { p_token: t, p_nickname: next.nickname || '', p_team_pref: next.teamPref || 'any' }).then(function (r) {
+        if (r && r.reason === 'bad-nickname') return { ok: false, reason: 'bad-nickname' };
+        return { ok: true };
+      }, function () { return { ok: true }; });
     },
     setBright: function (on) { var v = on ? 'light' : 'dark'; applyTheme(v); saveTheme(v); },
     // Run alerts: there is no off switch in the app. This only turns them on (asks the phone for permission).
@@ -1257,6 +1307,7 @@
     S.run = myRun();
     ensureShop().load().catch(function () { /* the shop shows its own error when opened; a failed startup read is not fatal */ });
     loadRsvp();
+    loadProfileStats();
     loadBoard();
     // P5b: recap and MVP vote on Home. Reads through be.rpc (live names only), 12 s timeout inside the loader.
     if (window.PlayerRecapBox && $('recapBox') && !S.recapBox) {
@@ -1271,6 +1322,7 @@
     }
     checkAlerts();
     if (!S.home) {
+      ensureShop().load().catch(function () { /* offline: Home shows the plain card */ });
       S.home = PlayerHome.mount($('home'), homeData(Date.now()), {
         card: function () { location.hash = '#profile'; },
         live: function () { location.hash = '#live'; },
@@ -1485,12 +1537,24 @@
       });
     }
     // Resume a 90-day sign-in on this phone (token only, no PIN needed). Otherwise show log in.
+    // Gap 5 (72v): a bad signal is not a sign-out. The last player seen on this phone is kept, so a
+    // signed-in player on weak signal lands on Home with the "Signal is weak" note, not on the log in form.
+    var LAST_PLAYER_KEY = '1to1-player-last';
+    function saveLastPlayer(p) { try { localStorage.setItem(LAST_PLAYER_KEY, JSON.stringify(p)); } catch (e) { /* private window: nothing kept */ } }
+    function readLastPlayer() { try { return JSON.parse(localStorage.getItem(LAST_PLAYER_KEY) || 'null'); } catch (e) { return null; } }
     function resumeSession() {
       var t = readToken();
       if (!t) return null;
       return be.resume(t).then(function (r) {
-        if (r && r.ok) { startApp(r.player, ''); return true; }
+        if (r && r.ok) { saveLastPlayer(r.player); startApp(r.player, ''); return true; }
         clearToken();
+        return null;
+      }, function (e) {
+        // Review fix (72z): a server answer with an HTTP error (for example 401) means the sign-in is no good: clear it.
+        // Only a network failure (no answer at all) keeps the last player on this phone.
+        if (e && /^http-/.test(String(e.message || ''))) { clearToken(); return null; }
+        var last = readLastPlayer();
+        if (last && last.first) { startApp(last, ''); return true; }
         return null;
       }).catch(function () { return null; });
     }

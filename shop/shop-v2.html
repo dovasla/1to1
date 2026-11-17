@@ -5,54 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0E0E0E">
 <title>Shop</title>
-<link rel="stylesheet" href="../brand/tokens.css">
-<link rel="stylesheet" href="shop-v2.css">
 <link rel="stylesheet" href="shop-effects.css">
+<link rel="stylesheet" href="shop-builder.css">
+<style>html,body{margin:0;background:#0E0E0E;color:#F5F5F5;font-family:Barlow,system-ui,sans-serif}#builder{min-height:100vh}</style>
 </head>
 <body class="shop-v2">
-<main>
-  <header class="top">
-    <h1>Shop</h1>
-    <span class="coins" aria-live="polite"><span id="coins">&nbsp;</span>&nbsp;coins</span>
-  </header>
-
-  <section class="banner" id="banner" aria-label="Preview"></section>
-  <p class="preview-line" id="previewLine" aria-live="polite"></p>
-
-  <p class="err" id="loadErr" hidden>Could not load the shop. Check the signal and try again.</p>
-  <button class="btn ghost" id="retry" type="button" hidden>Try again</button>
-
-  <nav class="tabs" id="tabs" aria-label="Shop sections"></nav>
-  <div class="collect"><span id="collectLabel">Collection</span><span id="collectCount"></span></div>
-  <div class="bar"><span id="collectBar"></span></div>
-  <p class="next" id="nextLine"></p>
-  <div id="grid" aria-live="polite"><p class="muted">Loading the shop...</p></div>
-
-  <h2 class="cap">Your loadout</h2>
-  <ul class="loadout" id="loadout"></ul>
-  <button class="btn ghost" id="takeAll" type="button">Take all off</button>
-  <p class="err" id="takeErr" hidden></p>
-</main>
-
-<section class="buybar" id="buybar" aria-label="Buy">
-  <div class="buy-text">
-    <p class="buy-name" id="buyName"></p>
-    <p class="buy-info" id="buyInfo"></p>
-    <p class="err" id="buyErr" hidden></p>
-  </div>
-  <div class="buy-actions">
-    <button class="btn ghost" id="buyBack" type="button" hidden>My look</button>
-    <button class="btn" id="buyBtn" type="button" hidden></button>
-  </div>
-</section>
-
-<script src="../lib/player-name.js"></script>
-<script src="cosmetics.js"></script>
-<script src="shop-rules.js"></script>
-<script src="catalogue.js"></script>
-<script src="shop-rules-v2.js"></script>
-<script src="shop-backend.js"></script>
+<div id="builder"><p style="padding:16px">Loading the shop...</p></div>
 <script src="shop-effects.js"></script>
-<script src="shop-v2.js"></script>
+<script src="shop-builder.js"></script>
+<script src="shop-v2-final.js"></script>
 </body>
 </html>

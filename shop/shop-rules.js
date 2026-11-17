@@ -41,11 +41,15 @@
     raw = raw || {};
     var equipped = {};
     SLOTS.forEach(function (s) { equipped[s] = (raw.equipped && raw.equipped[s]) || null; });
+    // Keep every worn layer (l_<layer> keys). Dropping them here is why equip never reached the card.
+    Object.keys(raw.equipped || {}).forEach(function (k) { if (k.indexOf('l_') === 0) equipped[k] = raw.equipped[k] || null; });
     var owned = [];
     (raw.owned || []).forEach(function (id) { if (owned.indexOf(id) < 0) owned.push(id); });
     var items = (raw.items || []).map(function (i) {
       return { id: i.id, slot: i.slot, value: i.value, name: i.name, price: i.price | 0,
-        minLevel: i.minLevel | 0, minStars: i.minStars | 0 };
+        minLevel: i.minLevel | 0, minStars: i.minStars | 0, layer: i.layer || null, tier: i.tier || null,
+        depth: i.depth | 0, effect: i.effect || 'none', sort: i.sort | 0, unlockKind: i.unlockKind || null,
+        unlockValue: i.unlockValue, unlockName: i.unlockName || null };
     });
     return {
       level: clamp(raw.level || 1, 1, 60),

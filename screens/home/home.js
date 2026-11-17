@@ -254,7 +254,7 @@
   // Home shows at most three cards (R62): the tonight card, the pay card while owed, and the last-night card after a run.
   // Live, Stats and Profile hold the rest.
   function page(d, now, busy, kp) {
-    var sv = (typeof window !== 'undefined' && window.ShopStrip && window.ShopStrip.html({ coins: d.coins || 0, level: d.level || 0, live: !!d.live, items: (d.shopItems || []), newLooks: !!d.newLooks })) || '';
+    var sv = (typeof window !== 'undefined' && window.ShopStrip && window.ShopStrip.html({ coins: d.coins || 0, level: d.level || 0, live: !!d.live, items: (d.shopItems || []), newLooks: !!d.newLooks, worn: d.shopWorn || {} })) || '';
     return '' +
       '<header class="ph-top">' +
         '<h1>Home</h1>' +

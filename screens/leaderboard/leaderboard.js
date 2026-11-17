@@ -114,10 +114,17 @@
   // Equipped look, read from the player. PlayerName cleans every value again, so odd text never reaches the markup.
   function lookOf(p) {
     var l = p.look || p.equipped || {};
+    // Stage 2: every worn layer (l_<layer> keys from the server loadout) reaches the board row card.
+    var layers = {};
+    ['background', 'frame', 'emblem', 'title', 'effect', 'name', 'card', 'flourish', 'row', 'ring', 'intro', 'pop'].forEach(function (k) {
+      var v = l['l_' + k] || (p.layers && p.layers[k]);
+      if (v) layers[k] = v;
+    });
     return {
       banner: l.banner || p.banner || '',
       nameStyle: l.name || l.nameStyle || p.nameStyle || '',
-      rowEffect: l.row || l.rowEffect || p.rowEffect || ''
+      rowEffect: l.row || l.rowEffect || p.rowEffect || '',
+      layers: layers
     };
   }
 
@@ -156,6 +163,7 @@
       clanTag: hidden ? '' : p.clanTag,
       emblemSrc: hidden ? '' : p.emblemSrc,
       rowEffect: look.rowEffect,
+      layers: look.layers,
       size: 'compact'
     });
     var stat = hidden

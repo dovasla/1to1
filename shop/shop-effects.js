@@ -272,9 +272,23 @@
     return api;
   }
 
+  // ---------- Buy moment (from the 72x module): adds .fx-unlock to the card for ~1.3 s ----------
+  var unlockReduced = false;
+  try { unlockReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+  function unlock(el) {
+    if (!el || unlockReduced) return;
+    try {
+      el.classList.remove('fx-unlock');
+      void el.offsetWidth;
+      el.classList.add('fx-unlock');
+      setTimeout(function () { el.classList.remove('fx-unlock'); }, 1300);
+    } catch (e) {}
+  }
+
   var api = {
     init: init,
     apply: apply,
+    unlock: unlock,
     lookFor: lookFor,
     setCalm: setCalm,
     setLow: setLow,
