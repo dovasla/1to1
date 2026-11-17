@@ -55,7 +55,7 @@
       <input id="pin" name="pin" type="password" inputmode="numeric" autocomplete="new-password" pattern="[0-9]*" maxlength="4" required>
       <p class="err" id="e-pin" hidden></p>
 
-    <button class="btn" type="submit" id="send">Send</button>
+    <button class="btn" type="submit" id="send">Sign up</button>
       <p class="err" id="e-form" hidden></p>
     </form>
   </section>
@@ -256,7 +256,7 @@ import { renderCharacterPicker } from './icons/characters/picker.js';
       if (signedUp) return;
       busy = false;
       $('send').disabled = false;
-      $('e-form').textContent = 'Couldn’t send just now. Check your signal and tap Send again. What you typed is still here.';
+      $('e-form').textContent = 'Couldn’t send just now. Check your signal and tap Sign up again. What you typed is still here.';
       $('e-form').hidden = false;
     });
   });

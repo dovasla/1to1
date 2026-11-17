@@ -30,6 +30,34 @@
   var TAB_LABEL = { home: NAMES.tabs.home, live: NAMES.tabs.live, stats: NAMES.tabs.stats, profile: NAMES.profile, more: NAMES.tabs.more };
   var THEME_KEY = '1to1-theme';
   var $ = function (id) { return document.getElementById(id); };
+  // Speed: the Stats and Profile scripts load on the first visit to those screens (and are fetched once the app is idle).
+  var GROUPS = {
+    stats: ['screens/leaderboard/leaderboard.js', 'screens/peek/peek.js', 'screens/stats-board/stats-board.js', 'screens/head-to-head/head-to-head.js', 'screens/streaks/streaks.js'],
+    profile: ['screens/profile/profile.js', 'screens/photo/photo.js', 'share-card/share-card.js']
+  };
+  var groupDone = {}, groupBusy = {};
+  function ensureGroup(name) {
+    if (groupDone[name]) return Promise.resolve();
+    if (!groupBusy[name]) {
+      groupBusy[name] = GROUPS[name].reduce(function (p, src) {
+        return p.then(function () {
+          return new Promise(function (done) {
+            var sc = document.createElement('script');
+            sc.src = src; sc.onload = done; sc.onerror = done;   // a failed file still lets the screen draw its plain state
+            document.body.appendChild(sc);
+          });
+        });
+      }, Promise.resolve()).then(function () { groupDone[name] = true; });
+    }
+    return groupBusy[name];
+  }
+  // Fetched 4 s after Home is up, when the phone is idle. Boot stays lean, and the first tap on Stats or Profile is still quick.
+  function prefetchGroups() {
+    var go = function () { ensureGroup('stats'); ensureGroup('profile'); };
+    setTimeout(function () {
+      if (window.requestIdleCallback) window.requestIdleCallback(go, { timeout: 4000 }); else go();
+    }, 4000);
+  }
 
   var LOGIN_MSG = {
     'wrong-details': 'No one signed up with that name. Check the spelling, or sign up first.',
@@ -213,12 +241,6 @@
 
   // ---------- data for the screens ----------
   // I'm in / Can't make it (R74): the server answer for this player and night.
-  // Board (R87 a): fills S.board from player_leaderboard. No call in the build = empty board.
-  function loadBoard() {
-    if (!be.leaderboard) { S.board = { players: [] }; return Promise.resolve(); }
-    return be.leaderboard(readToken(), S.season || 'current').then(function (r) { S.board = { players: (r && r.players) || [] }; }, function () { S.board = { players: [] }; });
-  }
-
   // P13 (R198): my own spot in the upcoming runs (upcoming_list). Feeds the Live waiting room only.
   // One call a minute; reset on sign-out and sign-in (R220). Timeout 12 s, with error and Try again.
   var upcomingGate = null;
@@ -377,6 +399,8 @@
       coins: typeof S.coins === 'number' ? S.coins : null,   // 72g: null until the shop read answers, so Home shows a dash, not 0
       next: game ? nextCard(game, games) : null,
       runState: runStateText(games, now),
+      runOver: runOverNow(),
+      runOverWord: runOverWordNow(),
       nextRunLabel: nextRunText() || (S.night && S.night.nextRun) || '',
       teamsIn: !!(game && LineupGate.published(game)),
       schedule: games.map(function (g) {
@@ -564,6 +588,21 @@
     if (S.serverRun && S.serverRun !== 'signin') return false;
     return NightShape.runOn(S.night, now);
   }
+  // Run over (72q): the organiser ended the run (End run publishes run status closed), the night is cancelled, or the server says ended.
+  // Home and Live then say the run is over and stop offering the games as next. A run that is on now is never over.
+  function runOverNow() {
+    if (runOnNow(Date.now())) return false;
+    if (S.serverRun === 'ended' || S.serverRun === 'cancelled') return true;
+    var PRS = window.PlayerRunState;
+    return !!(PRS && S.night && { ended: 1, cancelled: 1, 'called-off': 1, closed: 1 }[PRS.statusOf(S.night)]);
+  }
+  // Live tab redraw (72q): the Live screen reads the night too, so it follows a night change at once.
+  function liveUpdate() { if (S.liveScreen) S.liveScreen.update(liveData()); }
+  // The words for a run that is over: a cancelled night says so (the organiser marks it cancelled).
+  function runOverWordNow() {
+    var PRS = window.PlayerRunState;
+    return PRS && S.night && PRS.statusOf(S.night) === 'cancelled' ? 'Run is cancelled' : 'Run is over';
+  }
   // A run day: the run is open on the server, or the night is dated today.
   function runDay() {
     if (S.serverRun === 'open') return true;
@@ -575,7 +614,8 @@
   }
   // 72k: one tick. On a run day (tab visible) every 2 s: the server's run state, the night's stamp (full read only when it moved),
   // and the paid mark. The live row has its own loop (liveDelay). Otherwise every 30 s.
-  var TICK_RUN_MS = 2000, TICK_IDLE_MS = 30000, lastNightStamp = '';
+  // 17 Nov: idle phones check every 15 s (was 30 s), the same cadence as the organiser's payment pull, so a payment shows sooner.
+  var TICK_RUN_MS = 2000, TICK_IDLE_MS = 15000, lastNightStamp = '';
   function tickDelay() { return runDay() && !document.hidden ? TICK_RUN_MS : TICK_IDLE_MS; }
   function runTick() {
     if (!S.me || document.hidden) return Promise.resolve();
@@ -586,6 +626,7 @@
         S.serverRun = r.state;
         if (r.state === 'open') S.sawOpen = true;
         if (S.home) S.home.update(homeData(Date.now()));
+        liveUpdate();
         liveStripUpdate();
         checkJoinState();
       } else if (r && r.ok === true && r.state) { S.serverRun = r.state; if (r.state === 'open') S.sawOpen = true; }
@@ -641,6 +682,7 @@
       lastNightSig = sig;
       S.night = NightShape.applyNight(nt.payload);
       if (S.home) S.home.update(homeData(Date.now()));
+      liveUpdate();
       checkJoinState();
     }).catch(function () { setHomeError(true); });
   }
@@ -768,7 +810,7 @@
     var games = (S.night && S.night.games) || [];
     var game = nextGame(Date.now());
     // R168: the lineup shows one minute before each game, from the published night (lib/lineup-gate.js).
-    var soon = LineupGate.shows(game, Date.now(), NightShape.runStartMs(S.night)) ? game : null;
+    var soon = !runOverNow() && LineupGate.shows(game, Date.now(), NightShape.runStartMs(S.night)) ? game : null;
     var lineup = null;
     if (soon) {
       var mine = myTeamIn(soon), theirs = oppIn(soon);
@@ -788,14 +830,16 @@
       me: { team: teamName(myTeamNow()) },
       now: liveNow(),
       results: liveResults(),
-      nextUp: game ? nextUpOf(game) : null,
+      nextUp: game && !runOverNow() ? nextUpOf(game) : null,
       lineup: lineup,
       upcoming: games.map(function (g) {
         var lab = NightShape.rowLabel(g, S.me);
         return { no: g.no, time: hhmm(g.startsAt), vs: lab.vs, versus: lab.versus, state: liveNoNow() === g.no ? 'live' : (game && g.id === game.id ? 'next' : 'todo') };
       }),
       runOn: runOnNow(Date.now()),
-      waiting: !!(S.paid || myPaidOrIn() || (S.rsvp && S.rsvp.ok === true && S.rsvp.me === 'in')),
+      waiting: !runOverNow() && !!(S.paid || myPaidOrIn() || (S.rsvp && S.rsvp.ok === true && S.rsvp.me === 'in')),
+      runOver: runOverNow(),
+      runOverWord: runOverWordNow(),
       paid: !!(S.paid || myPaidOrIn(true)),
       waitError: !!S.upcomingError,
       board: S.board || null,
@@ -1088,6 +1132,12 @@
     }, function () { S.boardState = 'error'; }).then(loadLooks);
   }
 
+  // 1st, 2nd, 3rd, 4th ... 11th, 12th, 21st.
+  function ordinal(n) {
+    var s = ['th', 'st', 'nd', 'rd'], v = n % 100;
+    return n + (s[(v - 20) % 10] || s[v] || s[0]);
+  }
+
   // Stats tab (R62): your card pinned on top (tap it to open Profile), then the season picker and the board.
   function renderStats() {
     var box = $('stats');
@@ -1111,6 +1161,7 @@
       '</a>' +
       '<a class="stats-hist btn ghost" href="#stats/history">My stats and history</a>' +
       seasonChipsHtml() +
+      '<p class="stats-place muted" id="statsPlace" aria-live="polite"></p>' +
       '<div id="lb"></div>';
     if (S.boardState === 'loading') { $('lb').innerHTML = '<p class="sb-note" role="status">Loading...</p>'; return; }
     if (S.boardState === 'error') {
@@ -1121,6 +1172,12 @@
     var mt = myTeamNow();
     Leaderboard.mount($('lb'), leaderboardData(), { meId: S.me ? S.me.id : null, myTeamId: mt ? teamName(mt) : null, sort: 'level',
       valueLabel: 'XP', iconHtml: function (id) { return window.PlayerIconSvg ? window.PlayerIconSvg(id, { size: 36 }) : ''; } });
+    // "Your place": the rank the board itself shows on your row (same sort, hidden players counted as the board counts them).
+    var mineRank = $('lb').querySelector('.lb-row--me .lb-rank');
+    var place = $('statsPlace');
+    if (place && S.seasonBoard && S.seasonBoard.players && S.seasonBoard.players.length) {
+      place.textContent = mineRank ? 'You are ' + ordinal(Number(mineRank.textContent)) + ' on this board.' : 'You are not on this board yet.';
+    }
     // Tap a player row to see their card (overlay; the stats screen underneath stays as it is).
     if (window.PlayerPeek) PlayerPeek.bind($('lb'), { call: function (publicId) { return be.rpc('player_card', { p_token: readToken(), p_public_id: publicId }).then(function (d) { var L = lookOf({ id: publicId, public_id: publicId }); if (d && typeof d === 'object') { d.photo = L.photo; d.phIcon = L.icon; } return d; }); } });
     if (!(S.seasonBoard && S.seasonBoard.players && S.seasonBoard.players.length)) {
@@ -1164,6 +1221,9 @@
     if (head === 'shop') { head = 'more'; sub = 'shop'; }
     var tab = head === 'profile' ? 'profile' : (TABS.indexOf(head) > -1 ? head : 'home');
     if (sub && SUBS.indexOf(sub) < 0) { location.hash = '#' + tab; return; }
+    // The screen's script loads first (once), then the same route runs again.
+    var needs = (tab === 'stats' || sub === 'history') ? 'stats' : (tab === 'profile' ? 'profile' : '');
+    if (needs && !groupDone[needs]) { ensureGroup(needs).then(route); return; }
 
     if (tab !== 'more' && S.moreScreen) S.moreScreen.reset();
     var viewId = sub ? 'v-sub' : 'v-' + tab;
@@ -1445,6 +1505,7 @@
     if (!location.hash) history.replaceState(null, '', '#home');
     route();
     updateTabDots();
+    prefetchGroups();
   }
 
   function logIn() {
@@ -1629,6 +1690,8 @@
     var reached = PlayerLoading.reach({ task: function () { return loadNight().then(resumeSession); } });
     PlayerLoading.run({
       mapName: '',
+      minMs: 900,
+      until: reached,
       then: function () {
         reached.then(function () {
           if (!S.me) showLogin();

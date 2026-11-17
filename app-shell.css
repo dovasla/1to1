@@ -40,7 +40,7 @@ h2 { font-size:18px; }
 .tabs a span { font-family:var(--font-head); font-size:14px; letter-spacing:.06em; text-transform:uppercase; }
 
 /* Keyboard focus, visible in both themes */
-a:focus-visible, button:focus-visible, input:focus-visible { outline:px solid var(--focus); outline-offset:2px; }
+a:focus-visible, button:focus-visible, input:focus-visible { outline:3px solid var(--focus); outline-offset:2px; }
 
 /* Reduced motion: no slides, fades or transitions. Loading and reveal also check this themselves. */
 @media (prefers-reduced-motion: reduce) {

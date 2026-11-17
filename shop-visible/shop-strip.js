@@ -80,7 +80,6 @@
       (pic ? '<span class="sv-pic" aria-hidden="true">' + pic + '</span>' : '') +
       '<span class="sv-body"><b class="sv-title">Shop</b>' +
       (ln ? '<span class="sv-line">' + esc(ln) + '</span>' : '') + '</span>' +
-      '<span class="sv-coins"><b>' + esc(coins) + '</b> coins</span>' +
       '</a>';
   }
 

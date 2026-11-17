@@ -50,7 +50,7 @@
     var me = d.me && d.me.team ? String(d.me.team) : '';
     var now = d.now || null;
     var onCourt = !!(now && me && (now.teamA === me || now.teamB === me));
-    var mode = now ? 'on' : (d.upcoming && d.upcoming.length ? 'between' : 'none');
+    var mode = d.runOver ? 'over' : (now ? 'on' : (d.upcoming && d.upcoming.length ? 'between' : 'none'));
     return { mode: mode, yourTeamOnCourt: onCourt, yourTeam: me };
   }
 
@@ -186,6 +186,11 @@
       { error: 'Could not check your spot in the run. Check your signal.' }) + '</section>';
   }
 
+  // Run over (72q): the organiser ended the run. Results (if any) still show below.
+  function overHtml(word) {
+    return '<section class="lv-card lv-empty" aria-label="Run over"><h2 class="lv-h">' + esc(word || 'Run is over') + '</h2><p class="lv-muted">Thanks for coming.</p></section>';
+  }
+
   function emptyHtml() {
     return '<section class="lv-card lv-empty"><h2 class="lv-h">No game on court</h2>' +
       '<p class="lv-muted">Games show here when the run starts. This page updates on its own.</p></section>';
@@ -229,12 +234,13 @@
     if (s.mode === 'on') body += nowHtml(d.now, me) + CV.courtHtml(d.now, me);
     body += nextUpHtml(d.nextUp);
     body += boardHtml(d.board);
-    if (s.mode !== 'on' && !d.lineup && d.waiting) body += waitingHtml(d);
+    if (s.mode === 'over') body += overHtml(d.runOverWord);
+    else if (s.mode !== 'on' && !d.lineup && d.waiting) body += waitingHtml(d);
     else if (s.mode !== 'on' && !d.lineup && d.waitError && !d.waiting) body += waitErrorHtml();
     else if (s.mode === 'none' && !d.lineup && d.runOn) body += '<section class="lv-card"><h2 class="lv-h">Teams</h2><p class="lv-muted">Teams show when the organiser sends them.</p></section>';
     else if (s.mode === 'none' && !d.lineup) body += emptyHtml();
     body += lineupHtml(d.lineup, me);
-    body += upcomingHtml(d.upcoming);
+    if (s.mode !== 'over') body += upcomingHtml(d.upcoming);
     body += resultsHtml(d.results);
     return '<div class="lv">' + head + body + '</div>';
   }

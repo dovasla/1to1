@@ -43,7 +43,7 @@
 
 /* Button */
 .lv-btn { display:flex; align-items:center; justify-content:center; width:100%; min-height:48px; margin-top:12px; padding:10px 14px; border:0; border-radius:12px; background:var(--brand); color:var(--on-brand); font:inherit; font-size:18px; font-weight:900; text-transform:uppercase; letter-spacing:.03em; cursor:pointer; }
-.lv-btn:focus-visible { outline:px solid var(--focus); outline-offset:3px; }
+.lv-btn:focus-visible { outline:3px solid var(--focus); outline-offset:3px; }
 
 /* Tonight list (mirrors the organiser's game rows) */
 .lv-games { list-style:none; margin:0; padding:0; border:1px solid var(--line); border-radius:16px; background:var(--card); overflow:hidden; }
@@ -62,7 +62,7 @@
 .lv-empty .lv-h { margin-top:0; }
 
 /* Focus and reduced motion */
-.lv a:focus-visible { outline:px solid var(--focus); outline-offset:2px; }
+.lv a:focus-visible { outline:3px solid var(--focus); outline-offset:2px; }
 @media (prefers-reduced-motion: reduce) {
   .lv * { transition:none !important; animation:none !important; }
 }
@@ -85,9 +85,9 @@
 /* Patch C: tap targets (names on court and in the lineup), the small card, the player sheet, results.
    Hidden players are plain and do not respond to a tap. Everything is fluid: no fixed widths. */
 .cv-tap { display:flex; flex-direction:column; align-items:center; gap:4px; width:100%; min-height:48px; margin:0; padding:4px; border:0; border-radius:12px; background:none; color:inherit; font:inherit; text-align:center; cursor:pointer; }
-.cv-tap:focus-visible { outline:px solid var(--focus); outline-offset:2px; }
+.cv-tap:focus-visible { outline:3px solid var(--focus); outline-offset:2px; }
 .cv-tap--chip { display:block; min-height:48px; padding:6px; text-align:left; border-radius:10px; }
-.cv-tap--chip:focus-visible { outline:px solid var(--focus); outline-offset:2px; }
+.cv-tap--chip:focus-visible { outline:3px solid var(--focus); outline-offset:2px; }
 .cv-pt { min-width:0; }
 .cv-static { display:flex; flex-direction:column; align-items:center; gap:4px; width:100%; padding:4px; }
 .cv-pt.is-hidden .lv-pn { color:var(--muted); }
@@ -108,7 +108,7 @@
 .cv-btn { min-height:48px; padding:10px 14px; border:2px solid var(--line); border-radius:12px; background:transparent; color:var(--ink); font:inherit; font-size:18px; font-weight:800; text-transform:uppercase; letter-spacing:.03em; cursor:pointer; }
 .cv-btn--main { border-color:var(--brand); background:var(--brand); color:var(--on-brand); }
 .cv-btn--small { min-height:48px; padding:8px 14px; font-size:16px; }
-.cv-btn:focus-visible { outline:px solid var(--focus); outline-offset:3px; }
+.cv-btn:focus-visible { outline:3px solid var(--focus); outline-offset:3px; }
 .cv-top { display:flex; align-items:center; justify-content:space-between; gap:10px; min-height:48px; }
 .cv-hero { display:flex; justify-content:center; margin-top:8px; }
 .cv-hero .cv-pic-lg { width:128px; height:128px; }

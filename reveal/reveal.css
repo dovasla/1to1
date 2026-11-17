@@ -16,7 +16,7 @@
   --lr-muted: var(--muted);
   --lr-yellow: var(--brand);
   --lr-on-yellow: var(--on-brand);
-  --lr-head: var(--brand);
+  --lr-head: var(--brand-text);   /* yellow only on dark; bright hall uses ink, so text never sits yellow on white */
   --lr-blue: var(--link);
   --lr-blue-text: var(--link-text);
   --lr-gold-text: var(--brand);
@@ -157,7 +157,7 @@
   font-family: "Barlow Condensed", "Barlow", sans-serif;
   font-weight: 700;
   font-size: 20px;
-  color: var(--lr-muted);
+  color: var(--lr-text);
 }
 .lr-opp .lr-n { color: var(--lr-opp); }
 .lr-p { flex: 1; min-width: 0; }
@@ -183,7 +183,7 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
-.lr-tag-blue { background: var(--lr-blue); color: var(--on-brand); }
+.lr-tag-blue { background: var(--lr-blue); color: var(--on-link); }
 .lr-tag-yellow { background: var(--lr-yellow); color: var(--lr-on-yellow); }
 .lr-tier {
   font-family: "Barlow", sans-serif;

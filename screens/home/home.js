@@ -175,6 +175,8 @@
   }
 
   function tonightHtml(d, now, busy, kp) {
+    // 72q: the organiser ended the run. Home says so, and does not offer the games as next.
+    if (d.runOver) return '<div class="ph-card ph-card--hero"><span class="ph-cap">Run</span><h2>' + esc(d.runOverWord || 'Run is over') + '</h2><p class="ph-note">Thanks for coming.</p></div>';
     // 72h (R300): one state only. A run that is live (organiser pressed Start run) shows as on, never with a countdown.
     var kind = d.runOn && d.next ? 'on' : tonightKind(d.next, now);
     if (kind === 'none' && d.runOn) {

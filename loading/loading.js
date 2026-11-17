@@ -109,6 +109,13 @@
     var track = el.querySelector('.pl-bar');
     var skipBtn = el.querySelector('[data-pl="skip"]');
     var start = Date.now();
+    // Speed: the screen ends as soon as the server has answered (opts.until), but never before opts.minMs, so the brand moment still shows.
+    var minMs = typeof opts.minMs === 'number' ? opts.minMs : 0;
+    if (opts.until && typeof opts.until.then === 'function') {
+      opts.until.then(function () {
+        setTimeout(function () { finish(); }, Math.max(0, minMs - (Date.now() - start)));
+      }, function () { /* the timer below still ends the screen */ });
+    }
 
     function setProgress(p) {
       p = Math.max(0, Math.min(100, Math.round(p)));

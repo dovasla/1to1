@@ -20,7 +20,7 @@
 
 /* Hero: the player card */
 .ph-hero { display:block; margin-top:10px; padding:14px; border-radius:18px; border:2px solid var(--brand); background:var(--card); min-height:48px; }
-.ph-hero:focus-visible { outline:px solid var(--focus); outline-offset:3px; }
+.ph-hero:focus-visible { outline:3px solid var(--focus); outline-offset:3px; }
 .ph-hero-top { display:flex; align-items:center; justify-content:space-between; gap:10px; }
 .ph-pill { display:inline-block; padding:4px 10px; border-radius:8px; background:var(--brand); color:var(--on-brand); font-size:14px; font-weight:900; letter-spacing:.04em; }
 .ph-hero-name { margin:10px 0 2px; }
@@ -49,7 +49,7 @@
 .ph-count-num { font-size:44px; font-weight:900; line-height:1; font-variant-numeric:tabular-nums; color:var(--ink); font-family:var(--font-head); }
 .ph-btn { display:flex; align-items:center; justify-content:center; width:100%; min-height:52px; margin-top:10px; border-radius:var(--radius-btn); background:var(--brand); color:var(--on-brand); font-weight:900; text-transform:uppercase; letter-spacing:.04em; font-size:17px; }
 .ph-btn--ghost { background:transparent; color:var(--ink); border:2px solid var(--line); }
-.ph-btn:focus-visible, .ph-row:focus-visible, .ph-chip:focus-visible, .ph-coins:focus-visible { outline:px solid var(--focus); outline-offset:2px; }
+.ph-btn:focus-visible, .ph-row:focus-visible, .ph-chip:focus-visible, .ph-coins:focus-visible { outline:3px solid var(--focus); outline-offset:2px; }
 
 /* Blocks: schedule strip, last night, live */
 .ph-block { margin-top:14px; }
@@ -75,7 +75,7 @@
 .ph-rsvp-btn { min-height:48px; padding:6px 10px; border-radius:var(--radius-btn); border:2px solid var(--line); background:transparent; color:var(--ink); font-family:inherit; font-size:16px; font-weight:800; line-height:1.15; }
 .ph-rsvp-btn.is-on { border-color:var(--brand); color:var(--brand-text); }
 .ph-rsvp-btn:disabled { opacity:.6; }
-.ph-rsvp-btn:focus-visible { outline:px solid var(--focus); outline-offset:2px; }
+.ph-rsvp-btn:focus-visible { outline:3px solid var(--focus); outline-offset:2px; }
 .ph-rsvp-word { margin:8px 0 0; font-size:14px; font-weight:800; text-transform:uppercase; letter-spacing:.1em; color:var(--brand-text); }
 .ph-rsvp-quiet { margin:14px 0 0; padding-top:12px; border-top:1px solid var(--line); font-size:16px; color:var(--muted); }
 
@@ -99,12 +99,12 @@
 .ph-kp-key { min-height:52px; border-radius:var(--radius-btn); border:2px solid var(--line); background:transparent; color:var(--ink); font-family:inherit; font-size:20px; font-weight:800; }
 .ph-kp-key--go { background:var(--brand); border-color:var(--brand); color:var(--on-brand); text-transform:uppercase; font-size:17px; letter-spacing:.04em; }
 .ph-kp-key:disabled { opacity:.5; }
-.ph-kp-key:focus-visible { outline:px solid var(--focus); outline-offset:2px; }
+.ph-kp-key:focus-visible { outline:3px solid var(--focus); outline-offset:2px; }
 .ph-kp-done { margin:14px 0 0; padding-top:12px; border-top:1px solid var(--line); font-size:16px; font-weight:800; color:var(--brand-text); }
 .ph-kp-msg { font-size:16px; color:var(--ink); }
 .ph-kp-retry { display:flex; align-items:center; justify-content:center; width:100%; min-height:48px; margin-top:10px; border-radius:var(--radius-btn); border:2px solid var(--line); background:transparent; color:var(--ink); font-family:inherit; font-size:16px; font-weight:800; }
 .ph-kp-retry:disabled { opacity:.5; }
-.ph-kp-retry:focus-visible { outline:px solid var(--focus); outline-offset:2px; }
+.ph-kp-retry:focus-visible { outline:3px solid var(--focus); outline-offset:2px; }
 
 /* Buttons use the body face (Barlow), not the browser's system font (R130). */
 .ph-btn, .ph-rsvp-btn, .ph-kp-key, .ph-kp-retry { font-family:var(--font-body); }

@@ -52,7 +52,7 @@
   letter-spacing: 0.08em;
   cursor: pointer;
 }
-.pl-skip:focus-visible { outline:px solid var(--focus); outline-offset: 2px; }
+.pl-skip:focus-visible { outline:3px solid var(--focus); outline-offset: 2px; }
 
 /* The map card stays dark in both themes so the yellow heading always reads. */
 .pl-card {
@@ -249,4 +249,4 @@
   cursor: pointer;
 }
 .pl-retry:disabled { opacity: 0.6; cursor: wait; }
-.pl-retry:focus-visible { outline:px solid var(--focus); outline-offset: 2px; }
+.pl-retry:focus-visible { outline:3px solid var(--focus); outline-offset: 2px; }

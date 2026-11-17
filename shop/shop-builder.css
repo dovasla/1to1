@@ -18,27 +18,27 @@
 .sb-card .sb-layer { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
 .sb-card-body { position: relative; z-index: 2; padding: 14px 14px 12px; display: flex; flex-direction: column; gap: 8px; min-height: 200px; }
 .sb-card-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-.sb-level, .sb-coins { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; color: #fff; background: rgba(0,0,0,.45); padding: 6px 10px; border-radius: 999px; }
+.sb-level, .sb-coins { font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; color: #fff; background: rgba(0,0,0,.45); padding: 6px 10px; border-radius: 999px; }
 .sb-avatar {
   width: 68px; height: 68px; border-radius: 50%; display: grid; place-items: center; margin: 4px auto 0;
   background: var(--sb-blue); color: #fff; font-size: 24px; font-weight: 900; border: 3px solid var(--sb-yellow);
 }
 .sb-name { text-align: center; font-size: 19px; font-weight: 900; text-transform: uppercase; color: #fff; text-shadow: 0 2px 6px rgba(0,0,0,.6); }
 .sb-flag {
-  align-self: center; margin-top: auto; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em;
+  align-self: center; margin-top: auto; font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em;
   color: #fff; background: rgba(0,0,0,.55); padding: 5px 10px; border-radius: 999px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .sb-flag-try { background: var(--sb-yellow); color: #0b0f16; }
 
 /* On your card: five groups, each shows what is worn */
-.sb-on-label { margin: 16px 0 8px; font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; color: var(--sb-muted); }
-.sb-slots { display: flex; gap: 8px; overflow-x: auto; margin: 0 -16px; padding: 0 16px 4px; scrollbar-width: none; }
+.sb-on-label { margin: 16px 0 8px; font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; color: var(--sb-muted); }
+.sb-slots { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; }
 .sb-slots::-webkit-scrollbar { display: none; }
 .sb-slot {
-  flex: 0 0 auto; width: 132px; min-height: 64px; display: grid; gap: 4px; align-content: start; text-align: left; padding: 10px 12px;
+  flex: 1 1 calc(33.33% - 6px); min-width: 0; min-height: 64px; display: grid; gap: 4px; align-content: start; text-align: left; padding: 10px 12px;
   border-radius: 12px; border: 2px solid var(--sb-line); background: var(--sb-panel); color: var(--sb-ink); cursor: pointer; font: inherit;
 }
-.sb-slot-k { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; color: var(--sb-muted); }
+.sb-slot-k { font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; color: var(--sb-muted); }
 .sb-slot-v { font-size: 14px; font-weight: 700; line-height: 1.2; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .sb-slot.is-empty .sb-slot-v { color: var(--sb-muted); font-weight: 500; font-style: italic; }
 .sb-slot[aria-selected="true"] { border-color: var(--sb-yellow); box-shadow: inset 0 0 0 1px var(--sb-yellow); }
@@ -49,7 +49,7 @@
   min-height: 48px; text-align: left; display: grid; gap: 3px; padding: 12px; border-radius: 14px;
   background: var(--sb-panel); border: 2px solid var(--sb-line); color: var(--sb-ink); cursor: pointer; font: inherit;
 }
-.sb-tile-layer { font-size: 12px; color: var(--sb-muted); text-transform: uppercase; letter-spacing: .04em; }
+.sb-tile-layer { font-size: 14px; color: var(--sb-muted); text-transform: uppercase; letter-spacing: .04em; }
 .sb-tile-name { font-size: 16px; font-weight: 800; text-transform: uppercase; line-height: 1.15; }
 .sb-tile-sub { font-size: 14px; color: var(--sb-muted); line-height: 1.25; }
 .sb-tile-state { margin-top: 4px; font-size: 14px; font-weight: 800; color: var(--sb-yellow); }
@@ -84,7 +84,7 @@
 /* r6: one line per upgrade type in the open group */
 .sb-types { margin: 10px 0 0; display: grid; gap: 4px; }
 .sb-types p { margin: 0; font-size: 14px; color: var(--sb-muted); line-height: 1.3; }
-.sb-types b { color: var(--sb-ink); font-weight: 800; text-transform: uppercase; font-size: 12px; letter-spacing: .04em; margin-right: 4px; }
+.sb-types b { color: var(--sb-ink); font-weight: 800; text-transform: uppercase; font-size: 14px; letter-spacing: .04em; margin-right: 4px; }
 
 /* r8: one line under the Shop title */
 .sb-sub { margin: 0 0 12px; font-size: 14px; color: var(--sb-muted); line-height: 1.3; }

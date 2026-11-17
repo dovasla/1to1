@@ -138,7 +138,7 @@
 
 /* Tappable chip: 48px minimum, focus ring. */
 .pn--tap { cursor: pointer; }
-.pn--tap:focus-visible { outline:px solid var(--focus); outline-offset: 2px; }
+.pn--tap:focus-visible { outline:3px solid var(--focus); outline-offset: 2px; }
 
 /* Full card: name, level and stars on one line, banner across the top. */
 .pn--full {

@@ -28,7 +28,7 @@
 
 /* Me or my team: a thick yellow frame on the row. Outline, so it does not fight the row effect ring. */
 .lb-row--me > .pn,
-.lb-row--me > .lb-card { outline:px solid var(--focus); outline-offset: -3px; }
+.lb-row--me > .lb-card { outline:3px solid var(--focus); outline-offset: -3px; }
 
 /* Team name card, same height as a player row. */
 .lb-card {
@@ -84,7 +84,7 @@
   cursor: pointer;
 }
 .lb-seg button[aria-pressed="true"] { background: var(--brand); border-color: var(--brand); color: var(--on-brand); }
-.lb-seg button:focus-visible { outline:px solid var(--focus); outline-offset: 2px; }
+.lb-seg button:focus-visible { outline:3px solid var(--focus); outline-offset: 2px; }
 
 .lb-empty {
   margin: 0;

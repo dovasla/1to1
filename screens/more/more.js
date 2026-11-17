@@ -611,7 +611,19 @@
         if (h.enableAlerts) h.enableAlerts();
         return;
       }
-      if (act === 'logout') { if (h.logOut) h.logOut(); return; }
+      // Log out takes two taps: the first asks, the second does it. A stray tap on a shared phone cannot sign a player out.
+      if (act === 'logout') {
+        if (!h.logOut) return;
+        if (!t.getAttribute('data-armed')) {
+          t.setAttribute('data-armed', '1');
+          t.textContent = 'Tap again to log out';
+          t.setAttribute('aria-label', 'Tap again to log out. You will need your first name, last initial and PIN to get back in.');
+          clearTimeout(t._armTimer);
+          t._armTimer = setTimeout(function () { t.removeAttribute('data-armed'); t.textContent = 'Log out'; t.removeAttribute('aria-label'); }, 5000);
+          return;
+        }
+        return h.logOut();
+      }
     }
 
     function onInput(e) {

@@ -10,7 +10,7 @@ h1, h2 { font-family:var(--font-head); font-weight:700; text-transform:uppercase
 .btn-main { border:0; background:var(--brand); color:var(--on-brand); }
 .btn-line { border:2px solid var(--line); background:transparent; color:var(--ink); }
 .btn-main:active, .btn-line:active { transform:scale(.98); }
-.btn-main:focus-visible, .btn-line:focus-visible, .row:focus-visible { outline:px solid var(--focus); outline-offset:2px; }
+.btn-main:focus-visible, .btn-line:focus-visible, .row:focus-visible { outline:3px solid var(--focus); outline-offset:2px; }
 
 .row { display:flex; align-items:center; gap:var(--gap); min-height:var(--row-h); padding:0 var(--gutter);
   border-bottom:1px solid var(--line); color:var(--ink); }

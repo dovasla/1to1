@@ -321,9 +321,14 @@
         return call('POST', invite ? '/rest/v1/rpc/player_sign_up_invited' : '/rest/v1/rpc/player_sign_up', Object.assign({
           p_first: clean.first, p_last_initial: clean.lastInitial, p_pin: pin, p_skill: clean.level,
           p_door: String(door || ''), p_extra: String(clean.extra || '')
-        }, invite ? { p_invite: String(invite) } : {})).then(function (j) { return { ok: true, pin: j && j.pin }; }, function (e) {
-          var hit = SIGNUP_REASONS.filter(function (r) { return String(e.body || '').indexOf(r) > -1; })[0];
-          if (hit) return { ok: false, reason: hit, hint: /first-name/.test(String(e.body || '')) ? 'first-name' : (/extra-letters/.test(String(e.body || '')) ? 'extra-letters' : '') };
+        }, invite ? { p_invite: String(invite) } : {})).then(function (j) {
+          // A 200 that says ok:false is a refusal too (never a PIN). Turn it into the same error the HTTP path gives.
+          if (j && j.ok === false) { var refused = new Error('refused'); refused.body = JSON.stringify(j); throw refused; }
+          return { ok: true, pin: j && j.pin };
+        }).catch(function (e) {
+          var body = String((e && e.body) || '');
+          var hit = SIGNUP_REASONS.filter(function (r) { return body.indexOf(r) > -1; })[0];
+          if (hit) return { ok: false, reason: hit, hint: /first-name/.test(body) ? 'first-name' : (/extra-letters/.test(body) ? 'extra-letters' : '') };
           throw e;
         });
       },
