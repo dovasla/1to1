@@ -72,6 +72,20 @@
     return { games: num(r.games), last: last, final: fin, winner: r.winner ? text(r.winner) : null };
   }
 
+  // Court players from the organiser row (players: { a: [...], b: [...] }): name, icon, hidden and points only. No ids reach the app.
+  function courtPlayers(list) {
+    return (Array.isArray(list) ? list : []).filter(function (x) { return x && typeof x === 'object'; }).map(function (x) {
+      var name = text(x.name);
+      var out = { name: name || 'Player', icon: text(x.icon) || 'i01', hidden: x.hidden === true || !name };
+      if (x.pts != null && isFinite(Number(x.pts))) out.pts = Number(x.pts);
+      return out;
+    });
+  }
+  function courtPlayersOf(players) {
+    var pl = players && typeof players === 'object' ? players : {};
+    return { a: courtPlayers(pl.a), b: courtPlayers(pl.b) };
+  }
+
   function fromFeed(payload, nowMs) {
     var p = payload && typeof payload === 'object' ? payload : {};
     var nowT = nowMs == null ? Date.now() : nowMs;
@@ -90,7 +104,8 @@
         game: num(p.game) || 1, court: text(p.court), state: state,
         teamA: text(p.teamA), scoreA: num(p.scoreA), foulsA: num(fouls.a),
         teamB: text(p.teamB), scoreB: num(p.scoreB), foulsB: num(fouls.b),
-        clockRunning: running, clockMs: ms, clockText: ms == null ? null : clockText(ms)
+        clockRunning: running, clockMs: ms, clockText: ms == null ? null : clockText(ms),
+        players: courtPlayersOf(p.players)
       };
       if (state === 'full-time' || (ms != null && ms <= 0)) { now.state = 'full-time'; now.clockText = '0:00'; }
     }

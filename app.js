@@ -701,7 +701,7 @@
     if (!f || !f.now) return S.live;
     var n = f.now;
     var clock = n.state === 'full-time' ? 'Full time' : (n.state === 'paused' ? 'Paused' : (n.clockText ? n.clockText + ' left' : ''));
-    return { game: n.game, court: n.court, teamA: n.teamA, scoreA: n.scoreA, teamB: n.teamB, scoreB: n.scoreB, clock: clock, players: { a: [], b: [] } };
+    return { game: n.game, court: n.court, teamA: n.teamA, scoreA: n.scoreA, teamB: n.teamB, scoreB: n.scoreB, clock: clock, players: n.players || { a: [], b: [] } };
   }
   // Results: the last finished game and the final game (no full list in the row). Hidden when none.
   function liveResults() {
