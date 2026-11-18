@@ -1,0 +1,89 @@
+/* Shop climb screens. Phone width 390px, 16px gutter. Barlow, yellow accent, dark card look.
+   Colours come from --tree (set per tree in shop-climb.js). Motion: transform and opacity only; off with reduced motion. */
+:root { --sc-bg:#0E0E0E; --sc-card:#171717; --sc-line:#2A2A2A; --sc-ink:#F5F5F5; --sc-mut:#9A9A9A; --sc-yel:#FFD21F; }
+.sc, .sc-dim, .sc-sheet, .sc-cel { font-family: Barlow, system-ui, sans-serif; color: var(--sc-ink); }
+.sc { padding: 16px 16px 24px; background: var(--sc-bg); min-height: 100%; box-sizing: border-box; }
+.sc *, .sc-sheet *, .sc-cel * { box-sizing: border-box; }
+.sc-lbl { font-size: 13px; color: var(--sc-mut); text-transform: uppercase; letter-spacing: .06em; font-weight: 800; }
+.sc-h1 { font-family: "Barlow Condensed", Barlow, sans-serif; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--sc-yel); font-size: 32px; line-height: 1; margin: 4px 0 0; }
+.sc-sub { color: var(--sc-mut); font-size: 15px; margin: 6px 0 12px; line-height: 1.25; }
+.sc-muted { color: var(--sc-mut); font-size: 14px; }
+.sc-msg { margin: 10px 0 0; color: #FF8A8A; font-size: 14px; font-weight: 700; }
+.sc-hd { margin-bottom: 4px; }
+
+/* Buttons */
+.sc-btn { flex: 1; min-height: 52px; border-radius: 14px; font: inherit; font-weight: 900; font-size: 16px; text-transform: uppercase; border: 0; background: var(--sc-yel); color: #000; cursor: pointer; }
+.sc-btn.ghost { background: transparent; color: var(--sc-ink); border: 1px solid var(--sc-line); }
+.sc-btn:disabled, .sc-go:disabled, .sc-btn-sm:disabled { opacity: .5; }
+.sc-btn-sm { font: inherit; font-size: 13px; font-weight: 900; text-transform: uppercase; padding: 9px 12px; border-radius: 999px; border: 1px solid var(--sc-line); background: transparent; color: var(--sc-ink); cursor: pointer; }
+.sc-go { font: inherit; font-size: 13px; font-weight: 900; text-transform: uppercase; padding: 9px 13px; border-radius: 999px; background: var(--sc-yel); color: #000; border: 0; white-space: nowrap; cursor: pointer; }
+
+/* Tree picker */
+.sc-trees { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.sc-tree { width: 100%; text-align: left; font: inherit; color: inherit; background: var(--sc-card); border: 1px solid var(--sc-line); border-left: 6px solid var(--tree); border-radius: 18px; padding: 14px 14px 14px 16px; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 4px 12px; cursor: pointer; }
+.sc-tree-nm { font-family: "Barlow Condensed", Barlow, sans-serif; font-size: 28px; font-weight: 700; text-transform: uppercase; color: var(--tree); line-height: 1; }
+.sc-tree-ds { grid-column: 1; font-size: 14px; color: var(--sc-mut); }
+.sc-tree .sc-go { grid-column: 2; grid-row: 1 / span 2; }
+
+/* Path */
+.sc-path { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 8px; }
+.sc-node { display: grid; grid-template-columns: 52px 1fr auto; align-items: center; gap: 10px; background: var(--sc-card); border: 1px solid var(--sc-line); border-radius: 14px; padding: 10px 12px; min-height: 58px; }
+.sc-node.is-done { border-color: var(--tree); }
+.sc-node.is-ready { border: 2px solid var(--sc-yel); }
+.sc-node.is-locked { opacity: .45; }
+.sc-lv { font-family: "Barlow Condensed", Barlow, sans-serif; font-weight: 800; font-size: 18px; color: var(--sc-mut); text-transform: uppercase; }
+.sc-node-tx { min-width: 0; display: grid; }
+.sc-node-tx b { font-size: 18px; font-weight: 800; text-transform: uppercase; line-height: 1.05; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sc-node-tx span { font-size: 13px; color: var(--sc-mut); }
+.sc-node-th { display: flex; justify-content: flex-end; min-width: 0; max-width: 130px; overflow: hidden; }
+.sc-respec { margin-top: 14px; display: flex; justify-content: space-between; align-items: center; gap: 10px; background: #121212; border: 1px dashed #3a3a3a; border-radius: 14px; padding: 10px 12px; }
+.sc-respec b { font-size: 15px; }
+
+/* Pick screen */
+.sc-opts { display: grid; gap: 10px; margin-top: 12px; }
+.sc-opt { width: 100%; font: inherit; color: inherit; text-align: left; display: flex; align-items: center; gap: 12px; background: var(--sc-card); border: 1px solid var(--sc-line); border-radius: 18px; padding: 12px 14px; cursor: pointer; }
+.sc-opt.is-pick { border: 2px solid var(--sc-yel); }
+.sc-thumb { flex: 0 0 116px; height: 64px; border-radius: 12px; background: #0B0B0B; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.sc-txt { flex: 1; min-width: 0; display: grid; }
+.sc-tag { font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: .05em; color: var(--sc-mut); }
+.sc-nm { font-family: "Barlow Condensed", Barlow, sans-serif; font-size: 23px; font-weight: 700; text-transform: uppercase; line-height: 1; margin-top: 3px; }
+.sc-ds { font-size: 14px; color: var(--sc-mut); margin-top: 3px; line-height: 1.2; }
+.sc-foot { display: flex; gap: 10px; margin-top: 16px; }
+
+/* Respec sheet */
+.sc-dim { position: fixed; inset: 0; background: rgba(0,0,0,.6); }
+.sc-sheet { position: fixed; left: 0; right: 0; bottom: 0; background: #141414; border-top: 1px solid var(--sc-line); border-radius: 22px 22px 0 0; padding: 14px 16px 24px; }
+.sc-grab { width: 44px; height: 5px; border-radius: 9px; background: #3a3a3a; margin: 0 auto 12px; }
+.sc-sheet h3 { font-family: "Barlow Condensed", Barlow, sans-serif; font-size: 26px; text-transform: uppercase; color: var(--sc-yel); margin: 0 0 4px; }
+.sc-sheet p { margin: 0; font-size: 15px; color: var(--sc-mut); line-height: 1.3; }
+
+/* Unlock celebration (full screen) */
+.sc-cel { position: fixed; inset: 0; z-index: 100; background: radial-gradient(circle at 50% 40%, #3a1206 0, #0b0b0b 55%, #050505 100%); overflow: hidden; color: var(--sc-ink); }
+.sc-ring { position: absolute; left: 50%; top: 40%; width: 60px; height: 60px; margin: -30px 0 0 -30px; border-radius: 50%; border: 3px solid #FF5A1F; animation: sc-ring 1.8s ease-out infinite; }
+.sc-ring.r2 { animation-delay: .6s; border-color: var(--sc-yel); }
+.sc-ring.r3 { animation-delay: 1.2s; border-color: #0A5CFF; }
+@keyframes sc-ring { from { transform: scale(.2); opacity: 1; } to { transform: scale(7); opacity: 0; } }
+.sc-spark { position: absolute; left: 50%; top: 40%; width: 6px; height: 6px; border-radius: 50%; background: var(--sc-yel); box-shadow: 0 0 10px var(--sc-yel); animation: sc-fly 1.6s ease-out infinite; }
+@keyframes sc-fly { from { transform: translate(0,0); opacity: 1; } to { transform: translate(var(--x), var(--y)); opacity: 0; } }
+.sc-cel-wrap { position: absolute; left: 0; right: 0; top: 150px; text-align: center; padding: 0 20px; }
+.sc-word { font-family: "Barlow Condensed", Barlow, sans-serif; font-weight: 800; font-size: 22px; letter-spacing: .2em; text-transform: uppercase; color: var(--sc-yel); }
+.sc-big { font-family: "Barlow Condensed", Barlow, sans-serif; font-weight: 900; font-size: 74px; line-height: .95; text-transform: uppercase; margin-top: 6px; background: linear-gradient(180deg,#FFE27A,#FF7A1F 50%,#B3180A); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.sc-card { margin: 26px auto 0; width: 310px; min-height: 132px; border-radius: 20px; background: #0B0B0B; border: 1px solid #2a2a2a; box-shadow: 0 0 0 2px #FF5A1F, 0 0 40px 10px rgba(255,90,31,.6); display: flex; align-items: center; justify-content: center; padding: 18px; }
+.sc-sub2 { margin-top: 18px; font-size: 17px; color: #cfcfcf; }
+.sc-cel-btn { position: absolute; left: 16px; right: 16px; bottom: 34px; min-height: 56px; }
+
+/* Looks thumbnails: looks.css (pl-look-*) comes from lib/player-name.css. Nothing extra is needed here. */
+
+@media (prefers-reduced-motion: reduce) {
+  .sc-ring, .sc-spark { animation: none; }
+  .sc-ring { opacity: .5; transform: scale(3); }
+}
+[data-fx="low"] .sc-ring, [data-fx="low"] .sc-spark { animation: none; }
+
+/* Reward kinds (no shop looks in trees) */
+.sc-th { display: inline-flex; align-items: center; justify-content: center; min-width: 96px; height: 52px; padding: 0 10px; border-radius: 12px; background: #0B0B0B; font-family: "Barlow Condensed", Barlow, sans-serif; font-weight: 800; font-size: 20px; text-transform: uppercase; color: var(--tree); }
+.sc-th--title { font-size: 18px; color: var(--sc-ink); }
+.sc-th--coins { color: var(--sc-yel); font-size: 26px; }
+.sc-thumb { flex: 0 0 116px; height: 64px; border-radius: 12px; background: #0B0B0B; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.sc-node-th .sc-th { min-width: 0; height: 40px; font-size: 16px; }
+.sc-card-note { display: block; margin-top: 6px; font-size: 20px; font-weight: 800; text-transform: uppercase; color: var(--sc-yel); }

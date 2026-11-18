@@ -1,0 +1,268 @@
+/* PlayerName styles. Own file: lib/player-name.css (owner: prestige and cosmetic visuals). Pairs with lib/player-name.js.
+   Text 15px minimum, 48px tap height on compact rows, dark base with "Bright hall" light mode.
+   Effects are outline, shadow, opacity and transform only (cheap on old phones, no layout work in loops).
+   Reduced motion stops every animation. No GIF files anywhere. */
+
+.pn {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  min-height: 48px;
+  min-width: 0;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--ink);
+  font: 800 16px/1.25 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  contain: paint;
+}
+
+.pn > * { position: relative; z-index: 1; }
+.pn > .pn-banner { position: absolute; inset: 0; z-index: -1; }
+
+.pn-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  min-width: 0;
+}
+
+.pn-name { min-width: 0; overflow-wrap: anywhere; }
+.pn-clan {
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: .06em;
+  color: var(--on-brand);
+  background: var(--brand);
+  border-radius: 6px;
+  padding: 1px 6px;
+}
+/* Level text is light blue on dark cards and meets WCAG AA (4.5:1) even over the gold banner fade (QA item 4). */
+.pn-lv { font-size: 15px; font-weight: 800; color: var(--link-text); white-space: nowrap; }
+.pn-lv::before { content: "\00B7"; color: #E6EAF2; font-weight: 700; margin-right: 8px; }
+.pn-stars { font-size: 15px; color: var(--brand-text); letter-spacing: 1px; white-space: nowrap; }
+.pn-stars-more { font-size: 15px; font-weight: 900; color: var(--brand-text); white-space: nowrap; }
+
+/* Emblems: small CSS-only badges, 24px, never GIF. */
+.pn-emb { flex: none; display: inline-block; width: 24px; height: 24px; border-radius: 50%; object-fit: cover; }
+.pn-emb--ring {
+  background: conic-gradient(#FFD21F, #0A5CFF, #FFD21F);
+  -webkit-mask: radial-gradient(circle, transparent 46%, #000 50%);
+          mask: radial-gradient(circle, transparent 46%, #000 50%);
+  animation: pn-spin 3s linear infinite;
+}
+.pn-emb--spark {
+  background: radial-gradient(circle, #FFF6C2 0 18%, #FFD21F 40%, rgba(255, 210, 31, 0) 70%);
+  animation: pn-pulse 1.6s ease-in-out infinite;
+}
+@keyframes pn-spin { to { transform: rotate(360deg); } }
+@keyframes pn-pulse {
+  0%, 100% { transform: scale(.85); opacity: .7; }
+  50% { transform: scale(1.1); opacity: 1; }
+}
+
+/* Banner: a soft strip behind the row. An equipped shop banner wins; with none, the star count picks one (p1 to p10). */
+.pn-banner { display: block; pointer-events: none; }
+.pn-banner--brand { background: linear-gradient(90deg, rgba(255, 210, 31, .30), rgba(255, 210, 31, 0) 75%); }
+.pn-banner--blue { background: linear-gradient(90deg, rgba(10, 92, 255, .38), rgba(10, 92, 255, 0) 75%); }
+.pn-banner--tier-ember { background: linear-gradient(90deg, rgba(255, 120, 40, .34), rgba(255, 120, 40, 0) 75%); }
+.pn-banner--legend { background: linear-gradient(90deg, rgba(255, 210, 31, .42), rgba(10, 92, 255, .30) 70%, rgba(10, 92, 255, 0)); }
+.pn-banner--tier-silver { background: linear-gradient(90deg, rgba(201, 206, 214, .34), rgba(201, 206, 214, 0) 75%); }
+.pn-banner--tier-bronze { background: linear-gradient(90deg, rgba(196, 128, 58, .36), rgba(196, 128, 58, 0) 75%); }
+.pn-banner--black { background: linear-gradient(90deg, #000, rgba(0, 0, 0, 0) 80%); box-shadow: inset 3px 0 0 #FFD21F; }
+
+/* Prestige banners, one per star. Stars 1 to 5 climb bronze, silver, gold, ember, legend.
+   Stars 6 to 10 keep the legend gradient and add a gold edge that gets stronger each star. */
+.pn-banner--p1 { background: linear-gradient(90deg, rgba(196, 128, 58, .36), rgba(196, 128, 58, 0) 70%); }
+.pn-banner--p2 { background: linear-gradient(90deg, rgba(201, 206, 214, .38), rgba(201, 206, 214, 0) 70%); }
+.pn-banner--p3 { background: linear-gradient(90deg, rgba(255, 210, 31, .36), rgba(255, 210, 31, 0) 70%); }
+.pn-banner--p4 { background: linear-gradient(90deg, rgba(255, 120, 40, .40), rgba(255, 120, 40, 0) 70%); }
+.pn-banner--p5 { background: linear-gradient(90deg, rgba(255, 210, 31, .44), rgba(10, 92, 255, .32) 70%, rgba(10, 92, 255, 0)); }
+.pn-banner--p6 { background: linear-gradient(90deg, rgba(255, 210, 31, .44), rgba(10, 92, 255, .34) 70%, rgba(10, 92, 255, 0)); box-shadow: inset 3px 0 0 rgba(255, 210, 31, .6); }
+.pn-banner--p7 { background: linear-gradient(90deg, rgba(255, 210, 31, .46), rgba(10, 92, 255, .38) 70%, rgba(10, 92, 255, 0)); box-shadow: inset 4px 0 0 rgba(255, 210, 31, .75); }
+.pn-banner--p8 { background: linear-gradient(90deg, rgba(255, 210, 31, .48), rgba(10, 92, 255, .42) 70%, rgba(10, 92, 255, 0)); box-shadow: inset 5px 0 0 #FFD21F; }
+.pn-banner--p9 { background: linear-gradient(90deg, rgba(255, 210, 31, .50), rgba(10, 92, 255, .46) 70%, rgba(10, 92, 255, 0)); box-shadow: inset 5px 0 0 #FFD21F, inset 0 -2px 0 #FFD21F; }
+.pn-banner--p10 { background: linear-gradient(90deg, rgba(255, 210, 31, .55), rgba(10, 92, 255, .50) 70%, rgba(10, 92, 255, 0)); box-shadow: inset 6px 0 0 #FFD21F, inset 0 2px 0 #FFD21F, inset 0 -2px 0 #FFD21F; }
+
+/* Name styles. */
+.pn-name--caps { text-transform: uppercase; letter-spacing: .04em; }
+.pn-name--brand { color: var(--brand-text); }
+.pn-name--tier-silver { color: var(--tier-silver); }
+.pn-name--tier-bronze { color: var(--tier-bronze); }
+.pn-name--blue { color: var(--link-text); }
+.pn-name--tier-ember { color: var(--tier-ember); }
+.pn-name--legend { background: linear-gradient(90deg, #0A5CFF, var(--brand)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+/* Row effects. One pseudo-element each, animating only transform or opacity. */
+/* Shimmer: slow sweep. A static yellow ring is always there, so the row still stands out without motion. */
+.pn-fx--shimmer { box-shadow: inset 0 0 0 2px rgba(255, 210, 31, .45); }
+.pn-fx--shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: linear-gradient(100deg, transparent 35%, rgba(255, 255, 255, .16) 50%, transparent 65%);
+  transform: translateX(-100%);
+  will-change: transform;
+  animation: pn-sweep 5s ease-in-out infinite;
+}
+@keyframes pn-sweep {
+  0% { transform: translateX(-100%); }
+  60%, 100% { transform: translateX(100%); }
+}
+
+/* Glow: a blue ring that breathes. Static ring first, pulse on top. */
+.pn-fx--glow { box-shadow: inset 0 0 0 2px rgba(10, 92, 255, .7); }
+.pn-fx--glow::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  box-shadow: inset 0 0 14px 2px rgba(10, 92, 255, .55);
+  will-change: opacity;
+  animation: pn-breathe 2.4s ease-in-out infinite;
+}
+@keyframes pn-breathe {
+  0%, 100% { opacity: .25; }
+  50% { opacity: .9; }
+}
+
+/* Tappable chip: 48px minimum, focus ring. */
+.pn--tap { cursor: pointer; }
+.pn--tap:focus-visible { outline:3px solid var(--focus); outline-offset: 2px; }
+
+/* Full card: name, level and stars on one line, banner across the top. */
+.pn--full {
+  display: block;
+  padding: 16px;
+  min-height: 0;
+  border: 1px solid var(--line);
+}
+.pn--full .pn-line { font-size: 24px; font-weight: 900; text-transform: uppercase; letter-spacing: .02em; margin-top: 0; }
+.pn--full .pn-lv { font-size: 18px; }
+.pn--full .pn-stars { font-size: 18px; }
+.pn--full .pn-lv::before { content: none; margin: 0; }
+.pn--full .pn-banner { inset: 0; }
+
+/* Calling card: full card only. Old-school style: a title line and a stat line.
+   It slams in once when a level 60 or prestiged player loads in, then stays still. */
+.pn-call {
+  display: grid;
+  gap: 2px;
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 2px solid var(--brand);
+  background: linear-gradient(135deg, #1A1C22, #0E0E0E);
+  color: var(--ink);
+}
+.pn-call-title { font-size: 20px; font-weight: 900; text-transform: uppercase; color: var(--brand-text); overflow-wrap: anywhere; }
+.pn-call-stat { font-size: 15px; font-weight: 800; color: var(--ink); }
+.pn-call--arrive { animation: pn-call-in 420ms cubic-bezier(.2, .8, .2, 1) both; }
+@keyframes pn-call-in {
+  0% { transform: translateX(-28px); opacity: 0; }
+  70% { transform: translateX(3px); opacity: 1; }
+  100% { transform: none; opacity: 1; }
+}
+.pn-call--blue { background: linear-gradient(135deg, #0A5CFF, #0A2A6B); border-color: var(--link); }
+.pn-call--blue .pn-call-title, .pn-call--blue .pn-call-stat { color: var(--on-brand); }
+.pn-call--court { background: linear-gradient(135deg, #1F7A43, #0E3B21); border-color: var(--brand); }
+.pn-call--tier-silver { background: linear-gradient(135deg, #E6E9EE, #8A93A3); border-color: #C9CED6; }
+.pn-call--tier-silver .pn-call-title, .pn-call--tier-silver .pn-call-stat { color: var(--on-brand); }
+.pn-call--black { background: #000; border-color: var(--brand); }
+.pn-call--brand { background: linear-gradient(135deg, #FFD21F, #6B5200); border-color: var(--brand); }
+.pn-call--brand .pn-call-title, .pn-call--brand .pn-call-stat { color: var(--on-brand); }
+.pn-call--tier-ember { background: linear-gradient(135deg, #FF7A2F, #7A2A0A); border-color: #FF8A4C; }
+.pn-call--tier-ember .pn-call-title, .pn-call--tier-ember .pn-call-stat { color: var(--on-brand); }
+.pn-call--tier-bronze { background: linear-gradient(135deg, #C4803A, #5C3510); border-color: #C4803A; }
+.pn-call--tier-bronze .pn-call-title, .pn-call--tier-bronze .pn-call-stat { color: var(--on-brand); }
+.pn-call--legend { background: linear-gradient(135deg, #0A5CFF, #0E0E0E); border-color: var(--brand); }
+
+/* Mock: plain name only. */
+.pn--mock { font-weight: 700; }
+
+/* Bright hall (light) mode. */
+/* The black banner turns into a soft ink wash on light cards, so the row text stays readable. */
+:root:not([data-theme="dark"]) .pn-banner--black,
+:root[data-theme="light"] .pn-banner--black { background: linear-gradient(90deg, rgba(14, 14, 14, .18), rgba(14, 14, 14, 0) 80%); box-shadow: inset 3px 0 0 var(--brand); }
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) .pn-lv { color: var(--brand-text); }
+  :root:not([data-theme="dark"]) .pn-lv::before { color: #4B5263; }
+}
+:root[data-theme="light"] .pn-lv { color: var(--brand-text); }
+:root[data-theme="light"] .pn-lv::before { color: #4B5263; }
+
+/* Reduced motion: no sweep, no breathing, no spin, no slam-in. The still ring and the banner stay. */
+@media (prefers-reduced-motion: reduce) {
+  .pn-fx--shimmer::after,
+  .pn-fx--glow::after,
+  .pn-emb--ring,
+  .pn-emb--spark,
+  .pn-call--arrive { animation: none; }
+  .pn-fx--shimmer::after { display: none; }
+  .pn-fx--glow::after { opacity: .5; }
+}
+:root[data-reduce-motion="1"] .pn-fx--shimmer::after { animation: none; transform: none; display: none; }
+:root[data-reduce-motion="1"] .pn-fx--glow::after,
+:root[data-reduce-motion="1"] .pn-emb--ring,
+:root[data-reduce-motion="1"] .pn-emb--spark,
+:root[data-reduce-motion="1"] .pn-call--arrive { animation: none; }
+:root[data-reduce-motion="1"] .pn-fx--glow::after { opacity: .5; }
+/* PlayerLook styles. One block per look. Only transform and opacity animate (pre-blurred layers). */
+.pl{position:relative;display:inline-flex;flex-direction:column;align-items:center;isolation:isolate}
+.pl-ring,.pl-flame,.pl-banner{position:absolute;pointer-events:none;opacity:0}
+.pl-line{font-weight:800;text-transform:uppercase;letter-spacing:.03em;position:relative;z-index:2}
+.pl-score{display:flex;align-items:center;justify-content:center;width:52px;height:52px;border-radius:50%;background:#fff;color:#0E0E0E;font-weight:900;font-size:22px;position:relative;z-index:2}
+.pl-level{font-size:13px;color:#9A9A9A;font-weight:700;position:relative;z-index:2}
+.pl-banner{left:-10%;right:-10%;top:-10%;bottom:-10%;border-radius:18px;z-index:0}
+
+/* name colours (heat) */
+.pl-look-heat-orange .pl-name,.pl-name.pl-look-heat-orange{color:#FF8A1F}
+.pl-look-heat-red .pl-name,.pl-name.pl-look-heat-red{color:#E8201C}
+.pl-look-heat-ice .pl-name,.pl-name.pl-look-heat-ice{color:#8FD8FF}
+
+/* glow rings (glow): a pre-blurred ring whose opacity breathes */
+.pl-look-glow-ember .pl-ring,.pl-look-glow-ice .pl-ring,.pl-look-glow-violet .pl-ring{opacity:1;inset:-6px;border-radius:999px;filter:blur(7px);animation:plBreathe 3s ease-in-out infinite}
+.pl-look-glow-ember .pl-ring{background:#FF8A1F}
+.pl-look-glow-ice .pl-ring{background:#3FB6FF}
+.pl-look-glow-violet .pl-ring{background:#B07CFF}
+.pl-look-glow-ember .pl-name,.pl-name.pl-look-glow-ember{color:#FF8A1F}
+@keyframes plBreathe{50%{opacity:.45}}
+
+/* flame + shine (fire tree) */
+.pl-look-fire-on-fire .pl-ring,.pl-look-fire-cold-blooded .pl-ring,.pl-look-fire-neon .pl-ring{opacity:1;inset:-7px;border-radius:999px;filter:blur(8px);animation:plBreathe 1.6s ease-in-out infinite}
+.pl-look-fire-on-fire .pl-ring{background:#FF7A1F}
+.pl-look-fire-cold-blooded .pl-ring{background:#3FB6FF}
+.pl-look-fire-neon .pl-ring{background:#B6FF3F}
+.pl-look-fire-on-fire .pl-flame,.pl-look-fire-cold-blooded .pl-flame,.pl-look-fire-neon .pl-flame{opacity:.9;left:8%;right:8%;bottom:-4px;height:46%;border-radius:40% 40% 0 0;background:linear-gradient(0deg,rgba(255,90,31,.85),rgba(255,90,31,0));animation:plRise 1.2s ease-in-out infinite}
+.pl-look-fire-cold-blooded .pl-flame{background:linear-gradient(0deg,rgba(63,182,255,.8),rgba(63,182,255,0))}
+.pl-look-fire-neon .pl-flame{background:linear-gradient(0deg,rgba(182,255,63,.75),rgba(182,255,63,0))}
+.pl-look-fire-on-fire .pl-name,.pl-name.pl-look-fire-on-fire,.pl-look-fire-cold-blooded .pl-name,.pl-name.pl-look-fire-cold-blooded,.pl-look-fire-neon .pl-name,.pl-name.pl-look-fire-neon{color:#FFD21F}
+@keyframes plRise{50%{transform:translateY(-6px);opacity:.5}}
+
+/* burning names + banners (master) */
+.pl-look-inferno .pl-name,.pl-name.pl-look-inferno,.pl-look-gold-crown .pl-name,.pl-name.pl-look-gold-crown,.pl-look-void-burn .pl-name,.pl-name.pl-look-void-burn{background-clip:text;-webkit-background-clip:text;color:transparent;animation:plFlick 1.2s steps(2) infinite}
+.pl-look-inferno .pl-name,.pl-name.pl-look-inferno{background-image:linear-gradient(180deg,#FFE27A,#FF7A1F 45%,#B3180A)}
+.pl-look-gold-crown .pl-name,.pl-name.pl-look-gold-crown{background-image:linear-gradient(180deg,#FFF6C2,#FFD21F 45%,#A8740A)}
+.pl-look-void-burn .pl-name,.pl-name.pl-look-void-burn{background-image:linear-gradient(180deg,#E7C9FF,#9B4DFF 45%,#2A0A5C)}
+.pl-look-inferno .pl-banner{opacity:1;background:linear-gradient(0deg,rgba(255,90,31,.7),rgba(255,90,31,0) 80%);animation:plRise 1.6s ease-in-out infinite}
+.pl-look-gold-crown .pl-banner{opacity:1;background:linear-gradient(0deg,rgba(255,210,31,.6),rgba(255,210,31,0) 80%)}
+.pl-look-void-burn .pl-banner{opacity:1;background:linear-gradient(0deg,rgba(155,77,255,.7),rgba(155,77,255,0) 80%)}
+@keyframes plFlick{50%{opacity:.85}}
+
+/* score moment: a short flare when this player scores (one shot, 1.2 s) */
+.pl-moment .pl-ring{animation:plFlare 1.2s ease-out 1}
+@keyframes plFlare{0%{transform:scale(.9);opacity:1}100%{transform:scale(1.25);opacity:0}}
+
+/* lite mode: no loops, moments still show once */
+html[data-fx="low"] .pl *{animation:none !important}
+@media (prefers-reduced-motion: reduce){ .pl *{animation:none !important} }
