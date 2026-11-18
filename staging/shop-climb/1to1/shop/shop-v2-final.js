@@ -9,7 +9,7 @@
   function toItem(i) {
     return {
       id: i.id, layer: i.layer, name: i.name, tier: i.tier || 'common', price: i.price || 0,
-      sort: i.sort || 0, depth: i.depth || 0, effect: i.effect || 'none',
+      sort: i.sort || 0, depth: i.depth || 0, effect: i.effect || 'none', endsAt: i.availableUntil || null,
       unlock: { kind: i.unlockKind || 'level', minLevel: i.minLevel || 1, minStars: i.minStars || 0, badge: i.unlockName || null }
     };
   }

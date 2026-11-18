@@ -70,3 +70,6 @@ body.shop-v2 { margin: 0; background: #0E0E0E; color: #F5F5F5; font-family: Barl
 @media (prefers-reduced-motion: reduce) {
   .sb-tile, .sb-btn, .sb-tab { transition: none; }
 }
+
+/* Limited drops: end time under the tile (orange-red, never pure red). */
+.sb-ends { display: block; font-size: 12px; font-weight: 700; color: #FF7A1A; margin-top: 2px; }

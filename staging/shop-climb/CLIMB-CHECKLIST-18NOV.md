@@ -42,7 +42,11 @@ Status: done / in progress / not started. Chunks land in shop-redesign-18nov/sta
 | 2 | Night recap card | recap | not started | Owned by the recap thread on the PC. |
 | 3 | Auto rival | rival | not started | Owned by the rival thread. |
 | 4 | Crews (3 to 5, tag, weekly board) | me | in progress | v3 SQL: create, join, leave, state. Weekly board waits for weekly XP. |
-| 5 | Limited drops (available_until) | me | chunk done (SQL) | v3 SQL column and shop filter. Client "Ends in" badge not built. |
+| 5 | Limited drops (available_until) | me | done | v3 SQL column, shop filter, availableUntil sent. "Ends in" tile label done (syntax checked, not seen on device). |
+| 6a | Crew member names (First L) | me | done (SQL v3) | crew state returns members. Crew panel in app not built. |
+| 6b | Weekly crew board + crew XP | me | done (SQL v3) | shop_crew_board and crew_week_xp. Board panel in app not built. |
+| 6c | Perk XP in the award | me | hook done, not wired | climb_xp_for_night, live perks only. The award function was not found in the files; it must call the hook. |
+| 6d | player_state.prestiges | me | done in migration 9 | player_prestige already +1 per prestige. XP sync must not reset it. |
 | 6 | Season trophies | me | not started | Needs the season window. |
 | 7 | Bounty night | organiser | not started | Needs an organiser toggle. |
 | 8 | Shot of the night vote | me | not started | Needs a vote table and Jord's go. |

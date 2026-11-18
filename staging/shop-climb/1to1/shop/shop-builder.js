@@ -144,6 +144,16 @@
     }
 
     // One tile: a visual swatch (the real look), a tier stripe, and a small price chip. No long text.
+    // Limited drops: 'Ends in 3 days', 'Ends in 5h' or 'Ends soon'. Blank when no end time or already past.
+    function endsInLabel(iso) {
+      if (!iso) return '';
+      var ms = Date.parse(iso) - Date.now();
+      if (!(ms > 0)) return '';
+      var h = Math.floor(ms / 3600000);
+      if (h >= 48) return 'Ends in ' + Math.floor(h / 24) + ' days';
+      if (h >= 1) return 'Ends in ' + h + 'h';
+      return 'Ends soon';
+    }
     function tileHtml(it) {
       var st = state(it);
       var g = GROUPS.filter(function (x) { return x.key === S.group; })[0];
@@ -161,7 +171,8 @@
         'data-action="preview" data-id="' + esc(it.id) + '" aria-pressed="' + (S.previewId === it.id) + '" ' +
         'aria-label="' + esc(it.name + ', ' + (TIER_LABEL[it.tier] || it.tier)) + '">' +
         '<span class="sb-tier-bar" aria-hidden="true"></span>' +
-        label + chip + '<span class="sb-tile-name">' + esc(it.name) + '</span></button>';
+        label + chip + (st.key === 'owned' || st.key === 'worn' ? '' : (endsInLabel(it.endsAt) ? '<span class="sb-ends">' + esc(endsInLabel(it.endsAt)) + '</span>' : '')) +
+        '<span class="sb-tile-name">' + esc(it.name) + '</span></button>';
     }
 
     // The one action button, always under the grid.

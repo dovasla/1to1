@@ -13,8 +13,8 @@
 --   5. Coins from a pick are paid once per run per level, so respeccing cannot farm coins.
 --   6. Coin balance = earned + VIP bonus - purchases + shop_coin_ledger (picks add, respec takes away).
 --
--- NOTE, must be done by the XP sync before this is useful: player_state.prestiges must go up by 1 on every prestige
--- (the same place that sets level and stars). Until then every player is in run 0, which still works.
+-- NOTE: player_state.prestiges is set by migration 9 (player_prestige, level 60 only, +1 per prestige). The XP sync must
+-- not reset it. Until migration 9 runs, every player is in run 0, which still works.
 --
 -- Phone calls (token first, same as shop_state / shop_act):
 --   shop_state(p_token)                          existing call, same answer, plus retired items hidden and coin ledger counted
@@ -33,7 +33,7 @@ update public.shop_items set retired = true
 -- 1b. Limited drops: a look can end on a date. Owned ones stay owned.
 alter table public.shop_items add column if not exists available_until timestamptz;
 
--- 2. Run number. The XP sync sets this on every prestige. Created here so the climb can read it.
+-- 2. Run number. Set by player_prestige (migration 9). Created here too so the climb can read it.
 alter table public.player_state add column if not exists prestiges int not null default 0;
 
 -- 3. Coin ledger: picks add coins, respec takes them away. Signed.
@@ -257,6 +257,7 @@ begin
   select coalesce(json_agg(json_build_object(
            'id', id, 'slot', slot, 'value', value, 'name', name, 'price', price,
            'minLevel', min_level, 'minStars', min_stars, 'layer', layer, 'tier', tier, 'depth', depth, 'effect', effect, 'unlockKind', unlock_kind, 'unlockValue', unlock_value, 'sort', sort,
+           'availableUntil', available_until,
            'unlockName', (select a.title from public.achievements a where a.id = unlock_value)) order by sort, price, id), '[]'::json)
     into v_items from public.shop_items where retired = false and (available_until is null or available_until > now());
   select coalesce(json_agg(item_id), '[]'::json) into v_owned from public.shop_purchases where signup_id = p_sid;
@@ -519,14 +520,18 @@ create policy crews_deny on public.crews for all to anon, authenticated using (f
 drop policy if exists crew_members_deny on public.crew_members;
 create policy crew_members_deny on public.crew_members for all to anon, authenticated using (false) with check (false);
 
--- The crew a player is in right now (null if none) and its size. Member names are not sent yet (needs the names view).
+-- The crew a player is in right now (null if none): size, and members as 'First L' names (never usernames).
 create or replace function public._crew_of(p_sid uuid)
 returns jsonb
 language sql stable security definer set search_path = public as $$
   select case when c.id is null then null else jsonb_build_object(
       'id', c.id, 'name', c.name, 'tag', c.tag,
       'size', (select count(*) from public.crew_members m2 where m2.crew_id = c.id and m2.left_at is null),
-      'max', 5, 'youAreCreator', c.created_by = p_sid) end
+      'max', 5, 'youAreCreator', c.created_by = p_sid,
+      'members', (select coalesce(jsonb_agg(jsonb_build_object('name', s.first || coalesce(' ' || s.last_initial, ''),
+                    'you', m2.signup_id = p_sid, 'creator', m2.signup_id = c.created_by) order by m2.joined_at), '[]'::jsonb)
+                  from public.crew_members m2 join public.signups s on s.id = m2.signup_id
+                  where m2.crew_id = c.id and m2.left_at is null)) end
   from (select 1) as one
   left join public.crew_members m on m.signup_id = p_sid and m.left_at is null
   left join public.crews c on c.id = m.crew_id
@@ -602,6 +607,78 @@ begin
   update public.crew_members set left_at = now() where signup_id = v_sid and left_at is null;
   return json_build_object('ok', true, 'message', 'You left the crew.', 'crew', null);
 end $$;
+
+-- 13. Weekly crew XP and the crew board. The XP award calls climb_xp_for_night once per player per night.
+create table if not exists public.crew_week_xp (
+  crew_id    bigint not null references public.crews(id) on delete cascade,
+  week_start date   not null,
+  xp         int    not null default 0 check (xp >= 0),
+  primary key (crew_id, week_start)
+);
+alter table public.crew_week_xp enable row level security;
+revoke all on public.crew_week_xp from anon, authenticated;
+drop policy if exists crew_week_xp_deny on public.crew_week_xp;
+create policy crew_week_xp_deny on public.crew_week_xp for all to anon, authenticated using (false) with check (false);
+
+-- Server only (the XP award calls it, never the phone). Returns the bonus XP from this player's live XP perks
+-- in the current run, and adds base + bonus to their crew's XP for this week. Call once per player per night.
+-- Perk rules (shop_climb_rewards, live = true): gold-perk-1 MVP two nights running +15, gold-perk-2 MVP +10,
+-- gold-perk-3 +2 per streak week, storm-perk-1 +5 per game after the 3rd, storm-perk-2 3+ games +10,
+-- storm-perk-3 +5 per win, shadow-perk-3 3+ wins +10.
+create or replace function public.climb_xp_for_night(p_sid uuid, p_base_xp int, p_games int, p_wins int,
+                                                     p_mvp boolean, p_mvp_streak int, p_streak_weeks int)
+returns int
+language plpgsql security definer set search_path = public as $$
+declare
+  v_run   int := coalesce((select prestiges from public.player_state where signup_id = p_sid), 0);
+  v_bonus int := 0;
+  v_crew  bigint;
+  r       record;
+begin
+  for r in select pk.reward_id from public.shop_picks pk
+           where pk.signup_id = p_sid and pk.run_no = v_run and pk.cleared_at is null and pk.kind = 'perk' loop
+    v_bonus := v_bonus + case r.reward_id
+      when 'gold-perk-1'   then case when coalesce(p_mvp_streak, 0) >= 2 then 15 else 0 end
+      when 'gold-perk-2'   then case when coalesce(p_mvp, false) then 10 else 0 end
+      when 'gold-perk-3'   then 2 * greatest(coalesce(p_streak_weeks, 0), 0)
+      when 'storm-perk-1'  then 5 * greatest(coalesce(p_games, 0) - 3, 0)
+      when 'storm-perk-2'  then case when coalesce(p_games, 0) >= 3 then 10 else 0 end
+      when 'storm-perk-3'  then 5 * greatest(coalesce(p_wins, 0), 0)
+      when 'shadow-perk-3' then case when coalesce(p_wins, 0) >= 3 then 10 else 0 end
+      else 0 end;
+  end loop;
+
+  select m.crew_id into v_crew from public.crew_members m where m.signup_id = p_sid and m.left_at is null;
+  if v_crew is not null then
+    insert into public.crew_week_xp (crew_id, week_start, xp)
+      values (v_crew, date_trunc('week', now())::date, greatest(coalesce(p_base_xp, 0), 0) + v_bonus)
+      on conflict (crew_id, week_start) do update set xp = public.crew_week_xp.xp + excluded.xp;
+  end if;
+  return v_bonus;
+end $$;
+
+create or replace function public.shop_crew_board(p_token text)
+returns json
+language plpgsql security definer set search_path = public, extensions as $$
+declare
+  v_sid  uuid := public._shop_signup(p_token);
+  v_week date := date_trunc('week', now())::date;
+  v_rows json;
+begin
+  if v_sid is null then return json_build_object('ok', false, 'error', 'Sign in again'); end if;
+  select coalesce(json_agg(row_to_json(b)), '[]'::json) into v_rows from (
+    select c.name, c.tag, w.xp,
+           (select count(*) from public.crew_members m where m.crew_id = c.id and m.left_at is null) as size
+      from public.crew_week_xp w join public.crews c on c.id = w.crew_id
+     where w.week_start = v_week
+     order by w.xp desc, c.tag
+     limit 10) b;
+  return json_build_object('ok', true, 'weekStart', v_week, 'board', v_rows);
+end $$;
+
+revoke execute on function public.climb_xp_for_night(uuid, int, int, int, boolean, int, int) from public, anon, authenticated;
+revoke execute on function public.shop_crew_board(text) from public;
+grant execute on function public.shop_crew_board(text) to anon, authenticated;
 
 revoke execute on function public._crew_of(uuid) from public, anon, authenticated;
 revoke execute on function public.shop_crew_state(text) from public;

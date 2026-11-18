@@ -28,7 +28,10 @@ Calls the phone makes (all take the player's token, same as shop_state / shop_ac
 - `shop_climb_choose_tree(p_token, p_tree)` - tree: fire, ice, gold, storm or shadow
 - `shop_climb_pick(p_token, p_level, p_reward)` - level 3, 6 ... 60; reward = an `id` from `pending[].offers` (perk, title or coins)
 - `shop_climb_respec(p_token)` - clears the tree and this run's picks. ONE free respec, ever (shop_climb.respec_used). No coin respec. `respecsLeft` in the climb state is 1 or 0.
-- Limited drops: `shop_items.available_until` (hidden after that time, unless already owned). Client "Ends in" badge not built.
+- Limited drops: `shop_items.available_until` (hidden after that time, unless already owned). The shop returns `availableUntil` per item; tiles show "Ends in ...".
+- Crew members: crew state now has `members` (First L names, never usernames).
+- Crew board: `shop_crew_board(p_token)` returns the top 10 crews this week (`board`: name, tag, xp, size).
+- XP award hook (server only, not callable from the phone): `climb_xp_for_night(p_sid, p_base_xp, p_games, p_wins, p_mvp, p_mvp_streak, p_streak_weeks)` returns the perk bonus and adds base + bonus to the player's crew for the week. The XP award must call it once per player per night. The award function is not in the files I could search, so this call is not wired yet.
 - Crews: `shop_crew_create(p_token, p_name, p_tag)`, `shop_crew_join(p_token, p_tag)`, `shop_crew_leave(p_token)`, `shop_crew_state(p_token)`. Tag is 2-4 capitals/digits, max 5 members, one crew per player. Member names not returned yet (needs a names view). Weekly crew board not built.
 
 ## Glue the app needs (add in ShopBackend, not in the files above)
@@ -60,7 +63,8 @@ Then in the shop screen: `ShopClimb.mount(el, { name, onAction })` and `climb.se
 ## Not in this set (say so before shipping)
 
 - Night recap, Hype on Live and weekly rival belong to other threads. Not in this set.
-- Limited drops and crews: SQL and design are in; client badge, crew names and weekly board are not.
+- Crew panel in the app is not built. The server side (members, board, XP hook) is in SQL v3.
+- Prestige: migration 9 (player_prestige) already sets player_state.prestiges. The XP sync only needs to leave it alone.
 
 - Live court screen: not staged. Live thread should use `PlayerName.html({ ..., look })`.
 - Server award for tree perks (xp): not built. Perks in tree-xp-perks.md are design only.
