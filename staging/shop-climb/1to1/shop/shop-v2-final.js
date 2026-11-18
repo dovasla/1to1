@@ -56,6 +56,26 @@
     });
   }
 
+  // Crew panel: join or make a crew, members, weekly board. Hidden if the crew RPCs are not on the server yet.
+  function mountCrew() {
+    var el = document.getElementById('crew');
+    if (!el || !window.ShopCrew || !backend.crewState) return;
+    var wrap = document.getElementById('crew-wrap');
+    var panel = ShopCrew.mount(el, {
+      onAct: function (a) { return backend.crewAct(a); },
+      onChanged: function () { backend.crewBoard().then(function (b) { if (b.ok) panel.setState({ board: b.board }); }); }
+    });
+    backend.crewState().then(function (r) {
+      if (!r.ok) { if (wrap) wrap.hidden = true; return; }
+      if (wrap) wrap.hidden = false;
+      panel.setState({ crew: r.crew });
+      return backend.crewBoard();
+    }).then(function (b) {
+      if (b && b.ok) panel.setState({ board: b.board });
+      else if (b && !b.ok && wrap) wrap.hidden = true;
+    });
+  }
+
   function start() {
     if (!backend) {
       document.getElementById('builder').innerHTML = '<p style="padding:16px">Open the shop from the app.</p>';
@@ -77,6 +97,7 @@
       window.shopBuilder = ui;
       document.documentElement.setAttribute('data-shop-ready', '1');
       mountClimb(st);
+      mountCrew();
     }).catch(function (e) {
       document.getElementById('builder').innerHTML = '<p style="padding:16px">' + String(e.message).replace(/[<>&]/g, '') + '</p>';
     });

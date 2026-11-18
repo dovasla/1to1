@@ -94,6 +94,29 @@
           if (!j || j.ok === false) return { error: (j && j.error) || 'Could not save. Try again.' };
           return { state: { level: j.level, climb: j }, pick: j.pick, message: j.message };
         });
+      },
+      // Crew panel (SQL v3). A missing RPC (404) comes back as ok:false, so the panel hides itself.
+      crewState: function () {
+        return rpc('shop_crew_state', { p_token: getToken() }).then(function (j) {
+          if (!j || j.ok === false) return { ok: false, error: (j && j.error) || 'Could not load the crew' };
+          return { ok: true, crew: j.crew || null };
+        }).catch(function () { return { ok: false, error: 'crew-unavailable' }; });
+      },
+      crewBoard: function () {
+        return rpc('shop_crew_board', { p_token: getToken() }).then(function (j) {
+          if (!j || j.ok === false) return { ok: false, error: (j && j.error) || 'Could not load the board' };
+          return { ok: true, board: j.board || [] };
+        }).catch(function () { return { ok: false, error: 'board-unavailable' }; });
+      },
+      crewAct: function (a) {
+        var call = a.type === 'create' ? ['shop_crew_create', { p_name: a.name, p_tag: a.tag }]
+          : a.type === 'join' ? ['shop_crew_join', { p_tag: a.tag }]
+          : ['shop_crew_leave', {}];
+        var body = Object.assign({ p_token: getToken() }, call[1]);
+        return rpc(call[0], body).then(function (j) {
+          if (!j || j.ok === false) return { ok: false, error: (j && j.error) || 'Could not save. Try again.' };
+          return { ok: true, crew: j.crew === undefined ? null : j.crew, message: j.message || '' };
+        }).catch(function () { return { ok: false, error: 'Could not save. Try again.' }; });
       }
     };
   }

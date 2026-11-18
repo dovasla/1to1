@@ -63,7 +63,7 @@ Then in the shop screen: `ShopClimb.mount(el, { name, onAction })` and `climb.se
 ## Not in this set (say so before shipping)
 
 - Night recap, Hype on Live and weekly rival belong to other threads. Not in this set.
-- Crew panel in the app is not built. The server side (members, board, XP hook) is in SQL v3.
+- Crew panel: shop/shop-crew.js (add to shop-v2.html after shop-climb.js; section #crew-wrap). Needs SQL v3 for the crew RPCs; hides itself if they are missing.
 - Prestige: migration 9 (player_prestige) already sets player_state.prestiges. The XP sync only needs to leave it alone.
 
 - Live court screen: not staged. Live thread should use `PlayerName.html({ ..., look })`.

@@ -119,3 +119,31 @@
 .sc-tree { grid-template-columns: auto 1fr auto; }
 .sc-tree-tx { display: grid; gap: 4px; min-width: 0; }
 .sc-tree .sc-go { grid-column: auto; grid-row: auto; }
+
+/* Crew panel (shop-crew.js). Yellow for the own row and buttons, orange-red for badges. No pure red, no team blue. */
+.cr-outer { margin: 14px 0 0; }
+.cr-wrap { display: grid; gap: 12px; }
+.cr-card { background: #141414; border: 1px solid #2A2A2A; border-radius: 14px; padding: 14px; }
+.cr-title { margin: 0 0 4px; font-size: 18px; font-weight: 800; color: #FFFFFF; }
+.cr-title-2 { margin-top: 14px; }
+.cr-sub { margin: 0 0 10px; font-size: 14px; color: #B5B5B5; }
+.cr-head { display: flex; align-items: flex-start; justify-content: space-between; }
+.cr-badge { display: inline-block; background: #FF7A1A; color: #0E0E0E; font-weight: 800; border-radius: 6px; padding: 1px 6px; font-size: 13px; }
+.cr-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: stretch; }
+.cr-in { flex: 1 1 140px; min-height: 44px; border-radius: 10px; border: 1px solid #3A3A3A; background: #0E0E0E; color: #FFFFFF; padding: 0 12px; font-size: 16px; }
+.cr-in-tag { flex: 0 0 90px; text-transform: uppercase; }
+.cr-btn { min-height: 44px; min-width: 88px; border-radius: 10px; border: 0; background: #FFD21F; color: #0E0E0E; font-weight: 800; font-size: 16px; padding: 0 16px; }
+.cr-btn-ghost { background: transparent; color: #FFFFFF; border: 1px solid #3A3A3A; }
+.cr-list { list-style: none; margin: 0 0 10px; padding: 0; display: grid; gap: 6px; }
+.cr-mem { min-height: 44px; display: flex; align-items: center; padding: 0 12px; border-radius: 10px; background: #0E0E0E; color: #FFFFFF; font-size: 16px; font-weight: 600; }
+.cr-mem.is-you { border: 1px solid #FFD21F; }
+.cr-tag-s { font-size: 12px; font-weight: 700; color: #FFD21F; margin-left: 6px; }
+.cr-msg { min-height: 1.2em; margin: 8px 0 0; font-size: 14px; color: #FFD21F; }
+.cr-msg.is-bad { color: #FF7A1A; }
+.cr-board { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.cr-row-b { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border-radius: 10px; background: #0E0E0E; color: #FFFFFF; font-size: 16px; }
+.cr-row-b.is-mine { border: 1px solid #FFD21F; }
+.cr-rank { width: 24px; font-weight: 800; color: #FFD21F; }
+.cr-bname { flex: 1; font-weight: 700; }
+.cr-bxp { font-weight: 800; color: #FFFFFF; }
+.cr-btn, .cr-in { font-family: inherit; }
