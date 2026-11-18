@@ -203,10 +203,11 @@
       ? cfg
       : { backend: 'mock', level: PlayerXp.progress(S.run).level, stars: S.run.stars },
       function () { return readToken(); });
-    shopBe = {
+    // Keep every method of the real backend (climb and crew calls too). Only load and act also read the coins.
+    shopBe = Object.assign({}, real, {
       load: function () { return real.load().then(readCoinsFrom); },
       act: function (id, tag) { return real.act(id, tag).then(readCoinsFrom); }
-    };
+    });
     return shopBe;
   }
   // The Shop frame asks for this same instance (same origin), so a purchase updates Home and Profile at once.
