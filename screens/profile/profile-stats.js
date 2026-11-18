@@ -48,7 +48,7 @@
       return {
         id: String(n.night_id || ''),
         date: dateLabel(n.date),
-        line: int0(n.games) + ' games · ' + int0(n.wins) + ' wins · ' + int0(n.points) + ' pts · ' +
+        line: int0(n.games) + (int0(n.games) === 1 ? ' game · ' : ' games · ') + int0(n.wins) + ' wins · ' + int0(n.points) + ' pts · ' +
           int0(n.fouls) + ' fouls' + (int0(n.violations) ? ' · ' + int0(n.violations) + ' violations' : ''),
         xp: int0(n.xp),
         mvp: !!n.mvp

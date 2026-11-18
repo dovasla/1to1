@@ -693,7 +693,11 @@
   // A failed read (no signal) keeps the last update on screen.
   var feedState = { feed: null, offline: false };
   var feedTimer = null, feedBusy = false;
-  function feedNow() { return feedState.feed ? PlayerLiveFeed.fromFeed(feedState.feed) : null; }
+  function feedNow() { return feedState.feed ? PlayerLiveFeed.fromFeed(feedState.feed, Date.now(), feedState.serverMs) : null; }
+  // Heartbeat (live-feed.js): 'reconnecting' after 5 min with no beat, 'over' after 10 min. 'ok' when there is no row.
+  function feedConnectionNow() { var f = feedNow(); return f ? f.connection : 'ok'; }
+  // Run started on the organiser, no game on court yet: the Live tab says "Run is on".
+  function feedStartedNow() { var f = feedNow(); return !!(f && f.state === 'started'); }
   function liveNoNow() { var f = feedNow(); return f && f.now ? f.now.game : null; }
   // The Live screen's "now" card, from the live row. Falls back to S.live (null in the shipped build) when no row.
   function liveNow() {
@@ -701,7 +705,7 @@
     if (!f || !f.now) return S.live;
     var n = f.now;
     var clock = n.state === 'full-time' ? 'Full time' : (n.state === 'paused' ? 'Paused' : (n.clockText ? n.clockText + ' left' : ''));
-    return { game: n.game, court: n.court, teamA: n.teamA, scoreA: n.scoreA, teamB: n.teamB, scoreB: n.scoreB, clock: clock, players: n.players || { a: [], b: [] } };
+    return { game: n.game, court: n.court, teamA: n.teamA, scoreA: n.scoreA, teamB: n.teamB, scoreB: n.scoreB, clock: clock, players: n.players || { a: [], b: [] }, history: n.history || [] };
   }
   // Results: the last finished game and the final game (no full list in the row). Hidden when none.
   function liveResults() {
@@ -743,10 +747,14 @@
       feedState.changed = sig !== feedState.sig;   // stamp check: the same row as last time needs no redraw
       feedState.sig = sig;
       feedState.feed = row && row.payload ? row.payload : null;
+      // The server's own stamp for the row (Supabase updated_at): the heartbeat check uses it too.
+      feedState.serverMs = row && row.updatedAt ? Date.parse(row.updatedAt) : null;
       feedState.offline = false;
     }, function () { feedState.offline = true; feedState.changed = true; }).then(function () {
       clearTimeout(wait);
       feedBusy = false;
+      // A silent organiser changes no row, so a change in the heartbeat state (reconnecting / over) must redraw too.
+      if (feedConnectionNow() !== feedState.lastConn) { feedState.lastConn = feedConnectionNow(); feedState.changed = true; }
       if (feedState.changed) {
         if (feedNow() && feedNow().live) loadBoard(); else if (S.board) { S.board = null; }
         if (S.liveScreen) S.liveScreen.update(liveData());
@@ -836,10 +844,12 @@
         var lab = NightShape.rowLabel(g, S.me);
         return { no: g.no, time: hhmm(g.startsAt), vs: lab.vs, versus: lab.versus, state: liveNoNow() === g.no ? 'live' : (game && g.id === game.id ? 'next' : 'todo') };
       }),
-      runOn: runOnNow(Date.now()),
+      runOn: runOnNow(Date.now()) || feedStartedNow(),
+      runStarting: feedStartedNow(),
+      connection: feedConnectionNow(),
       waiting: !runOverNow() && !!(S.paid || myPaidOrIn() || (S.rsvp && S.rsvp.ok === true && S.rsvp.me === 'in')),
-      runOver: runOverNow(),
-      runOverWord: runOverWordNow(),
+      runOver: runOverNow() || feedConnectionNow() === 'over',
+      runOverWord: feedConnectionNow() === 'over' && !runOverNow() ? 'Run’s over' : runOverWordNow(),
       paid: !!(S.paid || myPaidOrIn(true)),
       waitError: !!S.upcomingError,
       board: S.board || null,
@@ -974,8 +984,17 @@
   // Icon pick: saved to the server (player_set_photo_icon) and shown to other players.
   function onPhotoIcon(id) {
     var t = readToken();
-    photoState.icon = id; renderProfile();
-    if (t && be.setPhotoIcon) be.setPhotoIcon(t, id).then(function (r) { if (!r || !r.ok) { photoState.note = 'Icon not saved. Try again.'; renderProfile(); } });
+    var before = photoState.icon;
+    photoState.icon = id; photoState.note = ''; renderProfile();
+    if (!t || !be.setPhotoIcon) { photoState.icon = before; photoState.note = 'Sign in to pick an icon.'; renderProfile(); return; }
+    be.setPhotoIcon(t, id).then(function (r) {
+      // Saved: reload the looks so the Leaderboard and player cards show the new icon now, not after a restart.
+      if (r && r.ok) { loadLooks(); return; }
+      // Not saved: show the icon that is really saved, and say so.
+      photoState.icon = before;
+      photoState.note = r && r.reason === 'signed-out' ? 'Sign in again to pick an icon.' : 'Icon not saved. Try again.';
+      renderProfile();
+    });
   }
   // Other players' looks, by public_id (photo only when approved). S.looks is set after each board load.
   function lookOf(p) { var k = p && (p.public_id || p.id); return (S.looks && k && S.looks[k]) || {}; }

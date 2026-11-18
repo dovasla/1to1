@@ -7,7 +7,7 @@
     brand: 'Check Ball',
     fullName: 'Check Ball',
     tagline: 'Check. Game on.',
-    tabs: Object.freeze({ home: 'Home', live: 'Live', stats: 'Stats', more: 'More' }),
+    tabs: Object.freeze({ home: 'Home', live: 'Live', stats: 'Leaderboard', more: 'More' }),
     session: 'Run',
     joinSession: 'Join a run',
     sessionOpen: 'Run open',

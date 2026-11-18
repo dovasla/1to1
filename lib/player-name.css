@@ -217,3 +217,52 @@
 :root[data-reduce-motion="1"] .pn-emb--spark,
 :root[data-reduce-motion="1"] .pn-call--arrive { animation: none; }
 :root[data-reduce-motion="1"] .pn-fx--glow::after { opacity: .5; }
+/* PlayerLook styles. One block per look. Only transform and opacity animate (pre-blurred layers). */
+.pl{position:relative;display:inline-flex;flex-direction:column;align-items:center;isolation:isolate}
+.pl-ring,.pl-flame,.pl-banner{position:absolute;pointer-events:none;opacity:0}
+.pl-line{font-weight:800;text-transform:uppercase;letter-spacing:.03em;position:relative;z-index:2}
+.pl-score{display:flex;align-items:center;justify-content:center;width:52px;height:52px;border-radius:50%;background:#fff;color:#0E0E0E;font-weight:900;font-size:22px;position:relative;z-index:2}
+.pl-level{font-size:13px;color:#9A9A9A;font-weight:700;position:relative;z-index:2}
+.pl-banner{left:-10%;right:-10%;top:-10%;bottom:-10%;border-radius:18px;z-index:0}
+
+/* name colours (heat) */
+.pl-look-heat-orange .pl-name,.pl-name.pl-look-heat-orange{color:#FF8A1F}
+.pl-look-heat-red .pl-name,.pl-name.pl-look-heat-red{color:#E8201C}
+.pl-look-heat-ice .pl-name,.pl-name.pl-look-heat-ice{color:#8FD8FF}
+
+/* glow rings (glow): a pre-blurred ring whose opacity breathes */
+.pl-look-glow-ember .pl-ring,.pl-look-glow-ice .pl-ring,.pl-look-glow-violet .pl-ring{opacity:1;inset:-6px;border-radius:999px;filter:blur(7px);animation:plBreathe 3s ease-in-out infinite}
+.pl-look-glow-ember .pl-ring{background:#FF8A1F}
+.pl-look-glow-ice .pl-ring{background:#3FB6FF}
+.pl-look-glow-violet .pl-ring{background:#B07CFF}
+.pl-look-glow-ember .pl-name,.pl-name.pl-look-glow-ember{color:#FF8A1F}
+@keyframes plBreathe{50%{opacity:.45}}
+
+/* flame + shine (fire tree) */
+.pl-look-fire-on-fire .pl-ring,.pl-look-fire-cold-blooded .pl-ring,.pl-look-fire-neon .pl-ring{opacity:1;inset:-7px;border-radius:999px;filter:blur(8px);animation:plBreathe 1.6s ease-in-out infinite}
+.pl-look-fire-on-fire .pl-ring{background:#FF7A1F}
+.pl-look-fire-cold-blooded .pl-ring{background:#3FB6FF}
+.pl-look-fire-neon .pl-ring{background:#B6FF3F}
+.pl-look-fire-on-fire .pl-flame,.pl-look-fire-cold-blooded .pl-flame,.pl-look-fire-neon .pl-flame{opacity:.9;left:8%;right:8%;bottom:-4px;height:46%;border-radius:40% 40% 0 0;background:linear-gradient(0deg,rgba(255,90,31,.85),rgba(255,90,31,0));animation:plRise 1.2s ease-in-out infinite}
+.pl-look-fire-cold-blooded .pl-flame{background:linear-gradient(0deg,rgba(63,182,255,.8),rgba(63,182,255,0))}
+.pl-look-fire-neon .pl-flame{background:linear-gradient(0deg,rgba(182,255,63,.75),rgba(182,255,63,0))}
+.pl-look-fire-on-fire .pl-name,.pl-name.pl-look-fire-on-fire,.pl-look-fire-cold-blooded .pl-name,.pl-name.pl-look-fire-cold-blooded,.pl-look-fire-neon .pl-name,.pl-name.pl-look-fire-neon{color:#FFD21F}
+@keyframes plRise{50%{transform:translateY(-6px);opacity:.5}}
+
+/* burning names + banners (master) */
+.pl-look-inferno .pl-name,.pl-name.pl-look-inferno,.pl-look-gold-crown .pl-name,.pl-name.pl-look-gold-crown,.pl-look-void-burn .pl-name,.pl-name.pl-look-void-burn{background-clip:text;-webkit-background-clip:text;color:transparent;animation:plFlick 1.2s steps(2) infinite}
+.pl-look-inferno .pl-name,.pl-name.pl-look-inferno{background-image:linear-gradient(180deg,#FFE27A,#FF7A1F 45%,#B3180A)}
+.pl-look-gold-crown .pl-name,.pl-name.pl-look-gold-crown{background-image:linear-gradient(180deg,#FFF6C2,#FFD21F 45%,#A8740A)}
+.pl-look-void-burn .pl-name,.pl-name.pl-look-void-burn{background-image:linear-gradient(180deg,#E7C9FF,#9B4DFF 45%,#2A0A5C)}
+.pl-look-inferno .pl-banner{opacity:1;background:linear-gradient(0deg,rgba(255,90,31,.7),rgba(255,90,31,0) 80%);animation:plRise 1.6s ease-in-out infinite}
+.pl-look-gold-crown .pl-banner{opacity:1;background:linear-gradient(0deg,rgba(255,210,31,.6),rgba(255,210,31,0) 80%)}
+.pl-look-void-burn .pl-banner{opacity:1;background:linear-gradient(0deg,rgba(155,77,255,.7),rgba(155,77,255,0) 80%)}
+@keyframes plFlick{50%{opacity:.85}}
+
+/* score moment: a short flare when this player scores (one shot, 1.2 s) */
+.pl-moment .pl-ring{animation:plFlare 1.2s ease-out 1}
+@keyframes plFlare{0%{transform:scale(.9);opacity:1}100%{transform:scale(1.25);opacity:0}}
+
+/* lite mode: no loops, moments still show once */
+html[data-fx="low"] .pl *{animation:none !important}
+@media (prefers-reduced-motion: reduce){ .pl *{animation:none !important} }

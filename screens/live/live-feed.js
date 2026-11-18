@@ -18,7 +18,7 @@
 
   var DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  var STATES = ['idle', 'between', 'live', 'paused', 'full-time', 'finished'];
+  var STATES = ['idle', 'started', 'between', 'live', 'paused', 'full-time', 'finished'];
 
   function text(v) { return v == null ? '' : String(v); }
   function num(v) { var n = Number(v); return isFinite(n) ? n : 0; }
@@ -78,26 +78,56 @@
       var name = text(x.name);
       var out = { name: name || 'Player', icon: text(x.icon) || 'i01', hidden: x.hidden === true || !name };
       if (x.pts != null && isFinite(Number(x.pts))) out.pts = Number(x.pts);
+      // Worn look and level from the organiser row (banner, name style, level). Only when sent.
+      if (text(x.banner)) out.banner = text(x.banner);
+      if (text(x.nameStyle)) out.nameStyle = text(x.nameStyle);
+      if (x.level != null && isFinite(Number(x.level))) out.level = Number(x.level);
       return out;
     });
+  }
+  // Mini history from the organiser row: the last baskets, newest first. Public names only; a hidden scorer is "Player".
+  function historyFrom(list, teamA, teamB) {
+    return (Array.isArray(list) ? list : []).filter(function (x) { return x && typeof x === 'object'; }).slice(0, 8).map(function (x) {
+      var side = x.side === 'b' ? 'b' : 'a';
+      var name = text(x.name);
+      return {
+        side: side,
+        team: side === 'b' ? text(teamB) : text(teamA),
+        pts: num(x.pts),
+        name: x.hidden === true || !name ? 'Player' : name,
+        icon: text(x.icon) || 'i01'
+      };
+    }).filter(function (x) { return x.pts > 0; });
   }
   function courtPlayersOf(players) {
     var pl = players && typeof players === 'object' ? players : {};
     return { a: courtPlayers(pl.a), b: courtPlayers(pl.b) };
   }
 
-  function fromFeed(payload, nowMs) {
+  // Heartbeat rule (Jord): no beat for 5 min -> 'reconnecting'; still none after 10 min -> 'over' ("Run's over").
+  // A new beat brings it straight back to live. The beat is the organiser's updatedAt, or the server's stamp when newer.
+  var STALE_MS = 5 * 60 * 1000;
+  var OVER_MS = 10 * 60 * 1000;
+  var OPEN_STATES = ['started', 'between', 'live', 'paused', 'full-time'];
+
+  function fromFeed(payload, nowMs, serverUpdatedMs) {
     var p = payload && typeof payload === 'object' ? payload : {};
     var nowT = nowMs == null ? Date.now() : nowMs;
     var updatedMs = p.updatedAt ? Date.parse(p.updatedAt) : NaN;
     if (!isFinite(updatedMs)) updatedMs = null;
+    var srvMs = serverUpdatedMs == null ? NaN : Number(serverUpdatedMs);
+    // Only organisers that send updatedAt (v139+) have a heartbeat. Older rows (no field) never go stale.
+    var beatMs = updatedMs == null ? null : (Math.max(updatedMs, isFinite(srvMs) ? srvMs : 0) || null);
     var hasState = STATES.indexOf(p.state) >= 0;
-    var state = hasState ? p.state : (p.live === true ? 'live' : 'idle');
-    var onCourt = (state === 'live' || state === 'paused' || state === 'full-time') && p.teamA && p.teamB;
+    var base = hasState ? p.state : (p.live === true ? 'live' : 'idle');
+    var age = beatMs == null ? null : nowT - beatMs;
+    var stale = (OPEN_STATES.indexOf(base) >= 0 && age != null && age >= STALE_MS) ? (age >= OVER_MS ? 'over' : 'reconnecting') : null;
+    var state = stale || base;
+    var onCourt = (base === 'live' || base === 'paused' || base === 'full-time') && p.teamA && p.teamB && stale !== 'over';
     var now = null;
     if (onCourt) {
       var c = p.clock && typeof p.clock === 'object' ? p.clock : null;
-      var running = !!(c && c.running);
+      var running = !!(c && c.running) && !stale;
       var ms = c ? clockMsNow(c.remainingMs, running, updatedMs, nowT) : null;
       var fouls = p.fouls && typeof p.fouls === 'object' ? p.fouls : {};
       now = {
@@ -105,15 +135,17 @@
         teamA: text(p.teamA), scoreA: num(p.scoreA), foulsA: num(fouls.a),
         teamB: text(p.teamB), scoreB: num(p.scoreB), foulsB: num(fouls.b),
         clockRunning: running, clockMs: ms, clockText: ms == null ? null : clockText(ms),
-        players: courtPlayersOf(p.players)
+        players: courtPlayersOf(p.players),
+        history: historyFrom(p.history, p.teamA, p.teamB)
       };
       if (state === 'full-time' || (ms != null && ms <= 0)) { now.state = 'full-time'; now.clockText = '0:00'; }
     }
-    if (now && now.state === 'full-time') state = 'full-time';
+    if (!stale && now && now.state === 'full-time') state = 'full-time';
     var sch = p.schedule && typeof p.schedule === 'object' ? p.schedule : {};
     return {
       state: state,
-      live: !!now,
+      live: !!now && !stale,
+      connection: stale || 'ok',
       now: now,
       recap: recapFrom(p.recap),
       court: text(p.court),

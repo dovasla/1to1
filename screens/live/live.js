@@ -191,6 +191,12 @@
     return '<section class="lv-card lv-empty" aria-label="Run over"><h2 class="lv-h">' + esc(word || 'Run is over') + '</h2><p class="lv-muted">Thanks for coming.</p></section>';
   }
 
+  // Run started on the organiser, no game on court yet (the live row says 'started').
+  function runOnHtml() {
+    return '<section class="lv-card lv-empty" aria-label="Run on"><h2 class="lv-h">Run is on</h2>' +
+      '<p class="lv-muted">Games show here when the first one starts. Teams show when the organiser sends them.</p></section>';
+  }
+
   function emptyHtml() {
     return '<section class="lv-card lv-empty"><h2 class="lv-h">No game on court</h2>' +
       '<p class="lv-muted">Games show here when the run starts. This page updates on its own.</p></section>';
@@ -230,14 +236,15 @@
     var me = s.yourTeam;
     var head = '<div class="lv-head"><h1>Live</h1>' +
       (d.updatedAt ? '<span class="lv-cap" role="status">Updated ' + esc(d.updatedAt) + '</span>' : '') + '</div>';
-    var body = '';
-    if (s.mode === 'on') body += nowHtml(d.now, me) + CV.courtHtml(d.now, me);
+    var body = d.connection === 'reconnecting' ? '<p class="lv-cap" role="status">Reconnecting…</p>' : '';
+    if (s.mode === 'on') body += nowHtml(d.now, me) + CV.courtHtml(d.now, me, d.lineup);
     body += nextUpHtml(d.nextUp);
     body += boardHtml(d.board);
     if (s.mode === 'over') body += overHtml(d.runOverWord);
+    else if (d.runStarting && !d.now && !d.lineup) body += runOnHtml();
     else if (s.mode !== 'on' && !d.lineup && d.waiting) body += waitingHtml(d);
     else if (s.mode !== 'on' && !d.lineup && d.waitError && !d.waiting) body += waitErrorHtml();
-    else if (s.mode === 'none' && !d.lineup && d.runOn) body += '<section class="lv-card"><h2 class="lv-h">Teams</h2><p class="lv-muted">Teams show when the organiser sends them.</p></section>';
+    else if (s.mode === 'none' && !d.lineup && d.runOn) body += runOnHtml();
     else if (s.mode === 'none' && !d.lineup) body += emptyHtml();
     body += lineupHtml(d.lineup, me);
     if (s.mode !== 'over') body += upcomingHtml(d.upcoming);
@@ -299,7 +306,8 @@
         icon: pl.getAttribute('data-icon') || CV.PLAIN_ICON,
         team: pl.getAttribute('data-team') || '',
         pts: CV.count(pl.getAttribute('data-pts')),
-        level: CV.count(pl.getAttribute('data-level'))
+        level: CV.count(pl.getAttribute('data-level')),
+        banner: pl.getAttribute('data-banner') || ''
       };
       lastFocus = pl;
       show(CV.cardHtml(current));
@@ -309,7 +317,14 @@
     el.addEventListener('click', onClick);
     render();
     return {
-      update: function (next) { state.data = next || {}; render(); },
+      update: function (next) {
+        // Points that went up since the last read light the token up ("just scored"). Pure copy, the feed is not changed.
+        var data = next || {};
+        var prevNow = state.data && state.data.now;
+        if (data.now && CV.markScored) data = Object.assign({}, data, { now: CV.markScored(data.now, prevNow) });
+        state.data = data;
+        render();
+      },
       destroy: function () { el.removeEventListener('click', onClick); close(); el.innerHTML = ''; }
     };
   }

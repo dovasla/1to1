@@ -258,7 +258,7 @@
 
   function lastNightHtml(ln) {
     var body = ln
-      ? '<b>+' + esc(ln.xp) + ' points</b><span>' + esc(ln.games) + ' games · ' + esc(ln.wins) + ' wins</span>'
+      ? '<b>+' + esc(ln.xp) + ' points</b><span>' + esc(ln.games) + (Number(ln.games) === 1 ? ' game · ' : ' games · ') + esc(ln.wins) + ' wins</span>'
       : '<b>No run yet</b><span>Your last run shows here</span>';
     return '<a class="ph-row ph-card" href="#stats" data-go="night"><span class="ph-cap">Last run</span><div class="ph-row-body">' + body + '</div></a>';
   }
@@ -266,15 +266,20 @@
   // Home shows at most three cards (R62): the tonight card, the pay card while owed, and the last-night card after a run.
   // Live, Stats and Profile hold the rest.
   function page(d, now, busy, kp) {
-    var sv = (typeof window !== 'undefined' && window.ShopStrip && window.ShopStrip.html({ coins: d.coins || 0, level: d.level || 0, live: !!d.live, items: (d.shopItems || []), newLooks: !!d.newLooks, worn: d.shopWorn || {} })) || '';
+    // Top line: level and prestige (no "Home" heading). Coins and the shop basket sit together on the right.
+    var lvl = (d.level == null || d.level === '') ? '' : 'Level ' + esc(d.level);
+    var pres = d.prestige ? ' · Prestige ' + esc(d.prestige) : '';
     return '' +
       '<header class="ph-top">' +
-        '<h1>Home</h1>' +
-        '<a class="ph-coins" href="#shop" data-go="shop" aria-label="Coins, open shop">' + ICON.coin +
-          '<b>' + esc(d.coins == null ? '–' : d.coins) + '</b><span class="ph-cap">Coins</span></a>' +
+        '<p class="ph-lvl"><b>' + (lvl || 'Your level') + '</b>' + pres + '</p>' +
+        '<div class="ph-top-r">' +
+          '<a class="ph-coins" href="#shop" data-go="shop" aria-label="Coins, open shop">' + ICON.coin +
+            '<b>' + esc(d.coins == null ? '–' : d.coins) + '</b><span class="ph-cap">Coins</span></a>' +
+          '<a class="ph-basket" href="#shop" data-go="shop" aria-label="Shop">' +
+            '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.6 10.2 H20.4"/><path d="M5.4 10.2 L7.6 19.2 H16.4 L18.6 10.2"/><path d="M8.8 10.2 L11.2 5.2"/><path d="M15.2 10.2 L12.8 5.2"/></svg></a>' +
+        '</div>' +
       '</header>' +
       '<div data-slot="tonight">' + tonightHtml(d, now, busy, kp) + '</div>' +
-      sv +
       payHtml(d.pay) +
       (d.lastNight ? lastNightHtml(d.lastNight) : '') +
       (d.updatedAt ? '<p class="ph-note ph-updated">' + ICON.clock + ' Last updated ' + esc(d.updatedAt) + '</p>' : '');

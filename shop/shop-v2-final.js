@@ -45,7 +45,9 @@
     backend.load().then(function (res) {
       if (!res || !res.ok) throw new Error(failText(res, 'Could not load the shop.'));
       var st = res.state;
-      var items = (st.items || []).filter(function (i) { return i.layer && i.layer !== 'pose'; }).map(toItem);
+      // Hidden until they have a visible effect: Gold banner, Gold name, Gold card, Clan tag (18 Nov, Jord OK'd).
+      var HIDDEN = { 'banner-gold': 1, 'name-gold': 1, 'calling-gold': 1, 'clan-tag': 1 };
+      var items = (st.items || []).filter(function (i) { return i.layer && i.layer !== 'pose' && !HIDDEN[i.id]; }).map(toItem);
       ui = ShopBuilder.init({
         mount: '#builder',
         items: items,

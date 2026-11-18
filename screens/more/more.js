@@ -245,7 +245,6 @@
         linkRowHtml('#profile', 'Profile', 'Your card, look and numbers') +
         rowHtml('account', 'My account', 'PIN, privacy, delete') +
         rowHtml('achievements', 'Badges and milestones', 'Badges you have earned and how close you are') +
-        linkRowHtml('#shop', 'Shop', 'Looks and coins') +
         rowHtml('invite', 'Invite a mate', 'Bring someone along') +
       '</div>' +
       '<p class="more-label more-head">App</p>' +

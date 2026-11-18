@@ -120,9 +120,15 @@
 
   // The picture slot. Always there, so Change look can fill it at once. Until a character is picked it shows
   // the Check Ball mark, so the card is never blank.
-  function pictureHtml(src, firstName) {
+  // A chosen Phosphor icon (phIcon) wins over the character picture when set.
+  function pictureHtml(src, firstName, phIcon) {
     var letter = String(firstName || '').charAt(0).toUpperCase();
     var slot = '<span class="pic-slot" data-card-pic data-initial="' + esc(letter) + '">';
+    if (/^[a-z-]{3,30}$/.test(String(phIcon || ''))) {
+      var u = 'url(icons/phosphor/' + phIcon + '.svg)';
+      slot += '<span class="ph-glyph tk-pic" aria-hidden="true" style="display:block;width:64px;height:64px;-webkit-mask-image:' + u + ';mask-image:' + u + '"></span>';
+      return slot + '</span>';
+    }
     slot += '<img class="tk-pic" alt="" src="' + esc(src || MARK) + '" width="64" height="64">';
     return slot + '</span>';
   }
@@ -144,7 +150,7 @@
     h += '<section class="ticket" aria-label="Player card">' +
       '<div class="tk-band"' + (band ? ' style="background:' + band + '"' : '') + '></div>' +
       '<div class="tk-body">' +
-      '<div class="tk-who">' + pictureHtml(pic, firstName) +
+      '<div class="tk-who">' + pictureHtml(pic, firstName, d && d.phIcon) +
       '<div class="tk-name"><span class="tk-user">' + esc(String(d && d.name || '')) + '</span>' +
       (v.playerName.clanTag ? ' <span class="pn-clan tk-clan">' + esc(v.playerName.clanTag) + '</span>' : '') +
       '<p class="tk-real">' + esc(firstName + (initial ? ' ' + initial : '')) + ' · Level ' + v.level +
