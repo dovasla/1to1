@@ -1,36 +1,21 @@
-// shop-builder.js: the card-builder screen (r5). Data model unchanged; only the groups on screen changed.
-// Usage: var b = ShopBuilder.init({ mount, items, owned, worn, player, onBuy(item), onEquip(item) });
-// Then b.update({ owned, worn, player, items }) after real data changes.
+// shop-builder.js (r13): the shop screen. Plain, one screen: a preview card on top, three tabs (Name, Banner, Frame),
+// a swatch grid, and one action button. Same API as before: ShopBuilder.init({ mount, items, owned, worn, player, onBuy, onEquip })
+// then update({ owned, worn, player, items }). Server item ids and coin logic are unchanged.
 (function (global) {
   'use strict';
 
-  // r11: three categories on screen. Other layers (emblem, title, card, ...) are hidden from the shop,
-  // but a worn item in them still shows on the card and in the app.
+  // Three tabs. Each owns one item layer. Other layers still show when worn (see cardHtml).
   var GROUPS = [
-    { key: 'name', label: 'Name effects', layers: ['name'] },
-    { key: 'banner', label: 'Banners', layers: ['background'] },
-    { key: 'frame', label: 'Frames', layers: ['frame'] }
+    { key: 'name', label: 'Name', layer: 'name', hint: 'Your name, everywhere in the app.' },
+    { key: 'banner', label: 'Banner', layer: 'background', hint: 'A band behind your card.' },
+    { key: 'frame', label: 'Frame', layer: 'frame', hint: 'A ring around your card.' }
   ];
+  var TIER_LABEL = { common: 'Common', rare: 'Rare', epic: 'Epic', legend: 'Legend' };
   var LAYER_LABEL = {
     background: 'Banner', card: 'Card face', name: 'Name effect', emblem: 'Badge', title: 'Title shine',
-    frame: 'Frame', ring: 'Avatar ring', row: 'Board row',
-    effect: 'Glow', flourish: 'Corner flourish', pop: 'Score pop', intro: 'Load-in'
+    frame: 'Frame', ring: 'Avatar ring', row: 'Board row', effect: 'Glow', flourish: 'Corner flourish',
+    pop: 'Score pop', intro: 'Load-in'
   };
-  var WHAT = {
-    background: 'A coloured banner behind your card.',
-    card: 'Lines or texture across the whole card.',
-    name: 'Moves and glows on your name everywhere in the app.',
-    emblem: 'A glow behind your avatar.',
-    title: 'A light sweep over your name.',
-    frame: 'A border around your card.',
-    ring: 'A ring around your avatar.',
-    row: 'How your row looks on the leaderboard.',
-    effect: 'A light effect over the whole card.',
-    flourish: 'Small marks in the card corners.',
-    pop: 'The animation when your score changes in a run.',
-    intro: 'The animation when you join a game.'
-  };
-  var TIER_LABEL = { common: 'Common', rare: 'Rare', epic: 'Epic', legend: 'Legend' };
 
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
@@ -43,7 +28,7 @@
     return (k === 'level' || k === 'stars') ? (item.price || 0) : 0;
   }
 
-  // Plain words for the requirement. Returns { ok, text }.
+  // Plain words for why an item is locked. Returns { ok, text }.
   function requirement(item, player) {
     var u = item.unlock || {};
     var p = player || {};
@@ -51,29 +36,25 @@
     if (u.kind === 'badge') {
       var badge = u.badge || item.name;
       var have = (p.badges || []).indexOf(item.id) >= 0 || (p.badges || []).indexOf(badge) >= 0;
-      return { ok: have, text: 'Earn the ' + badge + ' badge' };
+      return { ok: have, text: 'Earn ' + badge };
     }
     if (u.kind === 'stars') {
-      return { ok: (p.stars || 0) >= (u.minStars || 0), text: 'Earn ' + (u.minStars || 0) + ' stars' };
+      return { ok: (p.stars || 0) >= (u.minStars || 0), text: u.minStars + ' stars' };
     }
-    var lvl = (p.level || 0) >= (u.minLevel || 0);
-    var starsOk = (p.stars || 0) >= (u.minStars || 0);
-    if (!lvl) return { ok: false, text: 'Reach level ' + u.minLevel };
-    if (!starsOk) return { ok: false, text: 'Earn ' + u.minStars + ' stars' };
-    return { ok: true, text: 'Unlocked' };
+    if ((p.level || 0) < (u.minLevel || 0)) return { ok: false, text: 'Level ' + u.minLevel };
+    if ((p.stars || 0) < (u.minStars || 0)) return { ok: false, text: u.minStars + ' stars' };
+    return { ok: true, text: 'Open' };
   }
 
   function groupOfLayer(layer) {
-    for (var i = 0; i < GROUPS.length; i++) if (GROUPS[i].layers.indexOf(layer) >= 0) return GROUPS[i].key;
+    for (var i = 0; i < GROUPS.length; i++) if (GROUPS[i].layer === layer) return GROUPS[i].key;
     return GROUPS[0].key;
   }
 
   function create(opts) {
     var mount = typeof opts.mount === 'string' ? document.querySelector(opts.mount) : opts.mount;
     if (!mount) throw new Error('ShopBuilder: mount not found');
-    var S = { items: [], owned: {}, worn: {}, player: {}, group: 'name', previewId: null, pending: null, error: '', opts: opts };
-    var reducedMotion = false;
-    try { reducedMotion = global.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+    var S = { items: [], owned: {}, worn: {}, player: {}, group: 'name', previewId: null, pending: null, error: '', resetArmed: false, opts: opts };
 
     function setData(patch) {
       if (patch.items) S.items = patch.items;
@@ -90,10 +71,8 @@
     function groupItems(groupKey) {
       var g = GROUPS.filter(function (x) { return x.key === groupKey; })[0];
       if (!g) return [];
-      return S.items.filter(function (it) { return g.layers.indexOf(it.layer) >= 0; })
-        .sort(function (a, b) {
-          return (g.layers.indexOf(a.layer) - g.layers.indexOf(b.layer)) || ((a.sort || 0) - (b.sort || 0));
-        });
+      return S.items.filter(function (it) { return it.layer === g.layer; })
+        .sort(function (a, b) { return (a.sort || 0) - (b.sort || 0); });
     }
     function state(item) {
       var req = requirement(item, S.player);
@@ -117,106 +96,100 @@
     }
     function previewItem() { return S.previewId ? byId(S.previewId) : null; }
 
+    // Reset all: the ids worn on the three tab looks (name, banner, frame). Owned items are never removed.
+    function resettable() {
+      return GROUPS.map(function (g) { return S.worn[g.layer]; }).filter(Boolean);
+    }
+    // Header button: first tap arms it, second tap resets. Greyed out when nothing is worn on those looks.
+    function resetHtml() {
+      var n = resettable().length;
+      var armed = S.resetArmed && n > 0;
+      var off = n === 0 || !!S.pending || !S.opts.onEquip;
+      return '<button type="button" class="sb-reset' + (armed ? ' is-armed' : '') + '" data-action="reset-tap"' +
+        (off ? ' disabled' : '') + '>' + (armed ? 'Tap again to reset' : 'Reset all') + '</button>';
+    }
+    function resetHintHtml() {
+      return (S.resetArmed && resettable().length)
+        ? '<p class="sb-hint" aria-live="polite">Name, banner and frame go back to default. Owned items stay yours.</p>'
+        : '';
+    }
+
+    // Preview card: name look on the name text, banner and frame as overlays. Other worn layers still show.
     function cardHtml() {
       var pl = S.player;
       var pv = previewItem();
-      // The name effect goes on the name text itself (see the sb-name line below), not on an overlay.
+      var nameIt = shownOn('name');
       var layers = Object.keys(LAYER_LABEL).filter(function (layer) { return layer !== 'name'; }).map(function (layer) {
         var it = shownOn(layer);
         return it ? '<div class="sb-layer pn-l-' + esc(it.layer) + '-' + esc(it.id) + '" aria-hidden="true"></div>' : '';
       }).join('');
-      var nameIt = shownOn('name');
-      var flag = pv
-        ? '<div class="sb-flag sb-flag-try">Previewing: ' + esc(pv.name) + '</div>'
-        : '<div class="sb-flag">Your card</div>';
-      return '<div class="sb-card" data-action="replay" role="img" aria-label="Your player card. Tap to replay the effects.">' +
-        layers +
+      return '<div class="sb-card">' + layers +
         '<div class="sb-card-body">' +
-          '<div class="sb-card-top"><span class="sb-level">Level ' + esc(pl.level || 1) + '</span>' +
-          '<span class="sb-coins">' + esc(pl.coins || 0) + ' coins</span></div>' +
           '<div class="sb-avatar">' + esc(pl.initials || '?') + '</div>' +
-          '<div class="sb-name' + (nameIt ? ' pn-l-name-' + esc(nameIt.id) : '') + '">' + esc(pl.name || 'Your name') + '</div>' +
-          flag +
+          '<div class="sb-name' + (nameIt ? ' pn-l-name-' + esc(nameIt.id) : '') + '">' + esc(pl.name || 'You') + '</div>' +
+          '<div class="sb-meta">Level ' + esc(pl.level || 1) + ' · ' + esc(pl.coins || 0) + ' coins</div>' +
+          (pv ? '<div class="sb-try">Trying: ' + esc(pv.name) + '</div>' : '') +
         '</div></div>';
     }
 
-    // The five groups double as "On your card": each shows what is worn in it, or Nothing yet.
-    function slotsHtml() {
+    function tabsHtml() {
       return GROUPS.map(function (g) {
-        if (!groupItems(g.key).length) return '';
-        var worn = [];
-        g.layers.forEach(function (layer) {
-          var id = S.worn[layer];
-          var it = id ? byId(id) : null;
-          if (it) worn.push(it.name);
-        });
         var on = S.group === g.key;
-        // r8: an empty part shows no "Nothing yet" text. It stays a tab (so the parts can still be opened) but reads as blank.
-        var value = worn.length ? esc(worn.join(' + ')) : '';
-        return '<button type="button" class="sb-slot' + (worn.length ? '' : ' is-empty') + '" role="tab" aria-selected="' + on + '" ' +
-          'data-action="group" data-group="' + g.key + '">' +
-          '<span class="sb-slot-k">' + esc(g.label) + '</span>' +
-          '<span class="sb-slot-v">' + value + '</span></button>';
+        var all = groupItems(g.key);
+        var have = all.filter(function (it) { return !!S.owned[it.id]; }).length;
+        return '<button type="button" class="sb-tab' + (on ? ' is-on' : '') + '" role="tab" aria-selected="' + on + '" ' +
+          'data-action="group" data-group="' + g.key + '">' + esc(g.label) +
+          ' <span class="sb-tab-n">' + have + '/' + all.length + '</span></button>';
       }).join('');
     }
 
-    function typesHtml() {
-      var g = GROUPS.filter(function (x) { return x.key === S.group; })[0];
-      if (!g) return '';
-      return '<div class="sb-types">' + g.layers.filter(function (l) {
-        return S.items.some(function (it) { return it.layer === l; });
-      }).map(function (l) {
-        return '<p><b>' + esc(LAYER_LABEL[l]) + '</b> ' + esc(WHAT[l]) + '</p>';
-      }).join('') + '</div>';
-    }
-
+    // One tile: a visual swatch (the real look), a tier stripe, and a small price chip. No long text.
     function tileHtml(it) {
       var st = state(it);
-      var label = { worn: 'Wearing', owned: 'Owned', locked: 'Locked', short: 'Need coins', open: 'Buy' }[st.key];
-      var sub;
-      if (st.key === 'locked') sub = st.req.text;
-      else if (st.key === 'short') sub = st.need + ' more coins';
-      else if (st.cost) sub = st.cost + ' coins';
-      else sub = 'Free';
+      var g = GROUPS.filter(function (x) { return x.key === S.group; })[0];
       var sel = S.previewId === it.id ? ' is-preview' : '';
-      return '<button type="button" class="sb-tile sb-' + st.key + sel + '" data-action="preview" data-id="' + esc(it.id) + '" aria-pressed="' + (S.previewId === it.id) + '">' +
-        '<span class="sb-tile-layer">' + esc(LAYER_LABEL[it.layer] || it.layer) + '</span>' +
-        '<span class="sb-tile-name">' + esc(it.name) + '</span>' +
-        '<span class="sb-tile-sub">' + esc(TIER_LABEL[it.tier] || it.tier) + ' · ' + esc(sub) + '</span>' +
-        '<span class="sb-tile-state">' + esc(label) + '</span></button>';
+      var chip;
+      if (st.key === 'worn') chip = '<span class="sb-chip sb-chip-on">On</span>';
+      else if (st.key === 'owned') chip = '<span class="sb-chip">Owned</span>';
+      else if (st.key === 'locked') chip = '<span class="sb-chip sb-chip-lock">' + esc(st.req.text) + '</span>';
+      else chip = '<span class="sb-chip sb-chip-coin">' + (st.cost ? st.cost : 'Free') + '</span>';
+      var label = g.key === 'name'
+        ? '<span class="sb-name sb-swatch-name pn-l-name-' + esc(it.id) + '">Jordan</span>'
+        : '<span class="sb-swatch-blank" aria-hidden="true"></span>';
+      var look = g.key === 'name' ? '' : ' pn-l-' + esc(it.layer) + '-' + esc(it.id);
+      return '<button type="button" class="sb-tile sb-tier-' + esc(it.tier || 'common') + ' sb-' + st.key + sel + look + '" ' +
+        'data-action="preview" data-id="' + esc(it.id) + '" aria-pressed="' + (S.previewId === it.id) + '" ' +
+        'aria-label="' + esc(it.name + ', ' + (TIER_LABEL[it.tier] || it.tier)) + '">' +
+        '<span class="sb-tier-bar" aria-hidden="true"></span>' +
+        label + chip + '<span class="sb-tile-name">' + esc(it.name) + '</span></button>';
     }
 
+    // The one action button, always under the grid.
     function barHtml() {
       var it = previewItem();
       if (S.pending) {
-        return '<div class="sb-bar-text" aria-live="polite"><b>' + esc(S.pending.name) + '</b><span>Saving…</span></div>' +
-          '<button type="button" class="sb-btn" disabled>Saving…</button>';
+        return '<button type="button" class="sb-btn" disabled>Saving…</button>';
       }
       if (!it) {
-        return '<div class="sb-bar-text"><b>Tap an item</b><span>Tap any item to try it on your card.</span></div>' +
-          '<button type="button" class="sb-btn" disabled>Pick one</button>';
+        var msg = S.error ? '<span class="sb-err" role="alert">' + esc(S.error) + '</span>' : 'Tap a swatch to try it on.';
+        return '<p class="sb-bar-text" aria-live="polite">' + msg + '</p>';
       }
       var st = state(it);
-      var line, btn;
+      var line = '', btn = '';
       if (st.key === 'worn') {
-        line = 'Wearing now';
-        btn = '<button type="button" class="sb-btn" disabled>Wearing</button>';
+        line = 'Wearing'; btn = '<button type="button" class="sb-btn" disabled>Wearing</button>';
       } else if (st.key === 'owned') {
-        line = 'Owned. Not on your card yet.';
-        btn = '<button type="button" class="sb-btn sb-btn-go" data-action="equip" data-id="' + esc(it.id) + '">Equip</button>';
+        line = it.name; btn = '<button type="button" class="sb-btn sb-btn-go" data-action="equip" data-id="' + esc(it.id) + '">Equip</button>';
       } else if (st.key === 'locked') {
-        line = 'Locked: ' + st.req.text;
-        btn = '<button type="button" class="sb-btn" disabled>Locked</button>';
+        line = 'Locked: ' + st.req.text; btn = '<button type="button" class="sb-btn" disabled>Locked</button>';
       } else if (st.key === 'short') {
-        line = 'You need ' + st.need + ' more coins';
-        btn = '<button type="button" class="sb-btn" disabled>Buy ' + st.cost + '</button>';
+        line = 'You need ' + st.need + ' more coins'; btn = '<button type="button" class="sb-btn" disabled>Buy ' + st.cost + '</button>';
       } else {
-        line = 'Previewing. Not yours yet.';
-        btn = '<button type="button" class="sb-btn sb-btn-go" data-action="buy" data-id="' + esc(it.id) + '">' +
-          (st.cost ? 'Buy ' + st.cost : 'Claim') + '</button>';
+        line = it.name; btn = '<button type="button" class="sb-btn sb-btn-go" data-action="buy" data-id="' + esc(it.id) + '">' +
+          (st.cost ? 'Buy · ' + st.cost : 'Claim') + '</button>';
       }
       var err = S.error ? '<span class="sb-err" role="alert">' + esc(S.error) + '</span>' : '';
-      return '<div class="sb-bar-text" aria-live="polite"><b>' + esc(it.name) + '</b><span>' + esc(line) + '</span>' + err + '</div>' + btn;
+      return '<p class="sb-bar-text" aria-live="polite">' + esc(line) + err + '</p>' + btn;
     }
 
     // Runs onBuy/onEquip. The item only changes on success; a rejection leaves everything as it was.
@@ -231,7 +204,6 @@
         S.pending = null;
         applyLocally();
         render();
-        if (kind === 'buy' && global.ShopFx && !reducedMotion) global.ShopFx.unlock(mount.querySelector('.sb-card'));
       }, function (err) {
         S.pending = null;
         S.error = (err && typeof err.reason === 'string') ? err.reason
@@ -242,26 +214,57 @@
       });
     }
 
+    // Takes each worn name, banner and frame off, one after another. onEquip on a worn item is the server's
+    // toggle (same call as tapping Equip off). Each step checks the item is still worn before it runs.
+    // Owned items are never removed.
+    function runReset() {
+      var items = resettable().map(byId).filter(Boolean);
+      if (!items.length || !S.opts.onEquip) return;
+      S.resetArmed = false;
+      S.pending = { id: 'reset', name: 'reset' };
+      S.error = '';
+      render();
+      var p = items.reduce(function (chain, it) {
+        return chain.then(function () {
+          if (S.worn[it.layer] !== it.id) return null;
+          return Promise.resolve(S.opts.onEquip(it));
+        });
+      }, Promise.resolve());
+      p.then(function () {
+        S.pending = null;
+        GROUPS.forEach(function (g) { delete S.worn[g.layer]; });
+        render();
+      }, function (err) {
+        S.pending = null;
+        S.error = (err && err.message) ? err.message : "Couldn't reset. Try again.";
+        render();
+      });
+    }
+
     function render() {
       var list = groupItems(S.group);
       mount.innerHTML =
         '<section class="sb">' +
-          '<h2 class="sb-title">Shop</h2>' +
-          '<p class="sb-sub">Tap an item to try it on.</p>' +
-          '<div class="sb-stick">' + cardHtml() + '</div>' +
-          '<div class="sb-on-label">On your card</div>' +
-          '<div class="sb-slots" role="tablist" aria-label="Card parts">' + slotsHtml() + '</div>' +
-          typesHtml() +
+          '<header class="sb-head"><h2 class="sb-title">Shop</h2>' +
+          '<div class="sb-head-r"><span class="sb-coins">' + esc(S.player.coins || 0) + ' coins</span>' + resetHtml() + '</div></header>' +
+          '<div class="sb-stage">' + cardHtml() + '</div>' +
+          '<div class="sb-tabs" role="tablist" aria-label="Shop categories">' + tabsHtml() + '</div>' +
+          resetHintHtml() +
           '<div class="sb-grid" role="tabpanel">' + (list.map(tileHtml).join('') || '<p class="sb-empty">Nothing here yet.</p>') + '</div>' +
-          '<div class="sb-bar">' + barHtml() + '</div>' +
-        '</section>';
+        '</section>' +
+        '<div class="sb-bar">' + barHtml() + '</div>';
     }
 
     mount.addEventListener('click', function (ev) {
       var el = ev.target.closest('[data-action]');
       if (!el || el.disabled) return;
       var a = el.getAttribute('data-action');
-      if (a === 'group') {
+      if (a !== 'reset-tap') S.resetArmed = false;
+      if (a === 'reset-tap') {
+        if (S.pending) return;
+        if (!S.resetArmed) { S.resetArmed = true; render(); return; }
+        runReset();
+      } else if (a === 'group') {
         S.group = el.getAttribute('data-group');
         render();
       } else if (a === 'preview') {
@@ -269,8 +272,6 @@
         S.previewId = S.previewId === id ? null : id;
         S.error = '';
         render();
-      } else if (a === 'replay') {
-        render(); // re-creating the layer nodes restarts their animations
       } else if (a === 'buy') {
         if (S.pending) return;
         var bought = byId(el.getAttribute('data-id'));
@@ -287,7 +288,6 @@
     render();
 
     return {
-      // Call with any subset of { items, owned, worn, player } after real data changes.
       update: function (patch) { setData(patch || {}); render(); },
       setLayer: function (layer) { S.group = groupOfLayer(layer); render(); },
       preview: function (id) { S.previewId = id; render(); },

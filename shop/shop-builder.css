@@ -1,90 +1,72 @@
-/* shop-builder.css (r5): card builder. Calm: effects live on the card only. Uses shop-effects.css for pn-l- classes. */
-.sb {
-  --sb-bg: #07090d; --sb-panel: #12161d; --sb-line: #2a3140; --sb-ink: #ffffff; --sb-muted: #b7c0cc;
-  --sb-yellow: #ffd60a; --sb-blue: #0a5cff; --sb-dim: #1a202b; --sb-warn: #ff8a80; --sb-ok: #4dffb8;
-  background: var(--sb-bg); color: var(--sb-ink); font: 500 16px/1.4 system-ui, -apple-system, Segoe UI, sans-serif;
-  padding: 16px 16px 160px; max-width: 480px; margin: 0 auto; box-sizing: border-box;
-}
-.sb *, .sb *::before, .sb *::after { box-sizing: border-box; }
-.sb-title { margin: 0 0 12px; font-size: 22px; line-height: 1.2; text-transform: uppercase; letter-spacing: .04em; color: var(--sb-yellow); }
+/* shop-builder.css (r13): the shop screen. One column, 390 px first. Calm, dark, 48px tap targets, 14px+ labels.
+   Looks (name, banner, frame) come from shop-looks.css. This file only lays out the screen. */
 
-/* Card: the big preview, kept on screen while the items scroll */
-.sb-stick { position: sticky; top: 0; z-index: 20; background: var(--sb-bg); margin: 0 -16px; padding: 0 16px 8px; }
-.sb-card {
-  position: relative; isolation: isolate; overflow: hidden; border-radius: 18px; min-height: 200px;
-  background: linear-gradient(160deg, #1b2435, #0b0e14); border: 2px solid var(--sb-line);
-  cursor: pointer; -webkit-tap-highlight-color: transparent;
-}
+body.shop-v2 { margin: 0; background: #0E0E0E; color: #F5F5F5; font-family: Barlow, system-ui, sans-serif; }
+.sb { box-sizing: border-box; width: 100%; max-width: 520px; margin: 0 auto; padding: 16px 16px 150px; }
+.sb-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.sb-title { margin: 0; font: 900 26px/1 system-ui, sans-serif; text-transform: uppercase; letter-spacing: .02em; color: #FFD60A; }
+.sb-coins { font: 800 15px/1 system-ui, sans-serif; color: #FFD60A; background: rgba(255, 214, 10, .12); border-radius: 999px; padding: 8px 12px; }
+.sb-head-r { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px; }
+
+/* Reset all: a 48px pill. First tap arms it (yellow), second tap resets. */
+.sb-reset { min-height: 48px; border: 1px solid #2A2F3A; border-radius: 999px; background: #16181E; color: #F5F5F5; font: 800 15px/1 system-ui, sans-serif; padding: 0 14px; cursor: pointer; }
+.sb-reset.is-armed { background: #FFD60A; border-color: transparent; color: #0E0E0E; }
+.sb-reset:disabled { opacity: .5; cursor: default; }
+.sb-hint { margin: 0 0 12px; font: 700 14px/1.3 system-ui, sans-serif; color: #B8BEC9; }
+
+/* Preview card: the player's own card, short so the grid stays on screen. */
+.sb-stage { margin-bottom: 14px; }
+.sb-card { position: relative; border-radius: 18px; background: #16181E; overflow: hidden; isolation: isolate; min-height: 168px; }
 .sb-card .sb-layer { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
-.sb-card-body { position: relative; z-index: 2; padding: 14px 14px 12px; display: flex; flex-direction: column; gap: 8px; min-height: 200px; }
-.sb-card-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-.sb-level, .sb-coins { font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; color: #fff; background: rgba(0,0,0,.45); padding: 6px 10px; border-radius: 999px; }
-.sb-avatar {
-  width: 68px; height: 68px; border-radius: 50%; display: grid; place-items: center; margin: 4px auto 0;
-  background: var(--sb-blue); color: #fff; font-size: 24px; font-weight: 900; border: 3px solid var(--sb-yellow);
-}
-.sb-name { text-align: center; font-size: 19px; font-weight: 900; text-transform: uppercase; color: #fff; text-shadow: 0 2px 6px rgba(0,0,0,.6); }
-.sb-flag {
-  align-self: center; margin-top: auto; font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em;
-  color: #fff; background: rgba(0,0,0,.55); padding: 5px 10px; border-radius: 999px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-.sb-flag-try { background: var(--sb-yellow); color: #0b0f16; }
+.sb-card-body { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 168px; padding: 16px; text-align: center; }
+.sb-avatar { width: 56px; height: 56px; border-radius: 50%; background: #242A36; display: grid; place-items: center; font: 900 20px/1 system-ui, sans-serif; color: #fff; }
+.sb-name { font: 900 26px/1.1 system-ui, sans-serif; text-transform: uppercase; letter-spacing: .02em; color: #fff; text-shadow: 0 2px 6px rgba(0, 0, 0, .6); }
+.sb-meta { font: 700 14px/1.2 system-ui, sans-serif; color: #B8BEC9; }
+.sb-try { font: 800 14px/1 system-ui, sans-serif; color: #0E0E0E; background: #FFD60A; border-radius: 999px; padding: 6px 12px; margin-top: 2px; }
 
-/* On your card: five groups, each shows what is worn */
-.sb-on-label { margin: 16px 0 8px; font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; color: var(--sb-muted); }
-.sb-slots { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; }
-.sb-slots::-webkit-scrollbar { display: none; }
-.sb-slot {
-  flex: 1 1 calc(33.33% - 6px); min-width: 0; min-height: 64px; display: grid; gap: 4px; align-content: start; text-align: left; padding: 10px 12px;
-  border-radius: 12px; border: 2px solid var(--sb-line); background: var(--sb-panel); color: var(--sb-ink); cursor: pointer; font: inherit;
+/* Three plain tabs. */
+.sb-tabs { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+.sb-tab { min-height: 48px; border: 1px solid #2A2F3A; border-radius: 12px; background: #16181E; color: #B8BEC9; font: 800 16px/1 system-ui, sans-serif; cursor: pointer; }
+.sb-tab.is-on { background: #FFD60A; border-color: transparent; color: #0E0E0E; }
+
+/* Swatch grid: big visual tiles. */
+.sb-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.sb-tile { position: relative; min-height: 96px; border-radius: 14px; border: 1px solid #2A2F3A; background: #1B1E26; color: #fff; padding: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; cursor: pointer; font: inherit; }
+.sb-tile .sb-name { font-size: 18px; }
+.sb-tile .sb-swatch-name { position: relative; z-index: 1; }
+.sb-swatch-blank { display: block; width: 100%; height: 100%; }
+.sb-tile.is-preview { outline: 3px solid #FFD60A; outline-offset: 2px; }
+.sb-tile.sb-locked, .sb-tile.sb-short { opacity: .6; }
+
+/* Rarity: a coloured stripe along the top (grey, blue, purple, gold). */
+.sb-tier-bar { position: absolute; left: 0; right: 0; top: 0; height: 4px; z-index: 2; background: #7A808C; }
+.sb-tier-rare .sb-tier-bar { background: #3D8BFF; }
+.sb-tier-epic .sb-tier-bar { background: #A66BFF; }
+.sb-tier-legend .sb-tier-bar { background: #FFD60A; }
+
+/* Price or state chip, top right. */
+.sb-chip { position: absolute; top: 10px; right: 8px; z-index: 2; background: rgba(0, 0, 0, .6); color: #fff; border-radius: 999px; padding: 4px 9px; font: 800 13px/1 system-ui, sans-serif; }
+.sb-chip-coin { color: #FFD60A; }
+.sb-chip-on { background: #1BBF72; color: #0E0E0E; }
+.sb-chip-lock { color: #B8BEC9; }
+
+/* Item name, bottom left of each swatch, so every tile says what it is. */
+.sb-tile-name { position: absolute; left: 10px; right: 8px; bottom: 8px; z-index: 2; font: 800 14px/1.2 system-ui, sans-serif; color: #fff; text-align: left; text-shadow: 0 1px 3px rgba(0, 0, 0, .85); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sb-tab-n { font: 700 14px/1 system-ui, sans-serif; opacity: .8; }
+
+.sb-empty { grid-column: 1 / -1; color: #B8BEC9; font: 700 15px/1.3 system-ui, sans-serif; }
+
+/* One action bar, pinned to the bottom; the grid has room under it. */
+.sb-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: #101218; border-top: 1px solid #2A2F3A; }
+.sb-bar-text { margin: 0; flex: 1; min-width: 0; font: 800 16px/1.2 system-ui, sans-serif; color: #F5F5F5; }
+.sb-err { display: block; color: #FF6B6B; font: 700 14px/1.2 system-ui, sans-serif; margin-top: 4px; }
+.sb-btn { min-height: 52px; min-width: 132px; border: 0; border-radius: 14px; background: #2A2F3A; color: #8E95A3; font: 900 17px/1 system-ui, sans-serif; text-transform: uppercase; cursor: pointer; padding: 0 16px; }
+.sb-btn-go { background: #FFD60A; color: #0E0E0E; }
+.sb-btn:disabled { cursor: default; }
+
+/* Motion: the tiles and the button answer a tap. Nothing moves on its own here. */
+.sb-tile, .sb-btn, .sb-tab { transition: transform .15s ease, background-color .15s ease; }
+.sb-tile:active, .sb-btn:active, .sb-tab:active { transform: scale(.98); }
+@media (prefers-reduced-motion: reduce) {
+  .sb-tile, .sb-btn, .sb-tab { transition: none; }
 }
-.sb-slot-k { font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; color: var(--sb-muted); }
-.sb-slot-v { font-size: 14px; font-weight: 700; line-height: 1.2; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-.sb-slot.is-empty .sb-slot-v { color: var(--sb-muted); font-weight: 500; font-style: italic; }
-.sb-slot[aria-selected="true"] { border-color: var(--sb-yellow); box-shadow: inset 0 0 0 1px var(--sb-yellow); }
-
-/* Items for the open group */
-.sb-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
-.sb-tile {
-  min-height: 48px; text-align: left; display: grid; gap: 3px; padding: 12px; border-radius: 14px;
-  background: var(--sb-panel); border: 2px solid var(--sb-line); color: var(--sb-ink); cursor: pointer; font: inherit;
-}
-.sb-tile-layer { font-size: 14px; color: var(--sb-muted); text-transform: uppercase; letter-spacing: .04em; }
-.sb-tile-name { font-size: 16px; font-weight: 800; text-transform: uppercase; line-height: 1.15; }
-.sb-tile-sub { font-size: 14px; color: var(--sb-muted); line-height: 1.25; }
-.sb-tile-state { margin-top: 4px; font-size: 14px; font-weight: 800; color: var(--sb-yellow); }
-.sb-tile.sb-owned .sb-tile-state, .sb-tile.sb-worn .sb-tile-state { color: var(--sb-ok); }
-.sb-tile.sb-locked, .sb-tile.sb-short { opacity: .75; }
-.sb-tile.sb-locked .sb-tile-state, .sb-tile.sb-short .sb-tile-state { color: var(--sb-muted); }
-.sb-tile.is-preview { border-color: var(--sb-yellow); box-shadow: 0 0 0 2px var(--sb-yellow); }
-.sb-tile:focus-visible, .sb-slot:focus-visible, .sb-btn:focus-visible, .sb-card:focus-visible { outline: 3px solid var(--sb-yellow); outline-offset: 2px; }
-.sb-empty { grid-column: 1 / -1; color: var(--sb-muted); margin: 8px 0; }
-
-/* Bottom bar: one line of words, one button */
-.sb-bar {
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; display: flex; align-items: center; gap: 12px;
-  padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: var(--sb-panel); border-top: 2px solid var(--sb-line);
-}
-.sb-bar-text { flex: 1; min-width: 0; display: grid; gap: 2px; }
-.sb-bar-text b { font-size: 16px; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.sb-bar-text span { font-size: 14px; color: var(--sb-muted); }
-.sb-err { color: var(--sb-warn) !important; font-weight: 700; }
-.sb-btn {
-  min-height: 48px; min-width: 120px; padding: 0 18px; border-radius: 12px; border: 0; cursor: pointer;
-  background: var(--sb-dim); color: var(--sb-muted); font: 900 16px/1 system-ui, sans-serif; text-transform: uppercase; letter-spacing: .03em;
-}
-.sb-btn-go { background: var(--sb-yellow); color: #0b0f16; }
-.sb-btn:disabled { cursor: not-allowed; }
-
-/* Buy moment (ShopFx.unlock adds .fx-unlock to the card) */
-.sb-card.fx-unlock { animation: sb-pop .6s ease-out both; }
-@keyframes sb-pop { 0% { transform: scale(.97); } 40% { transform: scale(1.02); } 100% { transform: scale(1); } }
-@media (prefers-reduced-motion: reduce) { .sb-card.fx-unlock { animation: none; } }
-
-/* r6: one line per upgrade type in the open group */
-.sb-types { margin: 10px 0 0; display: grid; gap: 4px; }
-.sb-types p { margin: 0; font-size: 14px; color: var(--sb-muted); line-height: 1.3; }
-.sb-types b { color: var(--sb-ink); font-weight: 800; text-transform: uppercase; font-size: 14px; letter-spacing: .04em; margin-right: 4px; }
-
-/* r8: one line under the Shop title */
-.sb-sub { margin: 0 0 12px; font-size: 14px; color: var(--sb-muted); line-height: 1.3; }
