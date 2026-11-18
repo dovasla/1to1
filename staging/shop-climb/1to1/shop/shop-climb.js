@@ -147,10 +147,10 @@
           // Dashed branches from the last chosen node to each offer.
           offers.forEach(function (o, idx) {
             var cx = COLS[idx];
-            lines += curve(spine[spine.length - 1].x, spine[spine.length - 1].y + TILE_H, cx, rowTop, 'branch');
+            if (spine) lines += curve(spine[spine.length - 1].x, spine[spine.length - 1].y + TILE_H, cx, rowTop, 'branch');
             nodes += tile(cx, rowTop, 'offer', o.kind, o.name, KIND_LABEL[o.kind] || o.kind, L, idx);
           });
-          spine = null; // rows below are locked
+          spine = null; // only the first open row branches from the chosen path
           return;
         } else {
           [0, 1, 2].forEach(function (idx) { nodes += tile(COLS[idx], rowTop, 'locked', null, 'Level ' + L, '?', L, idx); });
