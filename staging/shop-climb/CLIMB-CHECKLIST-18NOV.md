@@ -6,7 +6,7 @@ Status: done / in progress / not started. Chunks land in shop-redesign-18nov/sta
 ## 3. Improvements to what exists
 | Item | Owner | Status | Note |
 |---|---|---|---|
-| 3.1 Merge the two reward systems (trees = perks, titles, coins; shop = looks) | me | in progress | Trees have no looks (SQL). Climb is inside the shop screen (staged). Live phone check still to do. |
+| 3.1 Merge the two reward systems (trees = perks, titles, coins; shop = looks) | me | shipped (per coordinator, 3827791) | Trees have no looks (SQL). Climb is inside the shop screen (staged). Live phone check still to do. |
 | 3.2 Real pick choices (perk, title, coins; max 3 perks, a full perk replaces the oldest) | me | done | SQL v2. Plain descriptions on each option. Fire and Ice have no live perks yet (shot data). |
 | 3.3 Respec (clear tree and picks, one free respec ever, no paid respec) | me | done | v3 SQL: one respec ever, no coins. Screens done, tested in harness. |
 | 3.4a Perk list: GAMIFICATION one | me | done | Middy +2 used. |
@@ -41,11 +41,11 @@ Status: done / in progress / not started. Chunks land in shop-redesign-18nov/sta
 | 1 | Hype on Live | hype | not started | Owned by the hype thread on the PC. |
 | 2 | Night recap card | recap | not started | Owned by the recap thread on the PC. |
 | 3 | Auto rival | rival | not started | Owned by the rival thread. |
-| 4 | Crews (3 to 5, tag, weekly board) | me | in progress | v3 SQL: create, join, leave, state. Weekly board waits for weekly XP. |
+| 4 | Crews (3 to 5, tag, weekly board) | me | partly shipped | Shipped: SQL v3, crew panel, member names, weekly board. Not wired: crew XP needs the award call (6c). |
 | 5 | Limited drops (available_until) | me | done | v3 SQL column, shop filter, availableUntil sent. "Ends in" tile label done (syntax checked, not seen on device). |
 | 6a | Crew member names (First L) and crew panel | me | done | Crew panel (shop-crew.js) join, make, leave, members. Hides if RPC missing. Harness shots at 390px. |
 | 6b | Weekly crew board + crew XP | me | done | shop_crew_board and crew_week_xp, board shown in the crew panel. |
-| 6c | Perk XP in the award | me | hook done, not wired | climb_xp_for_night, live perks only. The award function was not found in the files; it must call the hook. |
+| 6c | Perk XP in the award | me | partly: hook only, not wired | climb_xp_for_night, live perks only. The award function was not found in the files; it must call the hook. |
 | 6d | player_state.prestiges | me | done in migration 9 | player_prestige already +1 per prestige. XP sync must not reset it. |
 | 6 | Season trophies | me | not started | Needs the season window. |
 | 7 | Bounty night | organiser | not started | Needs an organiser toggle. |
@@ -69,3 +69,9 @@ Status: done / in progress / not started. Chunks land in shop-redesign-18nov/sta
 2. Max 3 active perks? Recommended yes. Done in the SQL.
 3. Rival auto or within ±5 levels? Recommended auto. Rival thread.
 4. Inferno gate 3 stars or L50? Recommended 3 stars plus a cheaper L50 look. Shop, not climb.
+
+## Final check (18 Nov, after publish)
+- Shipped: shop SQL v3 (migration 51 live, per coordinator), climb screens, crew panel, limited drops (tile label not seen on a device), coins and respec rules.
+- Partly done: perk XP (hook only, needs the XP award to call it), crew XP on the board (same), 3.4f coin formula (flat 150, simulation not run).
+- Not done: 3.4g balance simulation, shot perks (wait for organiser shot counts), rival matcher, First Ten decision, recap/hype/rival (other threads), season trophies, bounty night, shot vote, seasonal events, bib colours.
+- Could not verify commit 3827791 from this clone: the last commit here is 9a13d37 on shop-climb-staging.
