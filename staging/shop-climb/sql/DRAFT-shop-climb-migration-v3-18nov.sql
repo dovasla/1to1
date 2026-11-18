@@ -87,7 +87,7 @@ create table if not exists public.shop_climb_rewards (
 );
 
 -- Perks: 3 per tree (GAMIFICATION doc). live = false means it needs shot counts the organiser does not record yet.
--- Titles: placeholder names, 4 per tree. Coins: formula in _climb_offers (60 + 10 x level, paid once per run per level).
+-- Titles: placeholder names, 4 per tree. Coins: 40 + 6 x level (see test/coin-sim.js in staging), paid once per run per level.
 insert into public.shop_climb_rewards (id, tree, kind, ord, name, descr, live) values
   ('fire-perk-1',  'fire',  'perk', 1, 'Heat Check',     'Each three after your 2nd in one game +6 XP', false),
   ('fire-perk-2',  'fire',  'perk', 2, 'Middy Merchant', 'Every 2-pointer +2 XP', false),
@@ -163,7 +163,7 @@ $$;
 -- The three options for one pick level. Three different kinds, each with a plain description:
 --   perk  : adds an XP perk. If 3 perks are already active, it REPLACES the oldest one (the description says which).
 --   title : a title on your card.
---   coins : 150 coins for the shop.
+--   coins : 40 + 6 x level coins for the shop (was a flat 150).
 -- Fallback only when no live perk is left in this tree: the perk slot becomes a second coin pack (100 coins, plain).
 create or replace function public._climb_offers(p_sid uuid, p_level int)
 returns jsonb
@@ -199,8 +199,9 @@ begin
   return jsonb_build_array(
     v_perk,
     v_title,
-    jsonb_build_object('kind', 'coins', 'id', 'coins-' || p_level, 'name', '+150 coins',
-                       'desc', '150 coins to spend in the shop.', 'value', 150)
+    jsonb_build_object('kind', 'coins', 'id', 'coins-' || p_level,
+                       'name', '+' || (40 + 6 * p_level) || ' coins',
+                       'desc', (40 + 6 * p_level) || ' coins to spend in the shop.', 'value', 40 + 6 * p_level)
   );
 end $$;
 
