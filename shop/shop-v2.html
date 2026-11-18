@@ -8,12 +8,19 @@
 <link rel="stylesheet" href="shop-effects.css">
 <link rel="stylesheet" href="shop-builder.css">
 <link rel="stylesheet" href="shop-looks.css">
-<style>html,body{margin:0;background:#0E0E0E;color:#F5F5F5;font-family:Barlow,system-ui,sans-serif}#builder{min-height:100vh}</style>
+<link rel="stylesheet" href="../lib/player-name.css">
+<link rel="stylesheet" href="shop-climb.css">
+<style>html,body{margin:0;background:#0E0E0E;color:#F5F5F5;font-family:Barlow,system-ui,sans-serif}#builder{min-height:100vh}.cl-wrap{border-top:1px solid #2A2A2A;margin-top:8px}</style>
 </head>
 <body class="shop-v2">
 <div id="builder"><p style="padding:16px">Loading the shop...</p></div>
+<section id="climb-wrap" class="cl-wrap" hidden><div id="climb"></div></section>
+<section id="crew-wrap" class="cr-outer" hidden><div id="crew"></div></section>
 <script src="shop-effects.js"></script>
 <script src="shop-builder.js"></script>
+<script src="../lib/player-name.js"></script>
+<script src="shop-climb.js"></script>
+<script src="shop-crew.js"></script>
 <script src="shop-v2-final.js"></script>
 </body>
 </html>

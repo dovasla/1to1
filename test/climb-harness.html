@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Climb harness</title>
+<link rel="stylesheet" href="../lib/player-name.css">
+<link rel="stylesheet" href="../shop/shop-climb.css">
+<style>html,body{margin:0;background:#0E0E0E;width:390px;min-height:844px}#climb{width:390px}</style>
+</head><body>
+<div id="climb"></div>
+<script src="../lib/player-name.js"></script>
+<script src="../shop/shop-climb.js"></script>
+<script>
+  // Harness only: a fake server with the same answer shape as shop_climb_state (rules copied in plain form).
+  var PERKS = { fire: [], ice: [], gold: [['Crown Keeper','MVP two nights in a row +15 XP'],['Gold Captain','MVP nights +10 XP'],['Gold Streak','Each streak week +2 XP']], storm: [['Second Wind','Each game after your 3rd in one night +5 XP'],['Storm Run','A night with 3+ games +10 XP'],['Lightning','Each win +5 XP']], shadow: [['Shadow Wins','A night with 3+ wins +10 XP']] };
+  var TITLES = { fire: ['Microwave','Heat Seeker','Ember','Blaze'] };
+  function offers(tree, L, picks) {
+    var k = L / 3 - 1, taken = picks.filter(function (p) { return p.kind !== 'coins'; }).map(function (p) { return p.name; });
+    var out = [];
+    var perks = (PERKS[tree] || []).filter(function (p) { return taken.indexOf(p[0]) === -1; });
+    var perkCount = picks.filter(function (p) { return p.kind === 'perk'; }).length;
+    var coins = 60 + 10 * L;
+    if (perks.length && perkCount < 3) out.push({ kind: 'perk', id: 'p-' + L, name: perks[k % perks.length][0], desc: perks[k % perks.length][1], value: 0 });
+    else out.push({ kind: 'coins', id: 'big-' + L, name: '+' + (2 * coins) + ' coins', desc: 'Double coins. Perks are full or not live yet.', value: 2 * coins });
+    var titles = (TITLES[tree] || ['Title']).filter(function (t) { return taken.indexOf(t) === -1; });
+    out.push({ kind: 'title', id: 't-' + L, name: (titles[k % titles.length] || 'Title'), desc: 'A title on your card.', value: 0 });
+    out.push({ kind: 'coins', id: 'coins-' + L, name: '+' + coins + ' coins', desc: 'Spend it in the shop.', value: coins });
+    return out;
+  }
+  function build(o) {
+    o = o || {};
+    var level = o.level || 9, tree = o.tree === undefined ? 'fire' : o.tree;
+    var picks = o.picks || [];
+    var pending = [];
+    if (tree) for (var L = 3; L <= level; L += 3) {
+      if (!picks.some(function (p) { return p.level === L; })) pending.push({ level: L, offers: offers(tree, L, picks) });
+    }
+    return { climb: { tree: tree, level: level, run: 0, respecsLeft: o.respecsLeft == null ? 1 : o.respecsLeft, perks: picks.filter(function (p) { return p.kind === 'perk'; }).length,
+      picks: picks, pending: pending } };
+  }
+  var params = new URLSearchParams(location.search);
+  var v = params.get('v') || 'path';
+  var scen = {
+    tree: { tree: null, level: 9 },
+    entry: { tree: null, level: 9 },
+    path: { tree: 'gold', level: 15, picks: [{ level: 3, kind: 'perk', name: 'Crown Keeper', desc: 'MVP two nights in a row +15 XP', value: 0 }, { level: 6, kind: 'title', name: 'Captain', desc: 'A title on your card.', value: 0 }, { level: 9, kind: 'coins', name: '+150 coins', desc: 'Spend it in the shop.', value: 150 }] },
+    pick: { tree: 'gold', level: 9, picks: [{ level: 3, kind: 'title', name: 'Captain', desc: 'A title on your card.', value: 0 }, { level: 6, kind: 'coins', name: '+120 coins', desc: 'Spend it in the shop.', value: 120 }] },
+    respec: { tree: 'gold', level: 15, picks: [{ level: 3, kind: 'title', name: 'Captain', desc: 'A title on your card.', value: 0 }], respecsLeft: 1 },
+    cel: { tree: 'gold', level: 45, picks: [] }
+  }[v] || {};
+  var state = build(scen);
+  var climb = ShopClimb.mount(document.getElementById('climb'), {
+    name: 'Sam Kowalski',
+    onAction: function (a) {
+      var c = state.climb;
+      if (a.type === 'tree') state = build({ tree: a.tree, level: c.level });
+      else if (a.type === 'pick') {
+        var o = (c.pending.filter(function (p) { return p.level === a.level; })[0] || { offers: [] }).offers.filter(function (x) { return x.id === a.reward; })[0];
+        if (!o) return { error: 'That reward is not on offer' };
+        var np = c.picks.concat([{ level: a.level, kind: o.kind, name: o.name, desc: o.desc, value: o.value }]);
+        state = build({ tree: c.tree, level: c.level, picks: np, respecsLeft: c.respecsLeft });
+        return { state: state, pick: { level: a.level, kind: o.kind, name: o.name, desc: o.desc, value: o.value } };
+      }
+      else if (a.type === "respec") state = build({ tree: null, level: c.level, respecsLeft: 0 });
+      return { state: state };
+    }
+  });
+  climb.setState(state);
+  if (v === 'cel') ShopClimb.celebrate({ name: 'Crown Keeper', kind: 'perk' }, { name: 'Sam Kowalski', level: 45 });
+  window.__climb = climb;
+</script>
+</body></html>

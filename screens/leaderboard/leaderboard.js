@@ -124,6 +124,8 @@
       banner: l.banner || p.banner || '',
       nameStyle: l.name || l.nameStyle || p.nameStyle || '',
       rowEffect: l.row || l.rowEffect || p.rowEffect || '',
+      // Shop look (12 ids). PlayerName keeps only known ids, so an odd value is ignored.
+      look: l.l_effect || l.effect || (p.layers && p.layers.effect) || '',
       layers: layers
     };
   }
@@ -170,6 +172,7 @@
       clanTag: hidden ? '' : p.clanTag,
       emblemSrc: hidden ? '' : p.emblemSrc,
       rowEffect: look.rowEffect,
+      look: hidden ? '' : look.look,
       layers: look.layers,
       size: 'compact'
     });

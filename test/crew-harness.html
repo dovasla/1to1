@@ -1,0 +1,14 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Crew harness</title><link rel="stylesheet" href="../shop/shop-climb.css">
+<style>body{margin:0;padding:16px;background:#0E0E0E;font-family:system-ui,sans-serif}</style></head>
+<body><div id="crew"></div><script src="../shop/shop-crew.js"></script>
+<script>
+  window.__last = null;
+  var p = ShopCrew.mount(document.getElementById('crew'), {
+    onAct: function (a) { window.__last = a; return Promise.resolve(a.type === 'leave' ? { ok: true, crew: null, message: 'You left the crew.' } : { ok: true, crew: { id: 1, name: 'Late Crew', tag: 'LC', size: 2, max: 5, members: [{ name: 'Joe P', you: true, creator: true }, { name: 'Rob C' }] }, message: 'Crew made.' }); }
+  });
+  window.__panel = p;
+  p.setState({ crew: window.location.hash === '#in' ? { id: 1, name: 'Late Crew', tag: 'LC', size: 3, max: 5,
+      members: [{ name: 'Joe P', you: true, creator: true }, { name: 'Rob C' }, { name: 'Isaac D' }] } : null,
+    board: [{ name: 'Late Crew', tag: 'LC', xp: 412, size: 3 }, { name: 'Night Owls', tag: 'NOW', xp: 280, size: 4 }, { name: 'Bench', tag: 'BNC', xp: 95, size: 2 }] });
+</script></body></html>

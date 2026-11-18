@@ -1794,7 +1794,7 @@
         var nrP = (be.nextRun ? be.nextRun() : Promise.resolve(null)).catch(function () { return null; });
         var nrLimit = new Promise(function (res) { setTimeout(function () { res(null); }, 5000); });
         Promise.race([nrP, nrLimit]).then(function (nr) { S.nextRun = nr || null; if (S.home) S.home.update(homeData(Date.now())); }, function () { S.nextRun = null; });
-        return (LT0 ? LT0.withTimeout(pn, LT0.LIMIT, 'night') : pn).then(function (nt) { setHomeError(false); if (nt && nt.payload) { lastNightSig = JSON.stringify(nt.payload); S.night = NightShape.applyNight(nt.payload); checkJoinState(); PlayerLoading.saveLast(nt.payload); } }).catch(function () { setHomeError(!!S.me); });
+        return (LT0 ? LT0.withTimeout(pn, LT0.LIMIT, 'night') : pn).then(function (nt) { setHomeError(false); if (nt && nt.payload) { lastNightSig = JSON.stringify(nt.payload); S.night = NightShape.applyNight(nt.payload); checkJoinState(); PlayerLoading.saveLast(nt.payload); if (window.PlayerRunAlerts) PlayerRunAlerts.onNight(S.night); } }).catch(function () { setHomeError(!!S.me); });
       });
     }
     // Resume a 90-day sign-in on this phone (token only, no PIN needed). Otherwise show log in.

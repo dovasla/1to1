@@ -32,6 +32,9 @@
     return {
       kind: 'mock',
       load: function () { return Promise.resolve({ ok: true, state: view() }); },
+      // Shop climb is server-only. The demo has none, so the climb section stays hidden.
+      climbState: function () { return Promise.resolve({ ok: false, error: 'Climb is not on in the demo.' }); },
+      climbAct: function () { return Promise.resolve({ error: 'Climb is not on in the demo.' }); },
       act: function (id) {
         // 72s demo: same rules as the screen (buyCheck). Buy also wears the item; a second tap takes it off.
         var it = ITEMS.filter(function (i) { return i.id === id; })[0];
@@ -66,6 +69,47 @@
     }
     return {
       kind: 'supabase',
+      // Shop climb (server RPCs in the v3 draft SQL). Until that SQL is run these fail soft: the climb section hides.
+      climbState: function () {
+        return rpc('shop_climb_state', { p_token: getToken() }).then(function (j) {
+          if (!j || j.ok === false) return { ok: false, error: (j && j.error) || 'Climb not ready' };
+          return { ok: true, climb: j };
+        }).catch(function () { return { ok: false, error: 'Climb not ready' }; });
+      },
+      climbAct: function (a) {
+        var tok = getToken();
+        var call = a.type === 'tree' ? rpc('shop_climb_choose_tree', { p_token: tok, p_tree: a.tree })
+          : a.type === 'pick' ? rpc('shop_climb_pick', { p_token: tok, p_level: a.level, p_reward: a.reward })
+          : rpc('shop_climb_respec', { p_token: tok });
+        return call.then(function (j) {
+          if (!j || j.ok === false) return { error: (j && j.error) || 'Could not save. Try again.' };
+          // Same shape as the climb screen expects: state.climb is the climb, and pick is the new pick.
+          return { state: { level: j.level, climb: j }, pick: j.pick, message: j.message };
+        }).catch(function () { return { error: 'Could not save. Try again.' }; });
+      },
+      // Crew panel (SQL v3). A missing RPC (404) comes back as ok:false, so the panel hides itself.
+      crewState: function () {
+        return rpc('shop_crew_state', { p_token: getToken() }).then(function (j) {
+          if (!j || j.ok === false) return { ok: false, error: (j && j.error) || 'Could not load the crew' };
+          return { ok: true, crew: j.crew || null };
+        }).catch(function () { return { ok: false, error: 'crew-unavailable' }; });
+      },
+      crewBoard: function () {
+        return rpc('shop_crew_board', { p_token: getToken() }).then(function (j) {
+          if (!j || j.ok === false) return { ok: false, error: (j && j.error) || 'Could not load the board' };
+          return { ok: true, board: j.board || [] };
+        }).catch(function () { return { ok: false, error: 'board-unavailable' }; });
+      },
+      crewAct: function (a) {
+        var call = a.type === 'create' ? ['shop_crew_create', { p_name: a.name, p_tag: a.tag }]
+          : a.type === 'join' ? ['shop_crew_join', { p_tag: a.tag }]
+          : ['shop_crew_leave', {}];
+        var body = Object.assign({ p_token: getToken() }, call[1]);
+        return rpc(call[0], body).then(function (j) {
+          if (!j || j.ok === false) return { ok: false, error: (j && j.error) || 'Could not save. Try again.' };
+          return { ok: true, crew: j.crew === undefined ? null : j.crew, message: j.message || '' };
+        }).catch(function () { return { ok: false, error: 'Could not save. Try again.' }; });
+      },
       load: function () {
         return rpc('shop_state', { p_token: getToken() }).then(function (j) {
           if (!j || j.ok === false) return { ok: false, error: (j && j.error) || 'Could not load the shop' };

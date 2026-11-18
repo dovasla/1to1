@@ -9,7 +9,7 @@
   function toItem(i) {
     return {
       id: i.id, layer: i.layer, name: i.name, tier: i.tier || 'common', price: i.price || 0,
-      sort: i.sort || 0, depth: i.depth || 0, effect: i.effect || 'none',
+      sort: i.sort || 0, depth: i.depth || 0, effect: i.effect || 'none', endsAt: i.availableUntil || null,
       unlock: { kind: i.unlockKind || 'level', minLevel: i.minLevel || 1, minStars: i.minStars || 0, badge: i.unlockName || null }
     };
   }
@@ -37,6 +37,46 @@
     });
   }
 
+  // The climb sits under the looks. It needs the server climb calls; without them (demo, or SQL not run yet) it stays hidden.
+  function mountClimb(st) {
+    var el = document.getElementById('climb');
+    if (!el || !window.ShopClimb || !window.PlayerName || !backend || !backend.climbState) return;
+    var climb = ShopClimb.mount(el, {
+      name: playerOf(st).name,
+      onAction: function (a) {
+        return backend.climbAct(a).then(function (r) {
+          if (r && r.state) backend.load().then(function (s) { if (s && s.ok) refresh(s.state); });
+          return r;
+        });
+      }
+    });
+    backend.climbState().then(function (r) {
+      if (!r || !r.ok) { el.parentNode.hidden = true; return; }
+      el.parentNode.hidden = false;
+      climb.setState({ level: r.climb.level, climb: r.climb });
+    });
+  }
+
+  // Crew panel: join or make a crew, members, weekly board. Hidden if the crew RPCs are not on the server yet.
+  function mountCrew() {
+    var el = document.getElementById('crew');
+    if (!el || !window.ShopCrew || !backend || !backend.crewState) return;
+    var wrap = document.getElementById('crew-wrap');
+    var panel = ShopCrew.mount(el, {
+      onAct: function (a) { return backend.crewAct(a); },
+      onChanged: function () { backend.crewBoard().then(function (b) { if (b.ok) panel.setState({ board: b.board }); }); }
+    });
+    backend.crewState().then(function (r) {
+      if (!r.ok) { if (wrap) wrap.hidden = true; return; }
+      if (wrap) wrap.hidden = false;
+      panel.setState({ crew: r.crew });
+      return backend.crewBoard();
+    }).then(function (b) {
+      if (b && b.ok) panel.setState({ board: b.board });
+      else if (b && !b.ok && wrap) wrap.hidden = true;
+    });
+  }
+
   function start() {
     if (!backend) {
       document.getElementById('builder').innerHTML = '<p style="padding:16px">Open the shop from the app.</p>';
@@ -59,6 +99,8 @@
       });
       window.shopBuilder = ui;
       document.documentElement.setAttribute('data-shop-ready', '1');
+      mountClimb(st);
+      mountCrew();
     }).catch(function (e) {
       document.getElementById('builder').innerHTML = '<p style="padding:16px">' + String(e.message).replace(/[<>&]/g, '') + '</p>';
     });
