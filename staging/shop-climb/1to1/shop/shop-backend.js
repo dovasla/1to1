@@ -108,6 +108,13 @@
           return { ok: true, board: j.board || [] };
         }).catch(function () { return { ok: false, error: 'board-unavailable' }; });
       },
+      // Extras (SQL v4): events, bounty, trophies. Missing RPC comes back ok:false, so the panel hides.
+      extrasState: function () {
+        return rpc('shop_extras_state', { p_token: getToken() }).then(function (j) {
+          if (!j || j.ok === false) return { ok: false, error: (j && j.error) || 'extras-unavailable' };
+          return { ok: true, data: j };
+        }).catch(function () { return { ok: false, error: 'extras-unavailable' }; });
+      },
       crewAct: function (a) {
         var call = a.type === 'create' ? ['shop_crew_create', { p_name: a.name, p_tag: a.tag }]
           : a.type === 'join' ? ['shop_crew_join', { p_tag: a.tag }]

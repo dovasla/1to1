@@ -14,8 +14,8 @@ Status: done / in progress / not started. Chunks land in shop-redesign-18nov/sta
 | 3.4c Drop weekly-night perks (Crown Week, Double Trouble) | me | done | Not in the list. |
 | 3.4d Shadow Wins vs Lightning fixed (two different perks) | me | done | |
 | 3.4e Auto-offer the tree at level 3 | me | done | Tree picker on first entry, with Skip. |
-| 3.4f Server coin formula (or document flat 150) | me | in progress | Using flat 150 for picks. Documented in CLIMB notes; simulation still to run. |
-| 3.4g Balance simulation (perk XP vs night cap) | me | in progress | Needs the XP award function, not built. |
+| 3.4f Server coin formula (or document flat 150) | me | done (40 + 6 x level, provisional) | Using flat 150 for picks. Documented in CLIMB notes; simulation still to run. |
+| 3.4g Balance simulation (coins vs prices) | me | done (test/coin-sim.js, revamp/COIN-BALANCE-SIM-18NOV.md). Perk XP sim waits on award wiring. | Needs the XP award function, not built. |
 | 3.5a Tier shown once on reward cards | me | done | |
 | 3.5b Preview shows the player's own name | me | done | |
 | 3.5c Red Hot preview colour | me | done in CSS | SQL item names unchanged. |
@@ -27,7 +27,7 @@ Status: done / in progress / not started. Chunks land in shop-redesign-18nov/sta
 | Rival farming: rival within ±5 levels or auto-picked | rival | not started | Rival thread builds the matcher. Climb rival perk removed from pick list. |
 | Three chucking: no 3s challenges | me | done | No challenge uses 3s. Shot perks off. |
 | MVP vote trading: Gold perks count organiser MVP only | me | done | No player-vote MVP anywhere. |
-| First Ten boost tied to checked-in signups | Jord | not started | Not in the climb. Decision needed. |
+| First Ten boost tied to checked-in signups | Jord | default chosen, not built | Default: first ten checked-in players get one extra pick. Needs the check-in table. Jord to confirm. |
 | Organiser bias: personal night line on recap | recap | not started | Recap thread. |
 | Server and phone drift: one test fixture for both | me | not started | Needs the XP award function first. |
 | Prestige key bug: run number on picks | me | done | run_no = prestiges (needs XP sync). |
@@ -47,11 +47,11 @@ Status: done / in progress / not started. Chunks land in shop-redesign-18nov/sta
 | 6b | Weekly crew board + crew XP | me | done | shop_crew_board and crew_week_xp, board shown in the crew panel. |
 | 6c | Perk XP in the award | me | partly: hook only, not wired | climb_xp_for_night, live perks only. The award function was not found in the files; it must call the hook. |
 | 6d | player_state.prestiges | me | done in migration 9 | player_prestige already +1 per prestige. XP sync must not reset it. |
-| 6 | Season trophies | me | not started | Needs the season window. |
-| 7 | Bounty night | organiser | not started | Needs an organiser toggle. |
-| 8 | Shot of the night vote | me | not started | Needs a vote table and Jord's go. |
-| 9 | Seasonal events (double coins, bracket) | me | not started | Needs Jord's go. |
-| 10 | Team bib colour on Live | organiser | not started | Live thread. |
+| 6 | Season trophies | me | SQL v4 + panel (drafts) | Table and read call done. The organiser awards them later. |
+| 7 | Bounty night | organiser | SQL v4 + panel (drafts) | Table and read call done. Organiser toggle not built. |
+| 8 | Shot of the night vote | me | SQL v4 draft | Vote table and call done. Shot check and vote screen not built. |
+| 9 | Seasonal events (double coins, bracket) | me | SQL v4 + panel (drafts) | Event table and panel done. The effect itself is not wired into coins. |
+| 10 | Team bib colour on Live | organiser | SQL v4 draft | Table done. Live court and organiser setting not built (Live thread). |
 
 ## 6. Before run night
 | Step | Owner | Status |
@@ -71,6 +71,7 @@ Status: done / in progress / not started. Chunks land in shop-redesign-18nov/sta
 4. Inferno gate 3 stars or L50? Recommended 3 stars plus a cheaper L50 look. Shop, not climb.
 
 ## Final check (18 Nov, after publish)
+- Update (18 Nov, later): coin formula 40 + 6 x level and sim done; SQL v4 draft (extras) and extras panel added; First Ten default noted; season, bounty, vote, events and bib are drafts, not run.
 - Shipped: shop SQL v3 (migration 51 live, per coordinator), climb screens, crew panel, limited drops (tile label not seen on a device), coins and respec rules.
 - Partly done: perk XP (hook only, needs the XP award to call it), crew XP on the board (same), 3.4f coin formula (flat 150, simulation not run).
 - Not done: 3.4g balance simulation, shot perks (wait for organiser shot counts), rival matcher, First Ten decision, recap/hype/rival (other threads), season trophies, bounty night, shot vote, seasonal events, bib colours.

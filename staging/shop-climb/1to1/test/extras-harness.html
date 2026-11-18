@@ -1,0 +1,11 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Extras harness</title><link rel="stylesheet" href="../shop/shop-climb.css">
+<style>body{margin:0;padding:16px;background:#0E0E0E}</style></head>
+<body><div id="extras"></div><script src="../shop/shop-extras.js"></script>
+<script>
+  ShopExtras.mount(document.getElementById('extras')).setState({
+    events: [{ id: 'dc', name: 'Double coins weekend', effect: 'Climb picks pay double coins.', endsAt: new Date(Date.now() + 2*86400000).toISOString() }],
+    bounty: { nightId: 'n1', title: 'Bounty: three-pointers', bonusXp: 30 },
+    trophies: [{ season: 'Winter 26', trophy: 'Top Scorer' }, { season: 'Autumn 26', trophy: 'Iron Man' }]
+  });
+</script></body></html>

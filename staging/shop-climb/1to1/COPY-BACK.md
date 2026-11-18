@@ -71,3 +71,8 @@ Then in the shop screen: `ShopClimb.mount(el, { name, onAction })` and `climb.se
 - Placeholder content: title names, coin formula (60 + 10 x level). Jord to confirm.
 - Red Hot orange-red is in the CSS only. The shop item names in SQL are unchanged.
 - Tested only in the harness at 390px with a fake server. Not run against Supabase.
+
+## Added 18 Nov (later)
+- Coin formula: climb coin packs are 40 + 6 x level (SQL v3). See revamp/COIN-BALANCE-SIM-18NOV.md.
+- Extras: SQL v4 draft (DRAFT-shop-extras-migration-v4-18nov.sql, not run). Panel: shop/shop-extras.js (add script after shop-crew.js; section #extras).
+- Reference copies for the sim: test/ref/ (xp.js and items-136.json copied from the player app). Do not copy them over the real files.

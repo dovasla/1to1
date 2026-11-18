@@ -147,3 +147,16 @@
 .cr-bname { flex: 1; font-weight: 700; }
 .cr-bxp { font-weight: 800; color: #FFFFFF; }
 .cr-btn, .cr-in { font-family: inherit; }
+
+/* Extras panel (shop-extras.js): events, bounty, trophies. Same look as the crew cards. */
+.ex-outer { margin: 14px 0 0; }
+.ex-wrap { display: grid; gap: 12px; }
+.ex-card { background: #141414; border: 1px solid #2A2A2A; border-radius: 14px; padding: 14px; color: #FFFFFF; }
+.ex-kicker { display: block; font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #FFD21F; margin-bottom: 4px; }
+.ex-card b { font-size: 18px; }
+.ex-sub { margin: 4px 0 0; font-size: 14px; color: #B5B5B5; }
+.ex-ends { display: inline-block; margin-top: 6px; font-size: 13px; font-weight: 700; color: #FF7A1A; }
+.ex-bounty { border-color: #FF7A1A; }
+.ex-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; font-size: 16px; }
+.ex-tag-s { font-size: 12px; color: #FFD21F; margin-left: 6px; }
+

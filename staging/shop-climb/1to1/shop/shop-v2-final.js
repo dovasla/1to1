@@ -76,6 +76,16 @@
     });
   }
 
+  // Events, bounty and trophies above the crew panel. Hidden if the extras RPC is not on the server yet.
+  function mountExtras() {
+    var el = document.getElementById('extras');
+    if (!el || !window.ShopExtras || !backend.extrasState) return;
+    var panel = ShopExtras.mount(el);
+    backend.extrasState().then(function (r) {
+      if (r.ok) panel.setState(r.data); else el.hidden = true;
+    });
+  }
+
   function start() {
     if (!backend) {
       document.getElementById('builder').innerHTML = '<p style="padding:16px">Open the shop from the app.</p>';
@@ -98,6 +108,7 @@
       document.documentElement.setAttribute('data-shop-ready', '1');
       mountClimb(st);
       mountCrew();
+      mountExtras();
     }).catch(function (e) {
       document.getElementById('builder').innerHTML = '<p style="padding:16px">' + String(e.message).replace(/[<>&]/g, '') + '</p>';
     });
