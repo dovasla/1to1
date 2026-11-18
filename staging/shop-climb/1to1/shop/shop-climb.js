@@ -22,7 +22,7 @@
   var TREES = {
     fire:   { name: 'Fire',   blurb: 'Heat, streaks and big nights.',     color: '#FF7A1F', icon: 'M12 2c2 4 6 6 6 11a6 6 0 0 1-12 0c0-3 2-4 2-7 2 1 3 2 4-4z' },
     ice:    { name: 'Ice',    blurb: 'Cool, clean and steady.',           color: '#5CD6FF', icon: 'M12 2v20M2 12h20M5 5l14 14M19 5L5 19' },
-    gold:   { name: 'Gold',   blurb: 'Crowns, captains and big weeks.',   color: '#FFD21F', icon: 'M3 18h18l-2-10-5 4-4-6-4 6-3-4z' },
+    gold:   { name: 'Gold',   blurb: 'Crowns, captains and big weeks.',   color: '#D99A2B', icon: 'M3 18h18l-2-10-5 4-4-6-4 6-3-4z' },
     storm:  { name: 'Storm',  blurb: 'Busy nights and long runs.',        color: '#8F7CFF', icon: 'M13 2 4 14h7l-1 8 9-12h-7z' },
     shadow: { name: 'Shadow', blurb: 'Quiet shooters and comebacks.',     color: '#9A9A9A', icon: 'M20 14a8 8 0 1 1-10-10 6 6 0 0 0 10 10z' }
   };
