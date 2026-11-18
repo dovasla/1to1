@@ -136,6 +136,8 @@ button.cv-tk-face:focus-visible { outline:3px solid var(--focus); outline-offset
 .cv-cap { margin:0; font-size:14px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); }
 .cv-h { margin:2px 0 0; font-family:var(--font-head, "Barlow Condensed", "Barlow", system-ui, sans-serif); font-size:26px; font-weight:700; line-height:1.1; text-transform:uppercase; color:var(--brand-text); overflow-wrap:anywhere; }
 .cv-h--big { margin:12px 0 4px; font-size:34px; text-align:center; }
+/* Spacing: the team line sits centred under the name, with air above it. */
+.cv-h--big + .cv-cap { margin-top:6px; text-align:center; }
 .cv-pic-lg { flex:none; width:72px; height:72px; border-width:3px; }
 .cv-line { margin:12px 0 0; font-size:18px; font-weight:700; }
 .cv-actions { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:16px; }

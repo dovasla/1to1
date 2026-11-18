@@ -33,11 +33,11 @@ h2 { font-size:18px; }
 .switch[aria-checked="true"] { background:var(--brand); border-color:var(--brand); color:var(--on-brand); }
 
 /* Bottom tabs */
-.tabs { position:fixed; left:0; right:0; bottom:0; z-index:20; display:grid; grid-template-columns:repeat(4, 1fr); gap:4px; padding:6px 8px calc(6px + env(safe-area-inset-bottom)); background:var(--tabs-bg); border-top:2px solid var(--line); }
-.tabs a { position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; min-height:56px; border-radius:12px; color:var(--muted); text-decoration:none; font-size:14px; font-weight:800; letter-spacing:.02em; }
+.tabs { position:fixed; left:0; right:0; bottom:0; z-index:20; display:flex; gap:4px; padding:6px 8px calc(6px + env(safe-area-inset-bottom)); background:var(--tabs-bg); border-top:2px solid var(--line); }
+.tabs a { position:relative; flex:1 1 auto; min-width:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; min-height:56px; padding:0 6px; border-radius:12px; color:var(--muted); text-decoration:none; font-size:14px; font-weight:800; letter-spacing:.02em; }
 .tabs a[aria-current="page"] { color:var(--brand-text); }
 .tabs svg { width:24px; height:24px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
-.tabs a span { font-family:var(--font-head); font-size:14px; letter-spacing:.06em; text-transform:uppercase; }
+.tabs a span { font-family:var(--font-head); font-size:14px; letter-spacing:.06em; text-transform:uppercase; white-space:nowrap; }
 
 /* Keyboard focus, visible in both themes */
 a:focus-visible, button:focus-visible, input:focus-visible { outline:3px solid var(--focus); outline-offset:2px; }

@@ -12,6 +12,13 @@
 
 /* Top bar */
 .ph-top { display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:48px; }
+/* Phone widths (360 px): the level line shrinks and the coins pill and basket fit on the right. */
+@media (max-width:380px) {
+  .ph-top { gap:8px; }
+  .ph-top > .ph-lvl { min-width:0; }
+  .ph-top-r { gap:6px; flex:none; }
+  .ph-coins { padding:0 10px; gap:4px; }
+}
 .ph h1 { font-size:28px; line-height:1; margin:0; }  /* font and colour come from app-tokens.css */
 .ph-lvl { margin:0; font-size:18px; font-weight:800; white-space:nowrap; }
 .ph-top-r { display:flex; align-items:center; gap:8px; flex:none; }

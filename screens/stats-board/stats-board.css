@@ -5,6 +5,8 @@
 .sb-h1 { margin: 0; font-family: var(--font-head); font-weight: 700; text-transform: uppercase; letter-spacing: .02em; font-size: 32px; line-height: 1.05; color:var(--yellow-text); }
 .sb-h2 { margin: 8px 0 0; font-family: var(--font-head); font-weight: 700; text-transform: uppercase; font-size: 18px; color: var(--ink); }
 .sb-note { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.4; }
+/* Spacing: the history button and the season chips need air between them. */
+.stats-hist + .stats-seasons { margin-top: 8px; }
 
 /* Segment: My stats | Leaderboard */
 .sb-seg { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 4px; }

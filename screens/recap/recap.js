@@ -134,10 +134,10 @@
     if (!view || !view.state) return '';
     var isNew = view.state === 'new';
     return '<button type="button" class="rc-card' + (isNew ? ' is-new' : '') + '" data-recap-open="' + esc(view.nightId) + '">' +
-      '<span class="rc-cap">Last run</span>' +
+      (isNew ? '<span class="rc-cap">Last run</span>' : '') +
       '<span class="rc-title">' + (isNew ? 'Your recap is ready' : 'Last run recap') + '</span>' +
       '<span class="rc-row">' +
-        '<span class="rc-mini"><b>' + esc(view.games) + '</b> games</span>' +
+        '<span class="rc-mini"><b>' + esc(view.games) + '</b> ' + (Number(view.games) === 1 ? 'game' : 'games') + '</span>' +
         '<span class="rc-mini"><b>' + esc(view.wins) + '</b> wins</span>' +
         '<span class="rc-mini"><b>+' + esc(view.xp) + '</b> XP</span>' +
       '</span>' +
