@@ -13,10 +13,14 @@
 /* Top bar */
 .ph-top { display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:48px; }
 .ph h1 { font-size:28px; line-height:1; margin:0; }  /* font and colour come from app-tokens.css */
-.ph-lvl { margin:0; font-size:18px; font-weight:800; }
-.ph-top-r { display:flex; align-items:center; gap:8px; }
-.ph-basket { display:flex; align-items:center; justify-content:center; width:48px; height:48px; border-radius:12px; border:2px solid var(--line); background:var(--card); color:var(--brand-text); text-decoration:none; }
-.ph-basket svg { width:40px; height:40px; }
+.ph-lvl { margin:0; font-size:18px; font-weight:800; white-space:nowrap; }
+.ph-top-r { display:flex; align-items:center; gap:8px; flex:none; }
+.ph-basket { display:flex; align-items:center; justify-content:center; width:48px; height:48px; border-radius:12px; border:2px solid var(--line); background:var(--card); color:var(--brand-text); text-decoration:none; flex:none; }
+.ph-basket svg, .ph-basket svg * { fill:none; stroke:currentColor; }
+.ph-basket svg { width:40px; height:40px; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+.ph-season { display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; text-align:center; margin:12px 0; }
+.ph-big { display:flex; flex-direction:column; gap:4px; }
+.ph-big b { font-size:36px; line-height:1; font-family:var(--font-head); color:var(--brand-text); }
 .ph-coins { display:inline-flex; align-items:center; gap:6px; min-height:48px; padding:0 12px; border:2px solid var(--line); border-radius:99px; background:var(--card); }
 .ph-coins b { font-size:18px; font-weight:900; }
 .ph-coins .ph-cap { font-size:14px; }

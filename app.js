@@ -416,6 +416,10 @@
       runOn: runOnNow(now),
       runLabel: (S.night && S.night.fields && S.night.fields.nextRun) || '',
       level: PlayerXp.progress(S.run).level,
+      prestige: Number((S.run && S.run.stars) || 0),
+      season: { games: Number(((S.profileStats || {}).totals || {}).games) || 0, points: Number(((S.profileStats || {}).totals || {}).points) || 0, wins: Number(((S.profileStats || {}).totals || {}).wins) || 0 },
+      nightsPlayed: Number(((S.profileStats || {}).totals || {}).nights) || 0,
+      streakWeeks: Number((S.profileStats || {}).streakWeeks) || 0,
       shopItems: shopItemsFor(),
       newLooks: false,
       updatedAt: null
@@ -1321,6 +1325,8 @@
   var recapModelNow = null;
   function renderRecapCard() {
     var box = $('homeRecap');
+    // One last-run card on Home: the recap box (recapBox, with the MVP vote) is the one kept, so this card stays hidden.
+    if (box) { box.hidden = true; box.innerHTML = ''; return; }
     var RN = window.PlayerNightRecap;
     if (!box || !RN || !S.me) { if (box) { box.hidden = true; box.innerHTML = ''; } return; }
     var prog = PlayerXp.progress(S.run);
