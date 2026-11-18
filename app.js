@@ -698,6 +698,9 @@
   function feedConnectionNow() { var f = feedNow(); return f ? f.connection : 'ok'; }
   // Run started on the organiser, no game on court yet: the Live tab says "Run is on".
   function feedStartedNow() { var f = feedNow(); return !!(f && f.state === 'started'); }
+  // The organiser ended this run (or it has been silent for 10 min): the Live tab goes back to its default view.
+  function feedEndedNow() { return PlayerLiveFeed.endedNow(feedNow()); }
+  function feedRunKeyNow() { return feedState.feed ? PlayerLiveFeed.runKey(feedState.feed) : ''; }
   function liveNoNow() { var f = feedNow(); return f && f.now ? f.now.game : null; }
   // The Live screen's "now" card, from the live row. Falls back to S.live (null in the shipped build) when no row.
   function liveNow() {
@@ -848,7 +851,8 @@
       runStarting: feedStartedNow(),
       connection: feedConnectionNow(),
       waiting: !runOverNow() && !!(S.paid || myPaidOrIn() || (S.rsvp && S.rsvp.ok === true && S.rsvp.me === 'in')),
-      runOver: runOverNow() || feedConnectionNow() === 'over',
+      runOver: runOverNow() || feedEndedNow(),
+      runKey: feedRunKeyNow(),
       runOverWord: feedConnectionNow() === 'over' && !runOverNow() ? 'Run’s over' : runOverWordNow(),
       paid: !!(S.paid || myPaidOrIn(true)),
       waitError: !!S.upcomingError,
@@ -858,7 +862,7 @@
   }
 
   function renderLive() {
-    if (!S.liveScreen) S.liveScreen = PlayerLive.mount($('live'), liveData(), { onReveal: openLineup, onRetry: retryLive });
+    if (!S.liveScreen) S.liveScreen = PlayerLive.mount($('live'), liveData(), { onReveal: openLineup, onRetry: retryLive, onHome: function () { location.hash = '#home'; } });
     else S.liveScreen.update(liveData());
     var ul = $('standings');
     ul.innerHTML = '';

@@ -197,6 +197,33 @@
       '<p class="lv-muted">Games show here when the first one starts. Teams show when the organiser sends them.</p></section>';
   }
 
+  // Closed pop-up: shown once per run, only when the player was watching and the run ends. Returns the run key, or null.
+  function closedPopupKey(prev, next, seen) {
+    var key = next && next.runKey;
+    if (!next || !next.runOver || !key) return null;
+    if (prev && prev.runOver) return null;
+    if (Array.isArray(seen) && seen.indexOf(key) >= 0) return null;
+    return key;
+  }
+  var SEEN_KEY = 'oneto1.live.closedSeen';
+  function seenKeys() {
+    try { var v = JSON.parse(root.localStorage.getItem(SEEN_KEY) || '[]'); return Array.isArray(v) ? v : []; } catch (e) { return []; }
+  }
+  function markSeen(key) {
+    try {
+      var list = seenKeys();
+      if (list.indexOf(key) < 0) list.push(key);
+      root.localStorage.setItem(SEEN_KEY, JSON.stringify(list.slice(-20)));
+    } catch (e) { /* private window or blocked storage: the pop-up may show again, nothing breaks */ }
+  }
+  function closedPopupHtml() {
+    return '<section class="lv-card lv-closed" role="dialog" aria-modal="true" aria-labelledby="lvClosed">' +
+      '<h2 class="lv-h" id="lvClosed">The run has been closed</h2>' +
+      '<p class="lv-muted">Thanks for coming.</p>' +
+      '<button class="lv-btn" type="button" data-cv="home">Go Home</button>' +
+      '<button class="lv-btn" type="button" data-cv="close">Close</button></section>';
+  }
+
   function emptyHtml() {
     return '<section class="lv-card lv-empty"><h2 class="lv-h">No game on court</h2>' +
       '<p class="lv-muted">Games show here when the run starts. This page updates on its own.</p></section>';
@@ -239,8 +266,9 @@
     var body = d.connection === 'reconnecting' ? '<p class="lv-cap" role="status">Reconnecting…</p>' : '';
     if (s.mode === 'on') body += nowHtml(d.now, me) + CV.courtHtml(d.now, me, d.lineup);
     body += nextUpHtml(d.nextUp);
-    body += boardHtml(d.board);
-    if (s.mode === 'over') body += overHtml(d.runOverWord);
+    if (s.mode !== 'over') body += boardHtml(d.board);
+    // Run closed: the Live tab goes back to its default "no game on court" view (no stale court, no board).
+    if (s.mode === 'over') body += emptyHtml();
     else if (d.runStarting && !d.now && !d.lineup) body += runOnHtml();
     else if (s.mode !== 'on' && !d.lineup && d.waiting) body += waitingHtml(d);
     else if (s.mode !== 'on' && !d.lineup && d.waitError && !d.waiting) body += waitErrorHtml();
@@ -288,6 +316,7 @@
       if (!b) return;
       var act = b.getAttribute('data-cv');
       if (act === 'close') { close(); return; }
+      if (act === 'home') { close(); if (typeof state.handlers.onHome === 'function') state.handlers.onHome(); return; }
       if (act === 'see') {
         if (typeof state.handlers.onSeePlayer === 'function') { var p = current; close(); state.handlers.onSeePlayer(p); return; }
         show(CV.sheetHtml(current));
@@ -322,15 +351,19 @@
         var data = next || {};
         var prevNow = state.data && state.data.now;
         if (data.now && CV.markScored) data = Object.assign({}, data, { now: CV.markScored(data.now, prevNow) });
+        var prev = state.data;
         state.data = data;
         render();
+        // The pop-up only when the Live tab is on screen (a player who was watching when the run ended).
+        var key = closedPopupKey(prev, data, seenKeys());
+        if (key && el.getClientRects().length) { markSeen(key); show(closedPopupHtml()); }
       },
       destroy: function () { el.removeEventListener('click', onClick); close(); el.innerHTML = ''; }
     };
   }
 
   var api = {
-    mount: mount, html: html, summary: summary, orderLineup: orderLineup, upcomingRows: upcomingRows,
+    mount: mount, html: html, summary: summary, closedPopupKey: closedPopupKey, orderLineup: orderLineup, upcomingRows: upcomingRows,
     resultRows: resultRows, resultsHtml: resultsHtml, STATE_LABEL: STATE_LABEL,
     courtModel: function (now, me) { return CV.courtModel(now, me); },
     courtPlayer: function (p) { return CV.courtPlayer(p); }

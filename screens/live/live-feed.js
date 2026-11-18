@@ -155,7 +155,15 @@
     };
   }
 
-  var api = { fromFeed: fromFeed, runWhen: runWhen, hhmm: hhmm, clockMsNow: clockMsNow, clockText: clockText, recapFrom: recapFrom };
+  // The run is over for this player: the organiser ended it ('finished'), or the heartbeat has been silent for 10 min ('over').
+  function endedNow(f) { return !!(f && (f.state === 'finished' || f.connection === 'over')); }
+  // One run = its date and start, so the closed pop-up shows once per run.
+  function runKey(payload) {
+    var s = payload && typeof payload.schedule === 'object' && payload.schedule ? payload.schedule : {};
+    return text(s.date) + ' ' + text(s.start);
+  }
+
+  var api = { endedNow: endedNow, runKey: runKey, fromFeed: fromFeed, runWhen: runWhen, hhmm: hhmm, clockMsNow: clockMsNow, clockText: clockText, recapFrom: recapFrom };
   root.PlayerLiveFeed = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof self !== 'undefined' ? self : this);
