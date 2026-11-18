@@ -4,13 +4,15 @@
 // Only same-origin GET requests are handled and saved. The online database and any other
 // cross-origin call go straight to the network and are never saved.
 importScripts('brand/names.js');
-const CACHE = 'player-shell-1-next72z-r13';
+const CACHE = 'player-shell-1-next72z-r14';
 const SHELL = [
   './', 'signup.html', 'app.html', 'night.html', 'offline.html',
   'manifest.webmanifest', 'pwa.js', 'pwa.css', 'pwa-push.js',
   'brand/tokens.css', 'brand/components.css', 'brand/names.js', 'brand/lockup.js', 'brand/check-ball/loading-lockup.svg', 'app.css', 'app-tokens.css', 'app-shell.css', 'shell/device.css', 'lib/filling-up.js',
   'config.js', 'rules.js', 'backend.js', 'app.js',
-  'lib/xp.js', 'lib/player-name.js', 'lib/player-name.css',
+  'lib/xp.js', 'lib/player-name.js', 'lib/player-name.css', 'lib/weekly-rival.js', 'lib/weekly-rival.css', 'lib/hype.js', 'lib/night-recap.js', 'lib/hype-recap.css',
+  'lib/moments.js', 'lib/delight-rules.js', 'lib/delights.css', 'lib/cart-icon.js', 'lib/pay-stamp.js', 'lib/home-delights.js', 'lib/sound-setting.js', 'lib/seasonal.js',
+  'shop/shop-climb.js', 'shop/shop-climb.css',
   'lib/prestige-celebration.js', 'brand/prestige-celebration.css', 'lib/run-state.js', 'lib/run-state.css', 'lib/signal-line.js', 'lib/signal-line.css',
   'loading/loading.js', 'loading/loading.css',
   'reveal/reveal.js', 'reveal/reveal.css',

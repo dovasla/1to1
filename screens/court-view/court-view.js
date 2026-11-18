@@ -21,8 +21,8 @@
   // 2-3 zone, in % of the court box. Top side faces the top basket, bottom side is mirrored.
   // Two high on the wings, three under the basket. Players 6+ go in a middle row.
   var SLOTS = [
-    { x: 20, y: 32 }, { x: 80, y: 32 },
-    { x: 20, y: 14 }, { x: 50, y: 14 }, { x: 80, y: 14 }
+    { x: 20, y: 34 }, { x: 80, y: 34 },
+    { x: 20, y: 12 }, { x: 50, y: 12 }, { x: 80, y: 12 }
   ];
 
   function esc(s) {
@@ -46,7 +46,7 @@
   // One court player as the view shows it.
   function courtPlayer(p) {
     if (!p || p.hidden) return { name: 'Player', icon: PLAIN_ICON, hidden: true, pts: null, fouls: null, streak: null, gain: null, look: null };
-    var name = String(p.name || '').trim().slice(0, NAME_MAX) || 'Player';
+    var name = String(p.name || '').trim() || 'Guest';
     var icon = ICON_RE.test(String(p.icon || '')) ? String(p.icon) : PLAIN_ICON;
     // The look from the row (banner, name style, level) when the organiser sent it; else the lineup match (withLooks) fills it.
     var look = p.look || ((p.banner || p.nameStyle || p.level != null) ? lookFrom(p) : null);
@@ -132,42 +132,60 @@
   function litOf(p) {
     if (p.hidden) return { cls: '', badge: '' };
     if (p.gain) return { cls: 'is-score', badge: '+' + p.gain };
-    if (p.streak != null && p.streak >= 3) return { cls: 'is-streak', badge: 'STREAK ' + p.streak };
-    if (p.fouls != null && p.fouls >= 4) return { cls: 'is-foul', badge: 'FOUL ' + p.fouls };
+    if (p.streak != null && p.streak >= 3) return { cls: 'is-streak', badge: '' };
+    if (p.fouls != null && p.fouls >= 4) return { cls: 'is-foul', badge: p.fouls + ' FOULS' };
     return { cls: '', badge: '' };
+  }
+
+  // Names on the court and cards: first name and last initial, at most 10 characters (L4).
+  function shownName(name) {
+    var PN = root.PlayerName;
+    var s = PN && PN.shortName ? PN.shortName(name) : String(name || '');
+    return s.length > NAME_MAX ? s.slice(0, NAME_MAX - 1) + '…' : s;
+  }
+
+  // Initials for a disc: "Joe P" -> "JP". No name (a guest): "G".
+  function initialsOf(name) {
+    var parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return 'G';
+    return (parts[0].charAt(0) + (parts.length > 1 ? parts[parts.length - 1].charAt(0) : '')).toUpperCase();
   }
 
   function picHtml(icon, label, big) {
     return '<span class="lv-pic' + (big ? ' cv-pic-lg' : '') + '" data-icon="' + esc(icon || PLAIN_ICON) + '" data-label="' + esc(label) + '"></span>';
   }
 
-  // One token on the pitch: lit state, name, then points underneath. Visible players are tap targets for the card.
+  // One token on the pitch (L1 to L8): name plate, score disc (glow clipped to the disc), level plate.
+  // A hidden player is a Guest: initials disc, "Guest", and the score. Never the raw word "Player".
   function tokenHtml(p, team, i, side, mine) {
     var pos = formationFor(i, side);
     var lit = litOf(p);
     var look = p.look || null;
-    var cls = 'cv-tk ' + (side === 'bottom' ? 'cv-side-a' : 'cv-side-b') + (lit.cls ? ' ' + lit.cls : '') + (p.hidden ? ' is-hidden' : '') +
-      (look && look.worn ? ' has-look' : '');
-    var style = ' style="left:' + pos.x + '%;top:' + pos.y + '%"';
-    var badge = lit.badge ? '<span class="cv-tk-badge">' + esc(lit.badge) + '</span>' : '';
-    // The token is the shared PlayerName look: name, circle with points, level, and the worn look (ring, flame, banner, name effect).
     var PN = root.PlayerName;
     var lookId = look && PN && PN.LOOKS && PN.LOOKS.indexOf(look.id) !== -1 ? look.id : '';
-    var ptsTxt = p.pts != null ? esc(p.pts) : '–';
-    var lvLine = (look && look.level != null) ? '<span class="pl-level">Lv ' + esc(look.level) + '</span>' : '';
-    var shown = PN && PN.shortName ? PN.shortName(p.name) : p.name;
-    var face;
-    if (p.hidden) face = '<span class="cv-tk-plain">Player</span>';
-    else if (PN && lookId) face = PN.html({ name: p.name, look: lookId, score: p.pts != null ? p.pts : '–', level: look && look.level != null ? look.level : null, justScored: !!p.gain });
-    else face = '<span class="pl pl-tile"><span class="pl-line"><span class="pl-name">' + esc(shown) + '</span></span><span class="pl-score">' + ptsTxt + '</span>' + lvLine + '</span>';
-    var lv = '';
-    if (p.hidden) return '<li class="' + cls + '"' + style + '><span class="cv-tk-face" aria-label="Player">' + face + '</span></li>';
-    return '<li class="' + cls + '"' + style + '><button class="cv-tk-face" type="button" data-player' +
-      ' data-name="' + esc(p.name) + '" data-icon="' + esc(p.icon) + '" data-team="' + esc(team) + '"' +
+    var sideCls = side === 'bottom' ? 'cv-side-a' : 'cv-side-b';
+    var cls = 'cv-tk ' + sideCls + (lit.cls ? ' ' + lit.cls : '') + (p.hidden ? ' is-hidden' : '') +
+      (look && look.worn ? ' has-look' : '') + (mine ? ' is-team-mine' : '');
+    var style = ' style="left:' + pos.x + '%;top:' + pos.y + '%"';
+    var badge = '';
+    if (lit.cls === 'is-score') badge = '<span class="cv-tk-badge cv-pop ' + (pos.x >= 70 ? 'is-left' : 'is-right') + '">' + esc(lit.badge) + '</span>';
+    else if (lit.cls === 'is-foul') badge = '<span class="cv-tk-badge is-foul">' + esc(lit.badge) + '</span>';
+    var name = p.hidden ? 'Guest' : shownName(p.name);
+    var disc = p.hidden ? initialsOf('') : (p.pts != null ? String(p.pts) : '–');
+    var lvl = p.hidden ? '' : ((look && look.level != null) ? 'Lv ' + look.level : '');
+    var face = '<span class="cv-plate"><span class="cv-name pl-name' + (lookId ? ' pl-look-' + esc(lookId) : '') + '">' + esc(name) + '</span></span>' +
+      '<span class="cv-disc' + (p.hidden ? ' is-guest' : '') + (lookId ? ' pl-look-' + esc(lookId) : '') + '">' +
+        '<span class="pl-ring" aria-hidden="true"></span><span class="pl-flame" aria-hidden="true"></span>' +
+        '<span class="cv-disc-num pl-score">' + esc(disc) + '</span></span>' +
+      (lvl ? '<span class="cv-plate cv-lv pl-level">' + esc(lvl) + '</span>' : '');
+    if (p.hidden) return '<li class="' + cls + '"' + style + '>' + badge + '<span class="cv-tk-face" aria-label="Guest">' + face + '</span></li>';
+    return '<li class="' + cls + '"' + style + '>' + badge + '<button class="cv-tk-face" type="button" data-player' +
+      ' data-name="' + esc(p.name) + '" data-icon="' + esc(p.icon) + '" data-team="' + esc(team) + '" data-side="' + (side === 'bottom' ? 'a' : 'b') + '"' +
+      ' data-hk="' + esc(team + '|' + p.name) + '"' +
       (look && look.banner ? ' data-banner="' + esc(look.banner) + '"' : '') +
       (p.pts != null ? ' data-pts="' + esc(p.pts) + '"' : '') +
       (look && look.level != null ? ' data-level="' + esc(look.level) + '"' : '') +
-      ' aria-label="' + esc(p.name + (p.pts != null ? ', ' + p.pts + ' points' : '') + (look && look.level != null ? ', level ' + look.level : '')) + '">' + badge + face + '</button></li>';
+      ' aria-label="' + esc(p.name + (p.pts != null ? ', ' + p.pts + ' points' : '') + (look && look.level != null ? ', level ' + look.level : '')) + '">' + face + '</button></li>';
   }
 
   // Pitch: a half court at the top, the same half mirrored at the bottom (390 x 640 units, same as the preview).
@@ -188,16 +206,25 @@
     '<g class="cv-lines"><path d="M14 320 H376"/><circle cx="195" cy="320" r="40"/></g>' +
   '</svg>';
 
-  // Mini history: the last five baskets this game, newest first. Public names only.
-  function historyHtml(list) {
+  // L7: last baskets. Team colour dot (no team words), "12s ago" in grey, a new row slides in.
+  // The feed has no time per basket, so the time is when this phone first saw it.
+  var seenAt = {};
+  function historyHtml(list, nowMs) {
     var rows = (Array.isArray(list) ? list : []).filter(function (r) { return r && typeof r === 'object'; }).slice(0, 5);
     if (!rows.length) return '';
+    var t = nowMs == null ? Date.now() : nowMs;
     return '<section class="cv-hist" aria-label="Last baskets">' +
       '<h3 class="lv-h3">Last baskets</h3>' +
-      '<ol class="cv-hist-list">' + rows.map(function (r) {
-        return '<li class="cv-hist-row"><span class="cv-hist-pts">+' + esc(r.pts) + '</span>' +
-          '<span class="cv-hist-name">' + esc(r.name || 'Player') + '</span>' +
-          '<span class="cv-hist-team">' + esc(teamWord(r.team)) + '</span></li>';
+      '<ol class="cv-hist-list">' + rows.map(function (r, idx) {
+        var key = String(r.n) + '|' + r.side + '|' + r.name + '|' + r.pts;
+        if (seenAt[key] == null) seenAt[key] = t;
+        var secs = Math.max(0, Math.round((t - seenAt[key]) / 1000));
+        var ago = secs < 5 ? 'just now' : secs + 's ago';
+        return '<li class="cv-hist-row' + (idx === 0 && secs < 4 ? ' is-new' : '') + '">' +
+          '<span class="cv-hist-dot cv-hist-dot-' + (r.side === 'b' ? 'b' : 'a') + '" aria-hidden="true"></span>' +
+          '<span class="cv-hist-pts">+' + esc(r.pts) + '</span>' +
+          '<span class="cv-hist-name">' + esc(shownName(r.name || 'Guest')) + '</span>' +
+          '<span class="cv-hist-ago">' + esc(ago) + '</span></li>';
       }).join('') + '</ol></section>';
   }
 
@@ -214,54 +241,68 @@
     function label(s, where) {
       return '<span class="cv-label is-' + where + '">' + esc(teamWord(s.team)) + (s.mine ? ' · <b class="lv-you">Your team</b>' : '') + '</span>';
     }
+    // L6: your team's half gets a 4% yellow tint.
+    var tint = (mineTop ? '<span class="cv-tint is-top" aria-hidden="true"></span>' : '') + (mineBottom ? '<span class="cv-tint is-bottom" aria-hidden="true"></span>' : '');
     return '<section class="lv-card lv-court" aria-labelledby="lvCourt">' +
       '<div class="lv-top"><span class="lv-cap">Game ' + esc(now.game) + ' court</span></div>' +
       '<h2 class="lv-h" id="lvCourt">The court</h2>' +
       '<div class="cv-pitch' + (mineBottom || mineTop ? ' has-mine' : '') + '">' +
-        PITCH_SVG +
+        PITCH_SVG + tint +
         label(model.sides[1], 'top') + label(model.sides[0], 'bottom') +
         '<ul class="cv-tokens">' + tokens + '</ul>' +
       '</div>' +
       historyHtml(now.history) +
-      '<p class="lv-muted lv-court-note">Yellow ring: just scored. Badges: streak and foul trouble. Positions are for show.</p>' +
     '</section>';
   }
 
-  function ptsLine(p) {
-    return p.pts != null ? '<p class="cv-line">' + esc(p.pts) + ' ' + (p.pts === 1 ? 'point' : 'points') + ' this game</p>' : '';
+  // Team colour strip (P2): the worn banner when there is one, else a solid 6px team-colour strip.
+  function stripHtml(p) {
+    if (p.banner && BANNERS[p.banner]) return '<span class="pn-banner pn-banner--' + p.banner + ' cv-card-band" aria-hidden="true"></span>';
+    return '<span class="cv-strip cv-strip-' + (p.side === 'b' ? 'b' : 'a') + '" aria-hidden="true"></span>';
+  }
+
+  // P3: three big stats in a row: PTS TONIGHT, LEVEL, WEEK STREAK. The week streak is not in the feed yet: a dash.
+  function statsRow(p) {
+    function cell(label, value) {
+      return '<div class="cv-stat3"><span class="cv-stat3-v">' + esc(value) + '</span><span class="cv-stat3-l">' + esc(label) + '</span></div>';
+    }
+    return '<div class="cv-stats3">' +
+      cell('PTS TONIGHT', p.pts != null ? p.pts : '–') +
+      cell('LEVEL', p.level != null ? p.level : '–') +
+      cell('WEEK STREAK', p.weekStreak != null ? p.weekStreak : '–') +
+    '</div>';
   }
 
   // Small card, opened by a tap. Its one main action goes to the full sheet.
   function cardHtml(p) {
     p = p || {};
-    var band = p.banner && BANNERS[p.banner] ? '<span class="pn-banner pn-banner--' + p.banner + ' cv-card-band" aria-hidden="true"></span>' : '';
+    var who = p.name ? shownName(p.name) : 'Guest';
     return '<div class="cv-sheet cv-card" role="dialog" aria-modal="true" aria-labelledby="cvName">' +
-      band + '<div class="cv-grip" aria-hidden="true"></div>' +
-      '<div class="cv-who">' + picHtml(p.icon, p.name || 'Player', true) +
+      stripHtml(p) + '<div class="cv-grip" aria-hidden="true"></div>' +
+      '<div class="cv-who"><span class="cv-disc-init' + (p.side === 'b' ? ' is-b' : ' is-a') + '" aria-hidden="true">' + esc(initialsOf(p.name)) + '</span>' +
         '<div class="cv-who-text">' + (p.team ? '<p class="cv-cap">' + esc(teamWord(p.team)) + '</p>' : '') +
-        '<h2 class="cv-h" id="cvName">' + esc(p.name || 'Player') + '</h2></div></div>' +
-      ptsLine(p) +
-      (p.level != null ? '<p class="cv-line">Level ' + esc(p.level) + '</p>' : '') +
+        '<h2 class="cv-h" id="cvName">' + esc(who) + '</h2></div></div>' +
+      statsRow(p) +
       '<div class="cv-actions">' +
+        (p.hk && root.PlayerHype ? root.PlayerHype.buttonHtml(p.hk) : '') +
         '<button class="cv-btn cv-btn--main" type="button" data-cv="see">See player</button>' +
         '<button class="cv-btn" type="button" data-cv="close">Close</button>' +
       '</div>' +
     '</div>';
   }
 
-  // Full player sheet, opened from the card.
+  // Full player sheet, opened from the card (P1 initials disc in team colour, P2 strip, P3 stats row).
   function sheetHtml(p) {
     p = p || {};
-    var rows = '';
-    if (p.pts != null) rows += '<div class="cv-stat"><dt>Points this game</dt><dd>' + esc(p.pts) + '</dd></div>';
-    if (p.level != null) rows += '<div class="cv-stat"><dt>Level</dt><dd>' + esc(p.level) + '</dd></div>';
+    var who = p.name ? shownName(p.name) : 'Guest';
     return '<div class="cv-sheet cv-full" role="dialog" aria-modal="true" aria-labelledby="cvName">' +
+      stripHtml(p) +
       '<div class="cv-top"><span class="cv-cap">Player</span>' +
         '<button class="cv-btn cv-btn--small" type="button" data-cv="close">Back</button></div>' +
-      '<div class="cv-hero">' + picHtml(p.icon, p.name || 'Player', true) + '</div>' +
-      '<h2 class="cv-h cv-h--big" id="cvName">' + esc(p.name || 'Player') + '</h2>' +
+      '<div class="cv-hero"><span class="cv-disc-init cv-disc-init--big' + (p.side === 'b' ? ' is-b' : ' is-a') + '" aria-hidden="true">' + esc(initialsOf(p.name)) + '</span></div>' +
+      '<h2 class="cv-h cv-h--big" id="cvName">' + esc(who) + '</h2>' +
       (p.team ? '<p class="cv-cap">' + esc(teamWord(p.team)) + '</p>' : '') +
-      (rows ? '<dl class="cv-stats">' + rows + '</dl>' : '<p class="lv-muted">Stats show here when the organiser sends them.</p>') +
+      statsRow(p) +
     '</div>';
   }
 

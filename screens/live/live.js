@@ -257,6 +257,16 @@
     }, function () { /* no icon module: tiles keep their name */ });
   }
 
+  // D3: game-end banner. Built from the live state at full time (the row has no events).
+  function endBannerHtml(now) {
+    var DL = root.PlayerDelights;
+    if (!DL || !now || now.state !== 'full-time') return '';
+    var a = Number(now.scoreA) || 0, b = Number(now.scoreB) || 0;
+    if (a === b) return '';
+    var line = DL.gameEndBanner([{ type: 'game_end', winner: a > b ? 'A' : 'B', scoreA: a, scoreB: b }], { A: now.teamA, B: now.teamB });
+    return line ? '<div class="lv-endbanner" role="status">' + esc(line.text) + '</div>' : '';
+  }
+
   function html(d) {
     d = d || {};
     var s = summary(d);
@@ -264,6 +274,7 @@
     var head = '<div class="lv-head"><h1>Live</h1>' +
       (d.updatedAt ? '<span class="lv-cap" role="status">Updated ' + esc(d.updatedAt) + '</span>' : '') + '</div>';
     var body = d.connection === 'reconnecting' ? '<p class="lv-cap" role="status">Reconnecting…</p>' : '';
+    body += endBannerHtml(d.now);
     if (s.mode === 'on') body += nowHtml(d.now, me) + CV.courtHtml(d.now, me, d.lineup);
     body += nextUpHtml(d.nextUp);
     if (s.mode !== 'over') body += boardHtml(d.board);
@@ -324,6 +335,7 @@
     }
 
     function onClick(e) {
+      if (pressFired) { pressFired = false; e.preventDefault(); return; }
       var rt = e.target && e.target.closest ? e.target.closest('[data-retry]') : null;
       if (rt) { if (state.handlers.onRetry) state.handlers.onRetry(); return; }
       var rv = e.target && e.target.closest ? e.target.closest('[data-action="reveal"]') : null;
@@ -331,18 +343,70 @@
       var pl = e.target && e.target.closest ? e.target.closest('[data-player]') : null;
       if (!pl) return;
       current = {
-        name: pl.getAttribute('data-name') || 'Player',
+        name: pl.getAttribute('data-name') || 'Guest',
         icon: pl.getAttribute('data-icon') || CV.PLAIN_ICON,
         team: pl.getAttribute('data-team') || '',
         pts: CV.count(pl.getAttribute('data-pts')),
         level: CV.count(pl.getAttribute('data-level')),
-        banner: pl.getAttribute('data-banner') || ''
+        banner: pl.getAttribute('data-banner') || '',
+        hk: pl.getAttribute('data-hk') || '',
+        side: pl.getAttribute('data-side') || 'a'
       };
       lastFocus = pl;
       show(CV.cardHtml(current));
     }
 
     function render() { el.innerHTML = html(state.data); fillPictures(el); }
+    // Own score bump: one moment per screen (lib/moments.js). The visual is a CSS bump; motion-off is handled there.
+    var moments = root.PlayerMoments && root.PlayerMoments.create ? root.PlayerMoments.create({
+      vibrate: function (ms) { if (navigator.vibrate) navigator.vibrate(ms); }
+    }) : null;
+    function motionEnv() {
+      var mq = root.matchMedia ? root.matchMedia('(prefers-reduced-motion: reduce)') : null;
+      var fx = doc.documentElement && doc.documentElement.getAttribute('data-fx');
+      return { reducedMotion: !!(mq && mq.matches), fxLow: fx === 'low', soundOn: false };
+    }
+    if (moments) moments.setEnv(motionEnv());
+    function myScoreGain(prev, next) {
+      var me = next && next.me && next.me.team;
+      if (!me || !prev || !prev.now || !next || !next.now) return 0;
+      var key = next.now.teamA === me ? 'scoreA' : (next.now.teamB === me ? 'scoreB' : null);
+      if (!key || prev.now.game !== next.now.game) return 0;
+      return (Number(next.now[key]) || 0) - (Number(prev.now[key]) || 0);
+    }
+    function bump() {
+      var sc = el.querySelector('.lv-side.is-mine .lv-score');
+      if (!sc) return;
+      sc.classList.remove('lv-bump'); void sc.offsetWidth; sc.classList.add('lv-bump');
+    }
+    // D8: long-press a player (about 500 ms) opens the full sheet straight away. A short tap still opens the card.
+    var pressTimer = null, pressFired = false;
+    function playerFrom(pl) {
+      return {
+        name: pl.getAttribute('data-name') || 'Guest',
+        icon: pl.getAttribute('data-icon') || CV.PLAIN_ICON,
+        team: pl.getAttribute('data-team') || '',
+        side: pl.getAttribute('data-side') || 'a',
+        pts: CV.count(pl.getAttribute('data-pts')),
+        level: CV.count(pl.getAttribute('data-level')),
+        banner: pl.getAttribute('data-banner') || '',
+        hk: pl.getAttribute('data-hk') || ''
+      };
+    }
+    function onDown(e) {
+      var t = e.target && e.target.closest ? e.target.closest('[data-player]') : null;
+      if (!t) return;
+      pressFired = false;
+      pressTimer = setTimeout(function () {
+        pressFired = true;
+        current = playerFrom(t); lastFocus = t; show(CV.sheetHtml(current));
+      }, 500);
+    }
+    function onUp() { clearTimeout(pressTimer); pressTimer = null; }
+    el.addEventListener('pointerdown', onDown);
+    el.addEventListener('pointerup', onUp);
+    el.addEventListener('pointercancel', onUp);
+    el.addEventListener('pointerleave', onUp);
     el.addEventListener('click', onClick);
     render();
     return {
@@ -354,6 +418,9 @@
         var prev = state.data;
         state.data = data;
         render();
+        var gain = myScoreGain(prev, data);
+        if (gain > 0 && moments) moments.fire('live', { kind: 'bounce', haptic: true, visual: bump });
+        else if (moments) moments.setEnv(motionEnv());
         // The pop-up only when the Live tab is on screen (a player who was watching when the run ended).
         var key = closedPopupKey(prev, data, seenKeys());
         if (key && el.getClientRects().length) { markSeen(key); show(closedPopupHtml()); }

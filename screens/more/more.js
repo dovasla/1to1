@@ -408,6 +408,7 @@
         rowHtml('details', 'My details', detailsSummary(d.me)) +
         switchHtml('bright', !!d.bright, 'Bright hall', 'Light colours for daytime') +
         switchHtml('showme', d.showMe !== false, 'Show me to other players', 'Off: you show as “Player” and nobody can tap your name') +
+        switchHtml('sound', !!(window.PlayerSound && PlayerSound.get()), 'Celebration sounds', 'Off unless you turn it on') +
         rowHtml('alerts', 'Run alerts', alertsSummary(d.alertsState || 'off')) +
         rowHtml('reminders', 'Reminders', 'Off until you switch one on') +
         rowHtml('skill', 'Skill questions', owed ? 'To answer, once' : 'Done') +
@@ -596,6 +597,10 @@
       if (act === 'bright') {
         st.data.bright = !st.data.bright;
         if (h.setBright) h.setBright(st.data.bright);
+        return paint();
+      }
+      if (act === 'sound') {
+        if (window.PlayerSound) PlayerSound.set(!PlayerSound.get());
         return paint();
       }
       if (act === 'showme') {

@@ -200,3 +200,70 @@ button.cv-tk-face:focus-visible { outline:3px solid var(--focus); outline-offset
 .cv-tk.is-score .cv-tk-face, .cv-tk.is-streak .cv-tk-face, .cv-tk.has-look .cv-tk-face { box-shadow:none; }
 /* Tap card: the worn banner strip across the top of the card (same banner classes as the chips). */
 .cv-card-band { position:relative; display:block; height:56px; margin:-14px -14px 8px; border-radius:16px 16px 0 0; }
+
+/* ---- Court v2 (Opus design report, L1 to L8, P1 to P3). The look is kept: pitch, discs, tabular numbers. ---- */
+.cv-tk-face { display:flex; flex-direction:column; align-items:center; gap:3px; background:none; border:0; padding:0; color:inherit; font:inherit; }
+.cv-tk-face:focus-visible { outline:3px solid var(--focus); outline-offset:4px; border-radius:12px; }
+.cv-tk { font-variant-numeric:tabular-nums; }
+.cv-plate { position:relative; z-index:3; display:block; max-width:96px; padding:2px 6px; border-radius:6px; background:rgba(14,17,22,.88); color:#F4F6F8; font-family:var(--font-head, "Barlow Condensed", "Barlow", system-ui, sans-serif); font-weight:800; font-size:14px; line-height:1.1; text-align:center; text-transform:uppercase; letter-spacing:.03em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.cv-lv { color:#B4BBC8; font-size:14px; }
+.cv-disc { position:relative; display:flex; align-items:center; justify-content:center; width:52px; height:52px; border-radius:50%; background:#FFFFFF; color:#0E0E0E; }
+.cv-disc .pl-score { background:none; width:auto; height:auto; color:inherit; font-family:var(--font-head, "Barlow Condensed", "Barlow", system-ui, sans-serif); font-size:24px; font-weight:800; line-height:1; font-variant-numeric:tabular-nums; position:relative; z-index:2; }
+.cv-side-a .cv-disc { background:#0A5CFF; color:#FFFFFF; }
+.cv-side-b .cv-disc { background:#FFFFFF; color:#0E0E0E; }
+.cv-disc.is-guest { background:#2C323D; color:#B4BBC8; }
+/* L1: the glow sits behind the disc only (a 64px circle), never over the names or levels. */
+.cv-disc .pl-ring { inset:-6px; border-radius:50%; }
+.cv-tk .pl-flame { position:absolute; left:10%; right:10%; bottom:-4px; height:46%; border-radius:40% 40% 0 0; background:linear-gradient(0deg,rgba(255,122,31,.85),rgba(255,122,31,0)); opacity:0; pointer-events:none; z-index:1; }
+/* L3: yellow = just scored (and your own team) only. Foul trouble is red. */
+.cv-tk.is-score .cv-disc { box-shadow:0 0 0 3px #FFD21F; }
+.cv-tk.is-streak .pl-flame { opacity:.9; }
+.cv-tk.is-foul .cv-disc { box-shadow:0 0 0 3px #E5484D; }
+.cv-tk.is-foul .cv-tk-face { outline:none; }
+.cv-tk-badge { position:absolute; bottom:100%; left:50%; transform:translateX(-50%); margin-bottom:4px; padding:4px 9px; border-radius:999px; background:#FFD21F; color:#0E0E0E; font-family:var(--font-head, "Barlow Condensed", "Barlow", system-ui, sans-serif); font-size:14px; font-weight:800; line-height:1; white-space:nowrap; font-variant-numeric:tabular-nums; z-index:4; }
+.cv-tk-badge.is-foul { background:#E5484D; color:#FFFFFF; }
+@keyframes cvPop { 0% { transform:translate(-50%,6px) scale(.6); opacity:0; } 100% { transform:translate(-50%,0) scale(1); opacity:1; } }
+.cv-tk-badge.cv-pop { animation:cvPop .3s ease-out 1; }
+/* L6: your team's half gets a 4% yellow tint. */
+.cv-tint { position:absolute; left:0; right:0; height:50%; background:rgba(255,210,31,.04); pointer-events:none; }
+.cv-tint.is-top { top:0; }
+.cv-tint.is-bottom { bottom:0; }
+/* L7: last baskets: team dot, grey "ago", newest row slides in. */
+.cv-hist-row { align-items:center; }
+.cv-hist-dot { width:12px; height:12px; border-radius:50%; flex:none; }
+.cv-hist-dot-a { background:#0A5CFF; }
+.cv-hist-dot-b { background:#F4F6F8; }
+.cv-hist-ago { font-size:14px; color:#9A9A9A; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.cv-hist-pts, .cv-hist-name { font-variant-numeric:tabular-nums; }
+.cv-hist-row.is-new { animation:cvSlide .35s ease-out 1; }
+@keyframes cvSlide { from { transform:translateY(-12px); opacity:0; } to { transform:none; opacity:1; } }
+/* P1 and P2: initials disc in team colour, solid 6px team strip. */
+.cv-strip { display:block; height:6px; margin:-14px -14px 10px; border-radius:16px 16px 0 0; }
+.cv-strip-a { background:#0A5CFF; }
+.cv-strip-b { background:#F4F6F8; }
+.cv-disc-init { display:inline-flex; align-items:center; justify-content:center; width:56px; height:56px; border-radius:50%; flex:none; font-family:var(--font-head, "Barlow Condensed", "Barlow", system-ui, sans-serif); font-size:24px; font-weight:800; color:#FFFFFF; font-variant-numeric:tabular-nums; }
+.cv-disc-init.is-a { background:#0A5CFF; }
+.cv-disc-init.is-b { background:#F4F6F8; color:#0E0E0E; }
+.cv-disc-init--big { width:96px; height:96px; font-size:40px; }
+/* P3: three big stats in a row. */
+.cv-stats3 { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:12px 0; }
+.cv-stat3 { background:var(--raised); border-radius:12px; padding:10px 6px; text-align:center; }
+.cv-stat3-v { display:block; font-family:var(--font-head, "Barlow Condensed", "Barlow", system-ui, sans-serif); font-size:36px; font-weight:800; line-height:1; font-variant-numeric:tabular-nums; }
+.cv-stat3-l { display:block; margin-top:4px; font-size:14px; font-weight:800; letter-spacing:.08em; color:var(--muted); }
+@media (prefers-reduced-motion: reduce) { .cv-tk-badge.cv-pop, .cv-hist-row.is-new { animation:none; } }
+.cv-name { display:inline; }
+/* The +N pop sits beside the disc, so it never covers the next player's level. */
+.cv-name { display:block; }
+.cv-tk-badge.cv-pop.is-right { top:51px; bottom:auto; left:100%; transform:translateY(-50%); margin-left:8px; margin-bottom:0; animation:cvPopS .3s ease-out 1; }
+.cv-tk-badge.cv-pop.is-left { top:51px; bottom:auto; left:auto; right:100%; transform:translateY(-50%); margin-right:8px; margin-bottom:0; animation:cvPopS .3s ease-out 1; }
+@keyframes cvPopS { 0% { opacity:0; transform:translateY(-50%) scale(.6); } 100% { opacity:1; transform:translateY(-50%) scale(1); } }
+.cv-label.is-bottom { bottom:auto; top:calc(50% + 6px); }
+@media (prefers-reduced-motion: reduce) { .cv-tk-badge.cv-pop.is-right, .cv-tk-badge.cv-pop.is-left { animation:none; } }
+/* D3 game-end banner, and the own-score bump (moments.js decides when it plays; reduced motion turns it off). */
+.lv-endbanner { margin:10px 0 0; padding:10px 14px; border-radius:12px; background:var(--raised); color:var(--brand-text); font-family:var(--font-head, "Barlow Condensed", "Barlow", system-ui, sans-serif); font-size:22px; font-weight:800; letter-spacing:.04em; text-align:center; font-variant-numeric:tabular-nums; }
+.lv-score.lv-bump { animation:lvBump .45s ease-out 1; }
+@keyframes lvBump { 0% { transform:scale(1); } 40% { transform:scale(1.18); } 100% { transform:scale(1); } }
+@media (prefers-reduced-motion: reduce) { .lv-score.lv-bump { animation:none; } }
+/* Gradient-text looks would fade into the dark plate; the court keeps names solid and readable. */
+.cv-name.pl-look-inferno, .cv-name.pl-look-gold-crown { background:none !important; -webkit-background-clip:border-box; background-clip:border-box; color:#FFD21F; -webkit-text-fill-color:#FFD21F; animation:none; }
+.cv-name.pl-look-void-burn { background:none !important; -webkit-background-clip:border-box; background-clip:border-box; color:#C9A6FF; -webkit-text-fill-color:#C9A6FF; animation:none; }

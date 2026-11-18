@@ -862,7 +862,12 @@
   }
 
   function renderLive() {
-    if (!S.liveScreen) S.liveScreen = PlayerLive.mount($('live'), liveData(), { onReveal: openLineup, onRetry: retryLive, onHome: function () { location.hash = '#home'; } });
+    if (!S.liveScreen) {
+      S.liveScreen = PlayerLive.mount($('live'), liveData(), { onReveal: openLineup, onRetry: retryLive, onHome: function () { location.hash = '#home'; } });
+      // Hype: re-light the tokens after every Live render, and ask the server for the latest taps (throttled).
+      var liveUpd = S.liveScreen.update;
+      S.liveScreen.update = function (d) { liveUpd(d); if (window.PlayerHype) PlayerHype.apply(document, hypeLit); hypeRefresh(false); };
+    }
     else S.liveScreen.update(liveData());
     var ul = $('standings');
     ul.innerHTML = '';
@@ -1232,6 +1237,109 @@
     var inst = $('homeInstall'); if (inst) inst.hidden = !installOn;
   }
 
+  // Weekly rival card on Home (lib/weekly-rival.js). Loads once per week per visit. Hides itself when the server piece
+  // (player_week_board, a draft) is missing, or when there is no one to pair with.
+  function wornLookId(x) { return typeof x === 'string' ? x : ((x && (x.look || x.id)) || ''); }
+  function loadWeeklyRival() {
+    var box = $('homeRival');
+    var RV = window.PlayerWeeklyRival, LT = window.PlayerLoadTimeout;
+    var tok = readToken();
+    if (!box || !RV || !S.me || !tok) { if (box) box.hidden = true; return; }
+    var week = RV.weekKey(new Date());
+    if (S.rivalWeek === week) return;
+    S.rivalWeek = week;
+    var hide = function () { box.hidden = true; box.innerHTML = ''; };
+    var lt = function (p, what) { return LT ? LT.withTimeout(p, LT.LIMIT, what) : p; };
+    var board = S.seasonBoard ? Promise.resolve({ ok: true, players: S.seasonBoard.players }) : be.leaderboard(tok, 'current');
+    var weekly = be.rpc('player_week_board', { p_token: tok, p_week: week });
+    Promise.all([lt(board, 'board'), lt(weekly, 'rival')]).then(function (v) {
+      var b = v[0], w = v[1];
+      if (!w || w.ok !== true || !w.me || !b || !b.players) { hide(); return; }
+      var pts = {};
+      (w.rows || []).forEach(function (r) { pts[r.public_id] = Number(r.pts) || 0; });
+      if (!(w.me in pts)) { hide(); return; }
+      // One measure only: the board's own level and XP for everyone, me included (same data the pairing uses).
+      var mine = null;
+      b.players.forEach(function (p) { if (p && p.id === w.me) mine = p; });
+      if (!mine) { hide(); return; }
+      var level = Number(mine.level) || 0;
+      var rival = RV.pickRival({ id: w.me }, b.players, week);
+      if (!rival) { hide(); return; }
+      var d = RV.duel(pts[w.me], pts[rival.id] || 0, level, rival.level);
+      var show = function (bonus) {
+        var html = RV.buildCard({ week: week,
+          me: { name: displayName(), level: level, look: wornLookId(S.shopEquipped) },
+          rival: { name: rival.name, level: rival.level, look: wornLookId(rival.look) },
+          duel: d, bonus: bonus });
+        if (!html) { hide(); return; }
+        box.innerHTML = html; box.hidden = false;
+      };
+      if (!d.bonusXp) { show(null); return; }
+      // A win near your level: the server pays the bonus once a week and checks the win itself.
+      // Until it answers the card says "on its way". If the claim fails, the bonus line goes and the card stays.
+      show('pending');
+      be.rpc('player_claim_rival_bonus', { p_token: tok, p_week: week, p_rival: rival.id }).then(function (r) {
+        show(r && r.ok === true ? 'added' : null);
+      }, function () { show(null); });
+    }).catch(hide);
+  }
+
+  // Hype taps on Live (lib/hype.js). Buttons and lit tokens show only after the server answers player_hype_rows.
+  var hypeLit = {}, hypeLastFetch = 0;
+  function hypeRefresh(force) {
+    var tok = readToken();
+    if (!window.PlayerHype || !tok) { document.body.classList.remove('hype-on'); return; }
+    var now = Date.now();
+    if (!force && now - hypeLastFetch < 15000) return;
+    hypeLastFetch = now;
+    be.rpc('player_hype_rows', { p_token: tok, p_night: NIGHT_ID }).then(function (r) {
+      if (!r || r.ok !== true) { document.body.classList.remove('hype-on'); hypeLit = {}; return; }
+      document.body.classList.add('hype-on');
+      hypeLit = PlayerHype.litKeys(r.rows, Date.now());
+      PlayerHype.apply(document, hypeLit);
+    }, function () { document.body.classList.remove('hype-on'); });
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target && e.target.closest ? e.target.closest('[data-hype-btn]') : null;
+    if (!b || !window.PlayerHype) return;
+    var key = b.getAttribute('data-hype-btn'), now = Date.now();
+    var store = null;
+    try { store = window.localStorage; } catch (err) { store = null; }
+    var led = PlayerHype.loadLedger(store);
+    var gate = PlayerHype.canHype(led, key, now);
+    if (!gate.ok) { b.textContent = gate.message; return; }
+    b.disabled = true;
+    be.rpc('player_hype', { p_token: readToken(), p_night: NIGHT_ID, p_key: key }).then(function (r) {
+      b.disabled = false;
+      if (r && r.ok === true) { PlayerHype.saveLedger(store, PlayerHype.recordHype(led, key, now)); b.textContent = 'Hyped'; hypeRefresh(true); return; }
+      b.textContent = r && r.reason === 'wait' ? PlayerHype.MSG.wait : r && r.reason === 'hourly' ? PlayerHype.MSG.hourly : 'Could not hype. Try again.';
+    }, function () { b.disabled = false; b.textContent = 'Could not hype. Try again.'; });
+  });
+
+  // Night recap card on Home (lib/night-recap.js). Shows after a played night; Share uses the phone share sheet or saves a picture.
+  var recapModelNow = null;
+  function renderRecapCard() {
+    var box = $('homeRecap');
+    var RN = window.PlayerNightRecap;
+    if (!box || !RN || !S.me) { if (box) { box.hidden = true; box.innerHTML = ''; } return; }
+    var prog = PlayerXp.progress(S.run);
+    var pct = prog.isMax ? 100 : (prog.xpForLevel ? Math.round(prog.xpInLevel / prog.xpForLevel * 100) : 0);
+    var toNext = prog.isMax ? 'Max level' : prog.xpToNext + ' XP to Level ' + (prog.level + 1);
+    recapModelNow = RN.model({ name: displayName(), level: prog.level, levelPct: pct, toNext: toNext,
+      look: wornLookId(S.shopEquipped), lastNight: lastNightOf() });
+    var html = RN.buildCard(recapModelNow);
+    box.innerHTML = html; box.hidden = !html;
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target && e.target.closest ? e.target.closest('[data-act="share-recap"]') : null;
+    if (!b || !window.PlayerNightRecap || !recapModelNow) return;
+    b.disabled = true;
+    window.PlayerNightRecap.shareCard(recapModelNow).then(function (res) {
+      b.disabled = false;
+      b.textContent = res === 'saved' ? 'Picture saved' : res === 'shared' ? 'Shared' : res === 'cancelled' ? 'Share your night' : 'Could not share. Try again.';
+    });
+  });
+
   // ---------- routing ----------
   // Four tabs: Home, Live, Stats, More. Profile is a page (opened from Stats and More); Shop is a page too.
   // Old links still work: #profile, #profile/shop, #more/shop, #shop; #live/leaderboard and #more/leaderboard go to #stats.
@@ -1471,6 +1579,8 @@
       } catch (e) { /* the recap card is optional: the rest of Home still loads */ }
     }
     checkAlerts();
+    loadWeeklyRival();
+    renderRecapCard();
     if (!S.home) {
       ensureShop().load().catch(function () { /* offline: Home shows the plain card */ });
       S.home = PlayerHome.mount($('home'), homeData(Date.now()), {

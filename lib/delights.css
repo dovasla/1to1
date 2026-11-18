@@ -1,0 +1,66 @@
+/* Delights: shared motion tokens, tabular numbers, label floor, colour lanes, seasonal skins (one class on <html>).
+   Load after the app tokens. Not yet linked from app.html (other thread owns it); see the PC report. */
+:root {
+  --dl-ease: cubic-bezier(.2,.8,.2,1);
+  --dl-tap: 120ms;
+  --dl-sheet: 240ms;
+  --dl-celebrate: 900ms;
+  /* colour lanes */
+  --dl-brand: #FFD21F;
+  --dl-brand-blue: #0A5CFF;
+  --dl-just-scored: #FFD21F;
+  --dl-paid: #2BD67B;
+  --dl-owes: #FF6B6B;
+  --dl-look-orange: #FF9A3D;
+  --dl-look-ice: #5FE1FF;
+  --dl-look-violet: #A78BFA;
+  --dl-look-gold: #E9C46A;
+  --dl-look-lime: #B6F03C;
+}
+
+.num,
+[data-num],
+.score,
+.stat-num {
+  font-variant-numeric: tabular-nums;
+}
+
+.dl-label-floor { font-size: max(14px, 1em); }
+
+/* light mode: looks get a 2px outline + darker text instead of glow */
+html[data-theme="light"] .dl-look { box-shadow: none; outline: 2px solid currentColor; }
+
+@media (prefers-reduced-motion: reduce) {
+  .dl-bounce, .dl-wave, .dl-stamp, .dl-flip { animation: none !important; }
+}
+html[data-fx="low"] .dl-bounce, html[data-fx="low"] .dl-wave,
+html[data-fx="low"] .dl-stamp, html[data-fx="low"] .dl-flip { animation: none !important; }
+
+/* D1 own-score bump: squash then settle */
+@keyframes dl-squash { 0% { transform: scale(1); } 35% { transform: scale(1.18, .86); } 100% { transform: scale(1); } }
+.dl-bounce { animation: dl-squash var(--dl-sheet) var(--dl-ease); }
+
+/* D3 game-end wave: each disc lifts in turn (set --i per disc) */
+@keyframes dl-wave { 0%,100% { transform: translateY(0); } 40% { transform: translateY(-10px); } }
+.dl-wave { animation: dl-wave var(--dl-celebrate) var(--dl-ease) calc(var(--i, 0) * 90ms) 1; }
+
+/* D2 ticket stamp */
+@keyframes dl-stamp { 0% { transform: scale(1.4); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+.dl-stamp { animation: dl-stamp var(--dl-sheet) var(--dl-ease) both; }
+
+/* D2 paid stamp on the bib card and the punched corner hole */
+.dl-paid-stamp { position: absolute; right: 16px; top: 50%; transform: translateY(-50%) rotate(-8deg); border: 3px solid var(--dl-paid); color: var(--dl-paid); padding: 4px 10px; font-weight: 800; font-size: 18px; letter-spacing: .08em; border-radius: 6px; }
+.dl-punch { position: absolute; left: 10px; top: 10px; width: 14px; height: 14px; border-radius: 50%; background: var(--surface-0, #0E0E0E); box-shadow: inset 0 0 0 2px var(--dl-brand); }
+/* D5 streak line and D6 milestone line on Home */
+.dl-streak b, .dl-milestone b { color: var(--dl-brand); }
+
+/* D7 bib number flip */
+@keyframes dl-flip { 0% { transform: rotateX(90deg); } 100% { transform: rotateX(0); } }
+.dl-flip { animation: dl-flip var(--dl-celebrate) var(--dl-ease) both; }
+
+/* D11 seasonal skins: one class on <html>. Dec = snow lines, Halloween = orange court. */
+html[data-season="winter"] .court-line { stroke: #CFEFFF; }
+html[data-season="halloween"] .court-floor { background-color: #3a1d0a; }
+html[data-season="halloween"] .court-line { stroke: #FF9A3D; }
+@keyframes dl-tipoff { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+html[data-season-start="1"] .home-hero { animation: dl-tipoff var(--dl-sheet) var(--dl-ease) both; }

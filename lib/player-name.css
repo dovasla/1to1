@@ -70,7 +70,7 @@
 /* Banner: a soft strip behind the row. An equipped shop banner wins; with none, the star count picks one (p1 to p10). */
 .pn-banner { display: block; pointer-events: none; }
 .pn-banner--brand { background: linear-gradient(90deg, rgba(255, 210, 31, .30), rgba(255, 210, 31, 0) 75%); }
-.pn-banner--blue { background: linear-gradient(90deg, rgba(10, 92, 255, .38), rgba(10, 92, 255, 0) 75%); }
+.pn-banner--blue { background: linear-gradient(90deg, rgba(95, 225, 255, .34), rgba(95, 225, 255, 0) 75%); }
 .pn-banner--tier-ember { background: linear-gradient(90deg, rgba(255, 120, 40, .34), rgba(255, 120, 40, 0) 75%); }
 .pn-banner--legend { background: linear-gradient(90deg, rgba(255, 210, 31, .42), rgba(10, 92, 255, .30) 70%, rgba(10, 92, 255, 0)); }
 .pn-banner--tier-silver { background: linear-gradient(90deg, rgba(201, 206, 214, .34), rgba(201, 206, 214, 0) 75%); }
@@ -97,7 +97,7 @@
 .pn-name--tier-bronze { color: var(--tier-bronze); }
 .pn-name--blue { color: var(--link-text); }
 .pn-name--tier-ember { color: var(--tier-ember); }
-.pn-name--legend { background: linear-gradient(90deg, #0A5CFF, var(--brand)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.pn-name--legend { background: linear-gradient(90deg, #5FE1FF, #FF7A1F); -webkit-background-clip: text; background-clip: text; color: transparent; }
 
 /* Row effects. One pseudo-element each, animating only transform or opacity. */
 /* Shimmer: slow sweep. A static yellow ring is always there, so the row still stands out without motion. */
@@ -173,7 +173,7 @@
   70% { transform: translateX(3px); opacity: 1; }
   100% { transform: none; opacity: 1; }
 }
-.pn-call--blue { background: linear-gradient(135deg, #0A5CFF, #0A2A6B); border-color: var(--link); }
+.pn-call--blue { background: linear-gradient(135deg, #5FE1FF, #0A3A4B); border-color: #5FE1FF; }
 .pn-call--blue .pn-call-title, .pn-call--blue .pn-call-stat { color: var(--on-brand); }
 .pn-call--court { background: linear-gradient(135deg, #1F7A43, #0E3B21); border-color: var(--brand); }
 .pn-call--tier-silver { background: linear-gradient(135deg, #E6E9EE, #8A93A3); border-color: #C9CED6; }
@@ -185,7 +185,7 @@
 .pn-call--tier-ember .pn-call-title, .pn-call--tier-ember .pn-call-stat { color: var(--on-brand); }
 .pn-call--tier-bronze { background: linear-gradient(135deg, #C4803A, #5C3510); border-color: #C4803A; }
 .pn-call--tier-bronze .pn-call-title, .pn-call--tier-bronze .pn-call-stat { color: var(--on-brand); }
-.pn-call--legend { background: linear-gradient(135deg, #0A5CFF, #0E0E0E); border-color: var(--brand); }
+.pn-call--legend { background: linear-gradient(135deg, #5FE1FF, #0E0E0E); border-color: #5FE1FF; }
 
 /* Mock: plain name only. */
 .pn--mock { font-weight: 700; }
@@ -222,18 +222,18 @@
 .pl-ring,.pl-flame,.pl-banner{position:absolute;pointer-events:none;opacity:0}
 .pl-line{font-weight:800;text-transform:uppercase;letter-spacing:.03em;position:relative;z-index:2}
 .pl-score{display:flex;align-items:center;justify-content:center;width:52px;height:52px;border-radius:50%;background:#fff;color:#0E0E0E;font-weight:900;font-size:22px;position:relative;z-index:2}
-.pl-level{font-size:13px;color:#9A9A9A;font-weight:700;position:relative;z-index:2}
+.pl-level{font-size:14px;color:#9A9A9A;font-weight:700;position:relative;z-index:2}
 .pl-banner{left:-10%;right:-10%;top:-10%;bottom:-10%;border-radius:18px;z-index:0}
 
 /* name colours (heat) */
 .pl-look-heat-orange .pl-name,.pl-name.pl-look-heat-orange{color:#FF8A1F}
-.pl-look-heat-red .pl-name,.pl-name.pl-look-heat-red{color:#E8201C}
+.pl-look-heat-red .pl-name,.pl-name.pl-look-heat-red{color:#FF5A2A}
 .pl-look-heat-ice .pl-name,.pl-name.pl-look-heat-ice{color:#8FD8FF}
 
 /* glow rings (glow): a pre-blurred ring whose opacity breathes */
 .pl-look-glow-ember .pl-ring,.pl-look-glow-ice .pl-ring,.pl-look-glow-violet .pl-ring{opacity:1;inset:-6px;border-radius:999px;filter:blur(7px);animation:plBreathe 3s ease-in-out infinite}
 .pl-look-glow-ember .pl-ring{background:#FF8A1F}
-.pl-look-glow-ice .pl-ring{background:#3FB6FF}
+.pl-look-glow-ice .pl-ring{background:#5FE1FF}
 .pl-look-glow-violet .pl-ring{background:#B07CFF}
 .pl-look-glow-ember .pl-name,.pl-name.pl-look-glow-ember{color:#FF8A1F}
 @keyframes plBreathe{50%{opacity:.45}}
@@ -241,18 +241,19 @@
 /* flame + shine (fire tree) */
 .pl-look-fire-on-fire .pl-ring,.pl-look-fire-cold-blooded .pl-ring,.pl-look-fire-neon .pl-ring{opacity:1;inset:-7px;border-radius:999px;filter:blur(8px);animation:plBreathe 1.6s ease-in-out infinite}
 .pl-look-fire-on-fire .pl-ring{background:#FF7A1F}
-.pl-look-fire-cold-blooded .pl-ring{background:#3FB6FF}
+.pl-look-fire-cold-blooded .pl-ring{background:#5FE1FF}
 .pl-look-fire-neon .pl-ring{background:#B6FF3F}
 .pl-look-fire-on-fire .pl-flame,.pl-look-fire-cold-blooded .pl-flame,.pl-look-fire-neon .pl-flame{opacity:.9;left:8%;right:8%;bottom:-4px;height:46%;border-radius:40% 40% 0 0;background:linear-gradient(0deg,rgba(255,90,31,.85),rgba(255,90,31,0));animation:plRise 1.2s ease-in-out infinite}
 .pl-look-fire-cold-blooded .pl-flame{background:linear-gradient(0deg,rgba(63,182,255,.8),rgba(63,182,255,0))}
 .pl-look-fire-neon .pl-flame{background:linear-gradient(0deg,rgba(182,255,63,.75),rgba(182,255,63,0))}
-.pl-look-fire-on-fire .pl-name,.pl-name.pl-look-fire-on-fire,.pl-look-fire-cold-blooded .pl-name,.pl-name.pl-look-fire-cold-blooded,.pl-look-fire-neon .pl-name,.pl-name.pl-look-fire-neon{color:#FFD21F}
+.pl-look-fire-on-fire .pl-name,.pl-name.pl-look-fire-on-fire,.pl-look-fire-neon .pl-name,.pl-name.pl-look-fire-neon{color:#FF9A3C}
+.pl-look-fire-cold-blooded .pl-name,.pl-name.pl-look-fire-cold-blooded{color:#5FE1FF}
 @keyframes plRise{50%{transform:translateY(-6px);opacity:.5}}
 
 /* burning names + banners (master) */
 .pl-look-inferno .pl-name,.pl-name.pl-look-inferno,.pl-look-gold-crown .pl-name,.pl-name.pl-look-gold-crown,.pl-look-void-burn .pl-name,.pl-name.pl-look-void-burn{background-clip:text;-webkit-background-clip:text;color:transparent;animation:plFlick 1.2s steps(2) infinite}
-.pl-look-inferno .pl-name,.pl-name.pl-look-inferno{background-image:linear-gradient(180deg,#FFE27A,#FF7A1F 45%,#B3180A)}
-.pl-look-gold-crown .pl-name,.pl-name.pl-look-gold-crown{background-image:linear-gradient(180deg,#FFF6C2,#FFD21F 45%,#A8740A)}
+.pl-look-inferno .pl-name,.pl-name.pl-look-inferno{background-image:linear-gradient(180deg,#FFB347,#FF7A1F 45%,#B3180A)}
+.pl-look-gold-crown .pl-name,.pl-name.pl-look-gold-crown{background-image:linear-gradient(180deg,#FFE0A3,#E5A93A 45%,#8A5A08)}
 .pl-look-void-burn .pl-name,.pl-name.pl-look-void-burn{background-image:linear-gradient(180deg,#E7C9FF,#9B4DFF 45%,#2A0A5C)}
 .pl-look-inferno .pl-banner{opacity:1;background:linear-gradient(0deg,rgba(255,90,31,.7),rgba(255,90,31,0) 80%);animation:plRise 1.6s ease-in-out infinite}
 .pl-look-gold-crown .pl-banner{opacity:1;background:linear-gradient(0deg,rgba(255,210,31,.6),rgba(255,210,31,0) 80%)}

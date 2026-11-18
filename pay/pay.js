@@ -76,6 +76,7 @@
       stop();
       payBtn.hidden = true; hint.hidden = true; cashBtn.hidden = true; cashMsg.hidden = true;
       paidMsg.hidden = false;
+      if (typeof PlayerPayStamp !== 'undefined') PlayerPayStamp.stamp(box);  // D2 ticket punch on confirmed paid
     }
     // Asks the server. Returns true when paid. Stops itself when the box is no longer on the page.
     function check() {

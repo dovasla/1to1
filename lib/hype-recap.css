@@ -1,0 +1,19 @@
+/* Hype taps (Live) and the night recap card (Home). Calm, plain, app tokens with safe fallbacks. */
+.home-recap { margin: 12px 0; }
+.home-recap[hidden] { display: none; }
+.recap-card h2 { margin: 0 0 8px; font-size: 14px; letter-spacing: .08em; text-transform: uppercase; color: var(--brand, #FFD400); }
+.recap-who { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.recap-lv { font-size: 14px; color: var(--muted, #9AA0A6); }
+.recap-stats { display: flex; justify-content: space-between; margin: 12px 0; }
+.recap-stats div { display: flex; flex-direction: column; align-items: center; flex: 1 1 0; }
+.recap-stats b { font-size: 32px; font-weight: 800; color: var(--brand, #FFD400); }
+.recap-stats span { font-size: 14px; color: var(--muted, #9AA0A6); }
+.recap-bar { height: 10px; border-radius: 5px; background: rgba(255, 255, 255, .12); overflow: hidden; }
+.recap-bar i { display: block; height: 100%; background: var(--blue, #0A5CFF); }
+.recap-note { margin: 8px 0 0; font-size: 14px; color: var(--muted, #9AA0A6); }
+.recap-share { width: 100%; min-height: 48px; margin-top: 12px; }
+
+/* Hype: the button shows only when the server answers (body.hype-on). */
+body:not(.hype-on) [data-hype-btn] { display: none; }
+.hype-btn { min-height: 48px; }
+li.is-hyped .cv-tk-face { box-shadow: 0 0 0 3px var(--brand, #FFD400); border-radius: 50%; }

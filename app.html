@@ -22,6 +22,9 @@
 <link rel="stylesheet" href="reveal/reveal.css">
 <link rel="stylesheet" href="loading/loading.css">
 <link rel="stylesheet" href="screens/home/home.css">
+<link rel="stylesheet" href="lib/weekly-rival.css">
+<link rel="stylesheet" href="lib/hype-recap.css">
+<link rel="stylesheet" href="lib/delights.css">
 <link rel="stylesheet" href="screens/profile/profile.css">
 <link rel="stylesheet" href="icons/characters/picker.css">
 <link rel="stylesheet" href="screens/leaderboard/leaderboard.css">
@@ -80,6 +83,10 @@
 
     <section class="view" id="v-home" data-view="home" aria-label="Home">
       <div id="home"></div>
+      <!-- Weekly rival card (lib/weekly-rival.js). Hidden until the week's pairing loads; hides itself without the server piece. -->
+      <div id="homeRival" class="home-rival" hidden></div>
+      <!-- Night recap card (lib/night-recap.js): shows after a played night, with Share. -->
+      <div id="homeRecap" class="home-recap" hidden></div>
       <!-- P5b: last night's recap and MVP vote. Hidden when there is no played night. -->
       <div id="recapBox"></div>
       <!-- Below the next game. Shown only while Home has room (at most three cards). -->
@@ -158,6 +165,17 @@
 <script src="screens/recap/recap-loader.js"></script>
 <script src="screens/recap/recap-box.js"></script>
 <script src="lib/player-name.js"></script>
+<script src="lib/weekly-rival.js"></script>
+<script src="lib/hype.js"></script>
+<script src="lib/moments.js"></script>
+<script src="lib/delight-rules.js"></script>
+<script src="lib/cart-icon.js"></script>
+<script src="lib/pay-stamp.js"></script>
+<script src="lib/home-delights.js"></script>
+<script src="lib/sound-setting.js"></script>
+<script src="lib/seasonal.js"></script>
+<script>try { PlayerSeasonal.apply(document, new Date()); } catch (e) {}</script>
+<script src="lib/night-recap.js"></script>
 <script src="lib/filling-up.js"></script>
 <script src="brand/names.js"></script>
 <script src="brand/lockup.js"></script>
