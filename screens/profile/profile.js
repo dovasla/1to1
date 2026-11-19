@@ -81,7 +81,7 @@
         banner: look.banner || '',
         nameStyle: look.name || '',
         callingCard: look.calling || '',
-        clanTag: eq.clan ? String(d.clanTag || '') : '',
+        clanTag: (eq.clan || d.clanOn) ? String(d.clanTag || '') : '',
         look: String(eq.l_effect || eq.effect || '')   // shop climb look (PlayerName keeps only known ids)
       }
     };
@@ -154,7 +154,7 @@
       '<div class="tk-who">' + pictureHtml(pic, firstName, d && d.phIcon) +
       '<div class="tk-name"><span class="tk-user pl-name' + (dep('PlayerName').LOOKS.indexOf(v.playerName.look) !== -1 ? ' pl-look-' + v.playerName.look : '') + '">' + esc(String(d && d.name || '')) + '</span>' +
       (v.playerName.clanTag ? ' <span class="pn-clan tk-clan">' + esc(v.playerName.clanTag) + '</span>' : '') +
-      '<p class="tk-real">' + esc(firstName + (initial ? ' ' + initial : '')) + ' · Level ' + v.level +
+      (d && d.titleText ? ' <span class="st-pill">' + esc(d.titleText) + '</span>' : '') + '<p class="tk-real">' + esc(firstName + (initial ? ' ' + initial : '')) + ' · Level ' + v.level +
       '</p></div></div>' +
       '<div class="tk-rule"></div>' +
       '<button class="btn-outline" type="button" data-change-look>Update my picture</button>' +

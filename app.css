@@ -47,7 +47,7 @@ legend { font-weight:700; margin-bottom:6px; }
 /* 72g: the top-bar Pay line. Yellow, full width, always on screen above the tabs' content. */
 .top-stack { position:sticky; top:0; z-index:30; }
 .live-strip { background:#0E0E0E; border-bottom:1px solid #2a2a2a; }
-.live-strip-btn { display:block; width:100%; min-height:36px; padding:6px 16px; border:0; background:transparent; color:#fff; font-family:Barlow,system-ui,sans-serif; font-size:15px; font-weight:600; text-align:center; cursor:pointer; }
+.live-strip-btn { display:block; width:100%; min-height:48px; padding:8px 16px; border:0; background:transparent; color:#fff; font-family:Barlow,system-ui,sans-serif; font-size:15px; font-weight:600; text-align:center; cursor:pointer; }
 .live-strip-btn b { color:var(--brand); font-weight:900; }
 .live-strip-btn.pulse { animation:strip-pulse .9s ease-out 1; }
 @keyframes strip-pulse { 0% { background:rgba(255,212,0,.25); } 100% { background:transparent; } }

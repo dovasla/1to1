@@ -136,7 +136,7 @@
   function keyHtml(kp) {
     if (!kp) return '';
     if (kp.joined || kp.open) return keypadHtml(kp);
-    return '<button type="button" class="ph-btn ph-kp-open" data-key="open">Enter the code</button>';
+    return '<button type="button" class="ph-btn ph-kp-open ph-door-btn" data-key="open">ENTER DOOR CODE</button>';
   }
 
   function keypadHtml(kp) {
@@ -176,7 +176,7 @@
 
   function tonightHtml(d, now, busy, kp) {
     // 72q: the organiser ended the run. Home says so, and does not offer the games as next.
-    if (d.runOver) return '<div class="ph-card ph-card--hero"><span class="ph-cap">Run</span><h2>' + esc(d.runOverWord || 'Run is over') + '</h2><p class="ph-note">Thanks for coming.</p></div>';
+    if (d.runOver) return '<div class="ph-card ph-card--hero">' + keyHtml(kp) + '</div>';
     // 72h (R300): one state only. A run that is live (organiser pressed Start run) shows as on, never with a countdown.
     var kind = d.runOn && d.next ? 'on' : tonightKind(d.next, now);
     if (kind === 'none' && d.runOn) {
@@ -269,26 +269,20 @@
     // Top line: level and prestige (no "Home" heading). Coins and the shop basket sit together on the right.
     var lvl = (d.level == null || d.level === '') ? 'Level –' : 'Level ' + esc(d.level);
     var pres = 'Prestige ' + esc(d.prestige == null ? 0 : d.prestige);
-    var sn = d.season || {};
-    var season = '<section class="ph-season card" aria-label="Season">' +
-      '<div class="ph-big"><b>' + esc(sn.games == null ? 0 : sn.games) + '</b><span class="ph-cap">Games</span></div>' +
-      '<div class="ph-big"><b>' + esc(sn.points == null ? 0 : sn.points) + '</b><span class="ph-cap">Points</span></div>' +
-      '<div class="ph-big"><b>' + esc(sn.wins == null ? 0 : sn.wins) + '</b><span class="ph-cap">Wins</span></div>' +
-      '</section>';
     var streak = (typeof window !== 'undefined' && window.PlayerHomeDelights) ? window.PlayerHomeDelights.html(d) : '';
     var cart = (window.PlayerCartIcon ? window.PlayerCartIcon.svg(44) : '');
     return '' +
       '<header class="ph-top">' +
-        '<p class="ph-lvl"><b>' + lvl + '</b> · ' + pres + '</p>' +
+        '<p class="ph-lvl">' + (d.chip ? d.chip : '<b>' + lvl + '</b>') + ' · ' + pres + '</p>' +
         '<div class="ph-top-r">' +
           '<a class="ph-coins" href="#shop" data-go="shop" aria-label="Coins, open shop">' + ICON.coin +
             '<b>' + esc(d.coins == null ? '–' : d.coins) + '</b><span class="ph-cap">Coins</span></a>' +
           '<a class="ph-basket" href="#shop" data-go="shop" aria-label="Shop">' + cart + '</a>' +
         '</div>' +
       '</header>' +
+      '<p class="ph-note ph-tree-line"><a href="#profile/tree" data-go="tree">Skill tree</a></p>' +
       '<div data-slot="tonight">' + tonightHtml(d, now, busy, kp) + '</div>' +
       payHtml(d.pay) +
-      season +
       streak +
       (d.updatedAt ? '<p class="ph-note ph-updated">' + ICON.clock + ' Last updated ' + esc(d.updatedAt) + '</p>' : '');
   }

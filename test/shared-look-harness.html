@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shared look harness</title>
+<link rel="stylesheet" href="../lib/player-name.css">
+<link rel="stylesheet" href="../effects/faction-effects.css">
+<link rel="stylesheet" href="../shop/skill-tree.css">
+<link rel="stylesheet" href="../screens/leaderboard/leaderboard.css">
+<style>html,body{margin:0;background:#0E0E0E;width:360px;color:#F5F5F5;font-family:Barlow,system-ui,sans-serif}.wrap{padding:12px 16px}</style>
+</head><body>
+<div class="wrap"><div id="lb"></div></div>
+<div class="wrap" id="other"></div>
+<div class="wrap" id="court"></div>
+<div class="wrap" id="hidden"></div>
+<script src="../lib/player-name.js"></script>
+<script src="../shop/skill-tree-data.js"></script>
+<script src="../shop/skill-tree.js"></script>
+<script src="../screens/leaderboard/leaderboard.js"></script>
+<script src="../screens/court-view/court-view.js"></script>
+<script>
+  // Test only: my own save (TONE, title worn). The other player arrives as a server row (player_public_card shape).
+  localStorage.setItem('1to1-skill-tree', JSON.stringify({ faction: 'ember', unlocked: { '6-name': true }, equipped: { title: '6-name', card: '3-look' }, clanTag: 'TONE' }));
+  var other = { id: 9, name: 'Alex B', level: 20, stars: 1, points: 40, wins: 3, faction: 'frost', clan_tag: 'NX', title: 'Frost Crest', equipped: { card: '3-look' } };
+  var data = {
+    teams: [{ id: 'a', name: 'Blue', played: 3, wins: 2, points: 40 }, { id: 'b', name: 'Red', played: 3, wins: 1, points: 33 }],
+    players: [{ id: 7, name: 'Jord K', level: 12, stars: 0, points: 30, wins: 2 }, other]
+  };
+  Leaderboard.mount(document.getElementById('lb'), data, { meId: 7, myTeamId: 'a', sort: 'points' });
+  var look = ShopTree.fromPublic(other, false);
+  var classes = look.classes;
+  document.getElementById('other').innerHTML = '<div class="' + classes + '" style="border-radius:16px">' +
+    PlayerName.html({ name: other.name, level: other.level, stars: other.stars, size: 'full', noCall: true, clanTag: look.clanTag }) + '</div>' +
+    (look.title ? '<p><span class="st-pill">' + look.title + '</span></p>' : '');
+  var courtPlayer = { name: "Alex B", team: "Blue", side: "a", icon: "a01", pts: 12, level: 20, faction: "frost", clan_tag: "NX", title: "Frost Crest" };
+  document.getElementById("court").innerHTML = PlayerCourtView.cardHtml(courtPlayer);
+  document.getElementById("hidden").innerHTML = PlayerCourtView.cardHtml({ name: "Sam K", team: "Blue", side: "b", hidden: true, clanTag: "LEAK" });
+  window.__look = look;
+</script>
+</body></html>

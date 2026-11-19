@@ -138,6 +138,14 @@
   }
 
   // Names on the court and cards: first name and last initial, at most 10 characters (L4).
+  // The clan tag next to the name (shared look: shop/skill-tree.js fromPublic). Empty when there is none.
+  function tagOf(p) {
+    if (p && p.hidden) return '';
+    var look = root.ShopTree && root.ShopTree.fromPublic ? root.ShopTree.fromPublic(p || {}) : null;
+    return (look && look.clanTag) || (p && p.clanTag) || '';
+  }
+  function tagHtml(p) { var t = tagOf(p); return t ? ' <span class="pn-clan">' + esc(t) + '</span>' : ''; }
+
   function shownName(name) {
     var PN = root.PlayerName;
     var s = PN && PN.shortName ? PN.shortName(name) : String(name || '');
@@ -281,7 +289,7 @@
       stripHtml(p) + '<div class="cv-grip" aria-hidden="true"></div>' +
       '<div class="cv-who"><span class="cv-disc-init' + (p.side === 'b' ? ' is-b' : ' is-a') + '" aria-hidden="true">' + esc(initialsOf(p.name)) + '</span>' +
         '<div class="cv-who-text">' + (p.team ? '<p class="cv-cap">' + esc(teamWord(p.team)) + '</p>' : '') +
-        '<h2 class="cv-h" id="cvName">' + esc(who) + '</h2></div></div>' +
+        '<h2 class="cv-h" id="cvName">' + esc(who) + tagHtml(p) + '</h2></div></div>' +
       statsRow(p) +
       '<div class="cv-actions">' +
         (p.hk && root.PlayerHype ? root.PlayerHype.buttonHtml(p.hk) : '') +
@@ -300,7 +308,7 @@
       '<div class="cv-top"><span class="cv-cap">Player</span>' +
         '<button class="cv-btn cv-btn--small" type="button" data-cv="close">Back</button></div>' +
       '<div class="cv-hero"><span class="cv-disc-init cv-disc-init--big' + (p.side === 'b' ? ' is-b' : ' is-a') + '" aria-hidden="true">' + esc(initialsOf(p.name)) + '</span></div>' +
-      '<h2 class="cv-h cv-h--big" id="cvName">' + esc(who) + '</h2>' +
+      '<h2 class="cv-h cv-h--big" id="cvName">' + esc(who) + tagHtml(p) + '</h2>' +
       (p.team ? '<p class="cv-cap">' + esc(teamWord(p.team)) + '</p>' : '') +
       statsRow(p) +
     '</div>';

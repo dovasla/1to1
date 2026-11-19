@@ -25,6 +25,7 @@
   // The worn items, by name. Only ids the shop sends are shown (text is escaped).
   function wornList(eq) {
     var out = [];
+    if (eq.l_effect || eq.effect) out.push('Effect');
     if (eq.banner) out.push('Banner');
     if (eq.name) out.push('Name style');
     if (eq.calling) out.push('Calling card');
@@ -52,15 +53,22 @@
     var p = d.player || {};
     var s = d.stats || {};
     var eq = p.equipped || {};
+    // The worn look: the shop's layers (l_<layer> keys) plus the old slot names. PlayerName keeps only known ids.
+    var layers = {};
+    ['background', 'frame', 'emblem', 'title', 'effect', 'name', 'card', 'flourish', 'row', 'ring', 'intro', 'pop'].forEach(function (k) {
+      if (eq['l_' + k]) layers[k] = eq['l_' + k];
+    });
+    var look = root.ShopTree ? ShopTree.fromPublic(p) : { clanTag: '', title: '', classes: '' };
     var chip = root.PlayerName
-      ? root.PlayerName.html({ name: p.username || 'Player', level: p.level, stars: p.stars, banner: eq.banner || '',
-          nameStyle: eq.name || '', rowEffect: eq.row || '', clanTag: p.clan_tag || '', size: 'full' })
-      : esc(p.username || 'Player');
+      ? root.PlayerName.html({ name: p.name || p.username || 'Player', level: p.level, stars: p.stars, banner: eq.banner || '',
+          nameStyle: eq.name || '', rowEffect: eq.row || '', clanTag: look.clanTag || p.clan_tag || '', callingCard: eq.calling || '',
+          look: eq.l_effect || eq.effect || '', layers: layers, size: 'full' })
+      : esc(p.name || p.username || 'Player');
     var worn = wornList(eq);
     var wornLine = worn.length ? 'Wearing: ' + worn.join(', ') + '.' : 'Nothing worn yet.';
     var you = d.is_me ? '<p class="pk-note">This is you.</p>' : '';
     return '<h2 id="pk-title" class="pk-title">Player card</h2>' +
-      '<div class="pk-chip">' + avatarOf(d) + chip + '</div>' +
+      '<div class="pk-chip ' + esc(look.classes) + '">' + avatarOf(d) + chip + (look.title ? ' <span class="st-pill">' + esc(look.title) + '</span>' : '') + '</div>' +
       you +
       '<p class="pk-worn">' + esc(wornLine) + '</p>' +
       '<div class="pk-grid">' +

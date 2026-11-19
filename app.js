@@ -25,7 +25,7 @@
   if (sigLine) be = sigLine.wrap(be);
   var NIGHT_ID = 'tonight';
   var TABS = ['home', 'live', 'stats', 'more'];
-  var SUBS = ['shop', 'history'];
+  var SUBS = ['shop', 'history', 'tree', 'inventory'];
   var SUB_PARENT = { home: '#home', live: '#live', stats: '#stats', profile: '#profile', more: '#more' };
   var TAB_LABEL = { home: NAMES.tabs.home, live: NAMES.tabs.live, stats: NAMES.tabs.stats, profile: NAMES.profile, more: NAMES.tabs.more };
   var THEME_KEY = '1to1-theme';
@@ -33,7 +33,7 @@
   // Speed: the Stats and Profile scripts load on the first visit to those screens (and are fetched once the app is idle).
   var GROUPS = {
     stats: ['screens/leaderboard/leaderboard.js', 'screens/peek/peek.js', 'screens/stats-board/stats-board.js', 'screens/head-to-head/head-to-head.js', 'screens/streaks/streaks.js'],
-    profile: ['screens/profile/profile.js', 'screens/photo/photo.js', 'share-card/share-card.js']
+    profile: ['screens/profile/profile.js', 'screens/photo/photo.js', 'share-card/share-card.js', 'shop/shop-climb.js']
   };
   var groupDone = {}, groupBusy = {};
   function ensureGroup(name) {
@@ -102,6 +102,15 @@
   function fullName() { return S.me ? S.me.first + ' ' + S.me.lastInitial : ''; }
   // What the player sees of themselves: their username (never the first name or initial). Other players: usernames only.
   function displayName() { return S.username || savedUsernameHere() || 'You'; }
+  // Shared player chip (lib/player-name.js): first name + last initial, the worn shop look and the level. Plain text if the chip is not loaded.
+  function wornLook() { var e = S.shopEquipped || {}, L = e.layers || {}; return { banner: e.banner || '', nameStyle: e.name || '', rowEffect: e.row || '', look: L.effect || '', layers: L }; }
+  function chipHtml(opts) {
+    var name = fullName() || displayName();
+    if (!window.PlayerName) return escText(name);
+    // Clan tag from the one shared own look (skill tree save). Shop look and opts still win.
+    var own = window.ShopTree ? ShopTree.ownLook() : { clanTag: '' };
+    return PlayerName.html(Object.assign({ name: name, size: 'compact', clanTag: own.clanTag }, wornLook(), opts || {}));
+  }
   function teamName(t) { return t && t.name ? String(t.name) : 'TBC'; }
   function skillText(level) { return window.PlayerRules ? PlayerRules.levelLabel(level) : ''; }
   function myTeamIn(game) {
@@ -417,6 +426,7 @@
       runLabel: (S.night && S.night.fields && S.night.fields.nextRun) || '',
       level: PlayerXp.progress(S.run).level,
       prestige: Number((S.run && S.run.stars) || 0),
+      chip: chipHtml({ level: PlayerXp.progress(S.run).level, stars: Number((S.run && S.run.stars) || 0) }),
       season: { games: Number(((S.profileStats || {}).totals || {}).games) || 0, points: Number(((S.profileStats || {}).totals || {}).points) || 0, wins: Number(((S.profileStats || {}).totals || {}).wins) || 0 },
       nightsPlayed: Number(((S.profileStats || {}).totals || {}).nights) || 0,
       streakWeeks: Number((S.profileStats || {}).streakWeeks) || 0,
@@ -745,6 +755,33 @@
     }
     if (el) el.hidden = false;
   }
+  // Lobby box (lobby/lobby-hype.js): shows before the run starts, and the teams-out banner after. Never throws.
+  function drawLobby() {
+    var box = $('lobbyBox');
+    if (!box || !window.PlayerLobbyHype) return;
+    try {
+      var lf = feedState.feed;
+      var running = !!(lf && window.PlayerLobbyState && PlayerLobbyState.LIVE_STATES.indexOf(lf.state) !== -1);
+      var out = PlayerLobbyHype.teamsOut(lf, PlayerLobbyHype.seenVersion());
+      if (!lf || (running && !out)) { box.hidden = true; box.innerHTML = ''; return; }
+      PlayerLobbyHype.draw(box, {
+        feed: lf,
+        inCount: typeof lf.inCount === 'number' ? lf.inCount : null,
+        reactions: window.LobbyReactions ? LobbyReactions.all() : []
+      });
+    } catch (e) { box.hidden = true; }
+  }
+  var lobbyBoxEl = $('lobbyBox');
+  if (lobbyBoxEl) lobbyBoxEl.addEventListener('click', function (e) {
+    var seen = e.target && e.target.closest ? e.target.closest('[data-lobby-seen]') : null;
+    if (seen) { PlayerLobbyHype.markSeen(seen.getAttribute('data-lobby-seen')); drawLobby(); return; }
+    var b = e.target && e.target.closest ? e.target.closest('[data-lobby-hype]') : null;
+    if (!b || !window.PlayerLobbyHype) return;
+    PlayerLobbyHype.hype(be, readToken(), NIGHT_ID, b.getAttribute('data-lobby-hype')).then(function (r) {
+      b.setAttribute('data-hyped', r && r.server ? 'server' : 'local');
+    });
+  });
+
   function pollLive() {
     if (!S.me || !be.getLive || feedBusy || document.hidden || navigator.onLine === false) return Promise.resolve();
     feedBusy = true;
@@ -758,6 +795,7 @@
       // The server's own stamp for the row (Supabase updated_at): the heartbeat check uses it too.
       feedState.serverMs = row && row.updatedAt ? Date.parse(row.updatedAt) : null;
       feedState.offline = false;
+      drawLobby();
     }, function () { feedState.offline = true; feedState.changed = true; }).then(function () {
       clearTimeout(wait);
       feedBusy = false;
@@ -948,6 +986,13 @@
     d.run = myRun();
     d.coins = S.coins || 0;
     d.clanTag = '';
+    // The clan tag and the worn title come from the one shared own look (skill tree save, this phone for now).
+    if (window.ShopTree) {
+      var own = ShopTree.ownLook();
+      d.clanTag = own.clanTag;
+      d.clanOn = own.clanOn;
+      d.titleText = own.title;
+    }
     if (!S.shopEquipped && !S.shopEquippedAsked) {
       S.shopEquippedAsked = true;
       ensureShop().load().then(function (r) {
@@ -961,8 +1006,11 @@
     var box = $('profile');
     d.character = charState.current || vipState.current;
     box.innerHTML = PlayerProfile.render(d) + (window.PlayerPhoto ? PlayerPhoto.render(photoState) : '') +
-      (window.ShareCard ? '<p class="profile-links"><button type="button" class="btn yellow" id="shareCard">Share my card</button></p>' : '');
+      (window.ShareCard ? '<p class="profile-links"><button type="button" class="btn yellow" id="shareCard">Share my card</button></p>' : '') +
+      '<section class="profile-equip" aria-label="Your tag"><h2 class="st-h3">Your tag</h2><div id="tagBox"></div></section>' +
+      '<p class="profile-links"><a class="btn" href="#profile/inventory" data-go="inventory">Open inventory</a> <a class="btn" href="#profile/tree" data-go="tree">Skill tree</a></p>';
     if (window.PlayerPhoto) PlayerPhoto.bind(box, { onFile: onPhotoFile, onIcon: onPhotoIcon });
+    if (window.ShopTree) ShopTree.tagPanel(box.querySelector('#tagBox'));
     loadPhoto();
     var shareBtn = box.querySelector('#shareCard');
     if (shareBtn) shareBtn.addEventListener('click', function () { shareProfile(d); });
@@ -1084,6 +1132,47 @@
       box.innerHTML = '<iframe class="sub-frame" src="shop/shop-v2.html" title="Shop"></iframe>';
     }
     if (name === 'history') renderHistory();
+    if (name === 'tree') renderTree();
+    if (name === 'inventory') renderInventory();
+  }
+
+  // The shop (an iframe) asks for the inventory with a message. Same origin only.
+  window.addEventListener('message', function (e) {
+    if (e.origin === location.origin && e.data && e.data.type === 'open-inventory') location.hash = '#profile/inventory';
+  });
+
+  // Inventory (#profile/inventory): everything owned, grouped by slot. Wear here, never in the tree or the shop.
+  function renderInventory() {
+    var box = $('sub');
+    if (!window.ShopTree || !window.PlayerName) {
+      box.innerHTML = '<p class="sb-note" role="status">The inventory is loading. Try again in a moment.</p>';
+      return;
+    }
+    box.innerHTML = '<div id="invBox"></div>';
+    ShopTree.inventory(document.getElementById('invBox'), {
+      name: displayName(),
+      level: Math.max(0, Math.round(Number(S.me && S.me.xpLevel) || 0)),
+      stars: Number((S.run && S.run.stars) || 0),
+      onBack: function () { location.hash = '#profile'; }
+    });
+  }
+
+  // Skill tree page (#profile/tree). Full screen: pick a faction once, then the branching tree (shop/skill-tree.js).
+  // Unlocks are free (level only) and save on this phone. Equip happens on Profile, never here.
+  function renderTree() {
+    var box = $('sub');
+    if (!window.ShopTree || !window.PlayerName) {
+      box.innerHTML = '<p class="sb-note" role="status">The skill tree is loading. Try again in a moment.</p>';
+      return;
+    }
+    box.innerHTML = '<div id="treeBox"></div>';
+    var lvl = Math.max(0, Math.round(Number(S.me && S.me.xpLevel) || 0));
+    ShopTree.mount(document.getElementById('treeBox'), {
+      name: displayName(),
+      level: lvl,
+      stars: Number((S.run && S.run.stars) || 0),
+      onExit: function () { location.hash = '#profile'; }
+    });
   }
 
   // P6b: my stats, streak, game log and head to head. Every read has a 12 second limit, an error state and Try again.
@@ -1188,8 +1277,8 @@
     var toNext = prog.isMax ? 'Max level' : prog.xpToNext + ' XP to Level ' + (prog.level + 1);
     box.innerHTML = '<h1>' + NAMES.board + '</h1>' +
       '<a class="stats-me card" href="#profile" aria-label="Your card. Open your profile">' +
-        '<span class="stats-me-name">' + escText(displayName()) + '</span>' +
-        '<span class="stats-me-line"><b>Level ' + prog.level + '</b><span class="muted">' + escText(toNext) + '</span></span>' +
+        '<span class="stats-me-name">' + chipHtml({ level: prog.level }) + '</span>' +
+        '<span class="stats-me-line"><span class="muted">' + escText(toNext) + '</span></span>' +
         '<span class="stats-bar" aria-hidden="true"><i style="width:' + pct + '%"></i></span>' +
       '</a>' +
       '<a class="stats-hist btn ghost" href="#stats/history">My stats and history</a>' +
@@ -1212,7 +1301,7 @@
       place.textContent = mineRank ? 'You are ' + ordinal(Number(mineRank.textContent)) + ' on this board.' : 'You are not on this board yet.';
     }
     // Tap a player row to see their card (overlay; the stats screen underneath stays as it is).
-    if (window.PlayerPeek) PlayerPeek.bind($('lb'), { call: function (publicId) { return be.rpc('player_card', { p_token: readToken(), p_public_id: publicId }).then(function (d) { var L = lookOf({ id: publicId, public_id: publicId }); if (d && typeof d === 'object') { d.photo = L.photo; d.phIcon = L.icon; } return d; }); } });
+    if (window.PlayerPeek) PlayerPeek.bind($('lb'), { call: function (publicId) { return be.rpc('player_card', { p_token: readToken(), p_public_id: publicId }).then(function (d) { var L = lookOf({ id: publicId, public_id: publicId }); if (d && typeof d === 'object') { d.photo = L.photo; d.phIcon = L.icon; d.player = d.player || {}; var row = ((S.seasonBoard && S.seasonBoard.players) || []).filter(function (r) { return (r.public_id || r.id) === publicId; })[0]; if (row) { d.player.equipped = row.look || {}; d.player.name = row.name || d.player.name; if (row.stars != null) d.player.stars = row.stars; } } return d; }); } });
     if (!(S.seasonBoard && S.seasonBoard.players && S.seasonBoard.players.length)) {
       $('lb').insertAdjacentHTML('afterbegin', '<p class="sb-note">Nobody is on this board for this season yet.</p>');
     }
@@ -1353,6 +1442,10 @@
   function route() {
     if (!S.me) { showLogin(); return; }
     showShell();
+    // Attention glow: until a tree is picked, the Skill tree entry glows (see shop/shop-climb.css).
+    var treeSaved = '';
+    try { var st = JSON.parse(localStorage.getItem('1to1-skill-tree') || 'null'); treeSaved = st && ['ember', 'frost', 'brass', 'indigo', 'slate'].indexOf(st.faction) > -1 ? st.faction : ''; } catch (e) { treeSaved = ''; }
+    document.body.classList.toggle('tree-unpicked', !treeSaved);
     var parts = (location.hash || '#home').slice(1).split('/');
     var head = parts[0], sub = parts[1] || '';
     if (sub === 'leaderboard') { location.hash = '#stats'; return; }
@@ -1646,6 +1739,7 @@
     route();
     updateTabDots();
     prefetchGroups();
+    if (window.ShopTree) ShopTree.factionBoard($('factionBoard'), [], new Date().toISOString().slice(0, 7));
   }
 
   function logIn() {

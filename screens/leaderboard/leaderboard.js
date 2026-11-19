@@ -169,7 +169,7 @@
       stars: p.stars,
       banner: look.banner,
       nameStyle: look.nameStyle,
-      clanTag: hidden ? '' : p.clanTag,
+      clanTag: hidden ? '' : ((window.ShopTree && ShopTree.fromPublic(p, me).clanTag) || p.clanTag),
       emblemSrc: hidden ? '' : p.emblemSrc,
       rowEffect: look.rowEffect,
       look: hidden ? '' : look.look,

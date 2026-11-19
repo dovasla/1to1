@@ -56,7 +56,7 @@
       standIn: !!p.standIn, prestige: !!p.prestige,
       stars: p.prestige ? (p.stars || 0) : 0,    // prestige stars only; a level-60 non-prestige shows the level only
       banner: p.prestige ? (p.banner || '') : '', rowEffect: p.prestige ? (p.rowEffect || '') : '',
-      nameStyle: p.nameStyle || '', clanTag: p.clanTag || '', emblemSrc: p.emblemSrc || '',
+      nameStyle: p.nameStyle || '', clanTag: (window.ShopTree && ShopTree.fromPublic(p).clanTag) || p.clanTag || '', emblemSrc: p.emblemSrc || '',
       captain: !!flags.captain, me: !!flags.me
     };
   }
@@ -148,7 +148,7 @@
     var chip = el('div', 'lr-chip');
     chip.innerHTML = PlayerName.html({
       name: p.username || (p.me ? 'You' : 'Player'), level: p.level, stars: p.stars,
-      banner: p.banner, nameStyle: p.nameStyle, clanTag: p.clanTag, emblemSrc: p.emblemSrc, rowEffect: p.rowEffect
+      banner: p.banner, nameStyle: p.nameStyle, clanTag: (window.ShopTree && ShopTree.fromPublic(p).clanTag) || p.clanTag, emblemSrc: p.emblemSrc, rowEffect: p.rowEffect
     });
     body.appendChild(chip);
     var tags = el('div', 'lr-tags');

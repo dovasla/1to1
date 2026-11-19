@@ -13,6 +13,8 @@
 <style>html,body{margin:0;background:#0E0E0E;color:#F5F5F5;font-family:Barlow,system-ui,sans-serif}#builder{min-height:100vh}.cl-wrap{border-top:1px solid #2A2A2A;margin-top:8px}</style>
 </head>
 <body class="shop-v2">
+<p style="margin:10px 16px 0"><a href="#" id="openInv" style="color:#FFD21F;font-weight:800;text-decoration:none;text-transform:uppercase">Open inventory</a></p>
+<script>document.getElementById("openInv").addEventListener("click",function(e){e.preventDefault();parent.postMessage({type:"open-inventory"},"*");});</script>
 <div id="builder"><p style="padding:16px">Loading the shop...</p></div>
 <section id="climb-wrap" class="cl-wrap" hidden><div id="climb"></div></section>
 <section id="crew-wrap" class="cr-outer" hidden><div id="crew"></div></section>

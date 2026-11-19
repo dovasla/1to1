@@ -164,7 +164,7 @@
         }
       }
 
-      var svg = '<svg class="sc-lines" viewBox="0 0 358 ' + H + '" width="358" height="' + H + '" aria-hidden="true">' + lines + '</svg>';
+      var svg = '<svg class="sc-lines" viewBox="0 0 358 ' + H + '" width="100%" height="' + H + '" preserveAspectRatio="xMidYMin meet" aria-hidden="true">' + lines + '</svg>';
       var root = '<div class="sc-root" style="--tree:' + t.color + '">' + icon(t.icon) + '<span>' + esc(t.name) + ' tree</span></div>';
       var left = respecsLeft(c);
       var respec = '<div class="sc-respec"><span><b>Changed your mind?</b><br><span class="sc-muted">' +
@@ -189,7 +189,7 @@
       var mark = status === 'done' ? icon(CHECK_ICON, 'sc-tick') : '';
       var v = status === 'offer' ? String(idx) : '';
       var act = status === 'locked' ? 'locked' : 'node';
-      return '<button class="sc-tile sc-tile--' + status + '" type="button" style="left:' + (cx - 50) + 'px;top:' + top + 'px"' +
+      return '<button class="sc-tile sc-tile--' + status + '" type="button" style="left:calc(' + (cx / 358 * 100).toFixed(2) + '% - 50px);top:' + top + 'px"' +
         ' data-act="' + act + '" data-level="' + level + '" data-v="' + v + '"' + (busy ? ' disabled' : '') + '>' +
         icon(ic) + mark +
         '<span class="sc-tile-nm">' + esc(label) + '</span><span class="sc-tile-sub">' + esc(sub) + '</span></button>';

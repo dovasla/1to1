@@ -35,6 +35,14 @@
 
 .pn-name { min-width: 0; overflow-wrap: anywhere; }
 .pn-clan {
+  max-width: 6.5em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-shrink: 1;
+  min-width: 0;
+  display: inline-block;
+  vertical-align: middle;
   font-size: 15px;
   font-weight: 900;
   letter-spacing: .06em;

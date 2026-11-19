@@ -104,7 +104,7 @@
   function teamListHtml(team, players, isMine) {
     var list = orderLineup(players).map(function (p, i) {
       var chip = PN.html({ name: p.name, level: p.level, levelWord: 'Skill ', stars: p.stars, banner: p.banner,
-        nameStyle: p.nameStyle, clanTag: p.clanTag, callingCard: p.callingCard, emblemSrc: p.emblemSrc, size: 'compact' });
+        nameStyle: p.nameStyle, clanTag: (window.ShopTree && ShopTree.fromPublic(p).clanTag) || p.clanTag, callingCard: p.callingCard, emblemSrc: p.emblemSrc, size: 'compact' });
       var tap = '<button class="cv-tap cv-tap--chip" type="button" data-player' +
         ' data-name="' + esc(p.name) + '" data-team="' + esc(team) + '"' +
         (CV.count(p.level) != null ? ' data-level="' + esc(CV.count(p.level)) + '"' : '') + '>' + chip + '</button>';

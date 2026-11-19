@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Faction effects demo</title>
+<link rel="stylesheet" href="faction-effects.css">
+<style>
+  :root { --bg:#0B0B0B; --card:#161616; --line:#2A2A2A; --ink:#F5F5F5; --mut:#9A9A9A; --yel:#FFD21F; }
+  :root[data-theme="light"] { --bg:#F4F4F1; --card:#FFFFFF; --line:#DADADA; --ink:#111; --mut:#555; --yel:#0A5CFF; }
+  body { margin:0; background:var(--bg); color:var(--ink); font-family: Barlow, system-ui, sans-serif; }
+  .wrap { max-width:360px; margin:0 auto; padding:16px; }
+  h1 { font-size:26px; text-transform:uppercase; color:var(--yel); margin:8px 0 4px; }
+  .intro { color:var(--mut); font-size:14px; margin:0 0 12px; }
+  .row { border-top:1px solid var(--line); padding:14px 0 6px; }
+  .row h2 { margin:0; font-size:22px; text-transform:uppercase; }
+  .note, .lbl { font-size:14px; color:var(--mut); margin:4px 0; }
+  .lbl { text-transform:uppercase; letter-spacing:.06em; margin-top:10px; }
+  .cards { display:flex; flex-wrap:wrap; gap:8px; }
+  .sample { width:calc(50% - 4px); min-height:92px; padding:10px; border-radius:14px; background:var(--card); display:flex; flex-direction:column; justify-content:flex-end; font-size:14px; }
+  .sample b { font-size:16px; text-transform:uppercase; }
+  .sample small { color:var(--mut); font-size:13px; }
+  .stack { display:flex; flex-direction:column; gap:8px; }
+  .ban { min-height:44px; border-radius:12px; background:var(--card); display:flex; align-items:center; padding:0 12px; }
+  .ban span { position:relative; z-index:1; font-weight:700; text-transform:uppercase; font-size:16px; }
+  .names { display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px; }
+  .nm { font-size:22px; font-weight:800; text-transform:uppercase; padding:0 2px; }
+  .names small { color:var(--mut); font-size:13px; margin-right:6px; }
+  .badges { display:flex; gap:18px; align-items:center; padding:6px 4px; }
+  .bd { background-color:#2A2A2A; }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <h1>Faction effects</h1>
+  <p class="intro">Every class in faction-effects.css. Dark base shown. Each card, banner, name and badge is one class.</p>
+<section class="row">
+  <h2>Ember</h2>
+  <p class="note">Fire. Burn escalates from a warm edge to a full burning card.</p>
+  <p class="lbl">Card effect (5 stages)</p>
+  <div class="cards"><div class="fx-ember-card-1 sample"><b>Jord K</b><small>Card 1 · L3</small></div><div class="fx-ember-card-2 sample"><b>Jord K</b><small>Card 2 · L15</small></div><div class="fx-ember-card-3 sample"><b>Jord K</b><small>Card 3 · L30</small></div><div class="fx-ember-card-4 sample"><b>Jord K</b><small>Card 4 · L45</small></div><div class="fx-ember-card-5 sample"><b>Jord K</b><small>Card 5 · L60</small></div></div>
+  <p class="lbl">Banner (3)</p>
+  <div class="stack"><div class="fx-ember-banner-1 ban"><span>Jord K · L33</span></div><div class="fx-ember-banner-2 ban"><span>Jord K · L48</span></div><div class="fx-ember-banner-3 ban"><span>Jord K · L60</span></div></div>
+  <p class="lbl">Name effect (3)</p>
+  <div class="names"><span class="fx-ember-name-1 nm">Jord K</span><small>L15</small><span class="fx-ember-name-2 nm">Jord K</span><small>L30</small><span class="fx-ember-name-3 nm">Jord K</span><small>L45</small></div>
+  <p class="lbl">Badge (3)</p>
+  <div class="badges"><span class="fx-ember-badge-1 bd" aria-label="Badge 1"></span><span class="fx-ember-badge-2 bd" aria-label="Badge 2"></span><span class="fx-ember-badge-3 bd" aria-label="Badge 3"></span></div>
+</section>
+<section class="row">
+  <h2>Frost</h2>
+  <p class="note">Ice and snow. Pale edge to a full frost card.</p>
+  <p class="lbl">Card effect (5 stages)</p>
+  <div class="cards"><div class="fx-frost-card-1 sample"><b>Jord K</b><small>Card 1 · L3</small></div><div class="fx-frost-card-2 sample"><b>Jord K</b><small>Card 2 · L15</small></div><div class="fx-frost-card-3 sample"><b>Jord K</b><small>Card 3 · L30</small></div><div class="fx-frost-card-4 sample"><b>Jord K</b><small>Card 4 · L45</small></div><div class="fx-frost-card-5 sample"><b>Jord K</b><small>Card 5 · L60</small></div></div>
+  <p class="lbl">Banner (3)</p>
+  <div class="stack"><div class="fx-frost-banner-1 ban"><span>Jord K · L33</span></div><div class="fx-frost-banner-2 ban"><span>Jord K · L48</span></div><div class="fx-frost-banner-3 ban"><span>Jord K · L60</span></div></div>
+  <p class="lbl">Name effect (3)</p>
+  <div class="names"><span class="fx-frost-name-1 nm">Jord K</span><small>L15</small><span class="fx-frost-name-2 nm">Jord K</span><small>L30</small><span class="fx-frost-name-3 nm">Jord K</span><small>L45</small></div>
+  <p class="lbl">Badge (3)</p>
+  <div class="badges"><span class="fx-frost-badge-1 bd" aria-label="Badge 1"></span><span class="fx-frost-badge-2 bd" aria-label="Badge 2"></span><span class="fx-frost-badge-3 bd" aria-label="Badge 3"></span></div>
+</section>
+<section class="row">
+  <h2>Brass</h2>
+  <p class="note">Gold and seals. Gold edge to a gold crown card.</p>
+  <p class="lbl">Card effect (5 stages)</p>
+  <div class="cards"><div class="fx-brass-card-1 sample"><b>Jord K</b><small>Card 1 · L3</small></div><div class="fx-brass-card-2 sample"><b>Jord K</b><small>Card 2 · L15</small></div><div class="fx-brass-card-3 sample"><b>Jord K</b><small>Card 3 · L30</small></div><div class="fx-brass-card-4 sample"><b>Jord K</b><small>Card 4 · L45</small></div><div class="fx-brass-card-5 sample"><b>Jord K</b><small>Card 5 · L60</small></div></div>
+  <p class="lbl">Banner (3)</p>
+  <div class="stack"><div class="fx-brass-banner-1 ban"><span>Jord K · L33</span></div><div class="fx-brass-banner-2 ban"><span>Jord K · L48</span></div><div class="fx-brass-banner-3 ban"><span>Jord K · L60</span></div></div>
+  <p class="lbl">Name effect (3)</p>
+  <div class="names"><span class="fx-brass-name-1 nm">Jord K</span><small>L15</small><span class="fx-brass-name-2 nm">Jord K</span><small>L30</small><span class="fx-brass-name-3 nm">Jord K</span><small>L45</small></div>
+  <p class="lbl">Badge (3)</p>
+  <div class="badges"><span class="fx-brass-badge-1 bd" aria-label="Badge 1"></span><span class="fx-brass-badge-2 bd" aria-label="Badge 2"></span><span class="fx-brass-badge-3 bd" aria-label="Badge 3"></span></div>
+</section>
+<section class="row">
+  <h2>Indigo</h2>
+  <p class="note">Storm and lightning. Violet edge to a storm card.</p>
+  <p class="lbl">Card effect (5 stages)</p>
+  <div class="cards"><div class="fx-indigo-card-1 sample"><b>Jord K</b><small>Card 1 · L3</small></div><div class="fx-indigo-card-2 sample"><b>Jord K</b><small>Card 2 · L15</small></div><div class="fx-indigo-card-3 sample"><b>Jord K</b><small>Card 3 · L30</small></div><div class="fx-indigo-card-4 sample"><b>Jord K</b><small>Card 4 · L45</small></div><div class="fx-indigo-card-5 sample"><b>Jord K</b><small>Card 5 · L60</small></div></div>
+  <p class="lbl">Banner (3)</p>
+  <div class="stack"><div class="fx-indigo-banner-1 ban"><span>Jord K · L33</span></div><div class="fx-indigo-banner-2 ban"><span>Jord K · L48</span></div><div class="fx-indigo-banner-3 ban"><span>Jord K · L60</span></div></div>
+  <p class="lbl">Name effect (3)</p>
+  <div class="names"><span class="fx-indigo-name-1 nm">Jord K</span><small>L15</small><span class="fx-indigo-name-2 nm">Jord K</span><small>L30</small><span class="fx-indigo-name-3 nm">Jord K</span><small>L45</small></div>
+  <p class="lbl">Badge (3)</p>
+  <div class="badges"><span class="fx-indigo-badge-1 bd" aria-label="Badge 1"></span><span class="fx-indigo-badge-2 bd" aria-label="Badge 2"></span><span class="fx-indigo-badge-3 bd" aria-label="Badge 3"></span></div>
+</section>
+<section class="row">
+  <h2>Slate</h2>
+  <p class="note">Smoke and silver. Grey edge to a dark glass card.</p>
+  <p class="lbl">Card effect (5 stages)</p>
+  <div class="cards"><div class="fx-slate-card-1 sample"><b>Jord K</b><small>Card 1 · L3</small></div><div class="fx-slate-card-2 sample"><b>Jord K</b><small>Card 2 · L15</small></div><div class="fx-slate-card-3 sample"><b>Jord K</b><small>Card 3 · L30</small></div><div class="fx-slate-card-4 sample"><b>Jord K</b><small>Card 4 · L45</small></div><div class="fx-slate-card-5 sample"><b>Jord K</b><small>Card 5 · L60</small></div></div>
+  <p class="lbl">Banner (3)</p>
+  <div class="stack"><div class="fx-slate-banner-1 ban"><span>Jord K · L33</span></div><div class="fx-slate-banner-2 ban"><span>Jord K · L48</span></div><div class="fx-slate-banner-3 ban"><span>Jord K · L60</span></div></div>
+  <p class="lbl">Name effect (3)</p>
+  <div class="names"><span class="fx-slate-name-1 nm">Jord K</span><small>L15</small><span class="fx-slate-name-2 nm">Jord K</span><small>L30</small><span class="fx-slate-name-3 nm">Jord K</span><small>L45</small></div>
+  <p class="lbl">Badge (3)</p>
+  <div class="badges"><span class="fx-slate-badge-1 bd" aria-label="Badge 1"></span><span class="fx-slate-badge-2 bd" aria-label="Badge 2"></span><span class="fx-slate-badge-3 bd" aria-label="Badge 3"></span></div>
+</section>
+
+</main>
+</body>
+</html>

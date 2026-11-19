@@ -36,20 +36,22 @@
       climbState: function () { return Promise.resolve({ ok: false, error: 'Climb is not on in the demo.' }); },
       climbAct: function () { return Promise.resolve({ error: 'Climb is not on in the demo.' }); },
       act: function (id) {
-        // 72s demo: same rules as the screen (buyCheck). Buy also wears the item; a second tap takes it off.
+        // 72s demo: same rules as the screen (buyCheck). Buying only adds to owned (never wears it). Wear is a separate tap on an owned item; a second tap takes it off.
         var it = ITEMS.filter(function (i) { return i.id === id; })[0];
         if (!it) return Promise.resolve({ ok: false, error: 'Unknown item', state: view() });
         var key = 'l_' + it.layer;
         var owned = st.owned.indexOf(id) !== -1;
         if (st.equipped[key] === id) { st.equipped[key] = null; return Promise.resolve({ ok: true, state: view(), message: 'Taken off.' }); }
+        var bought = false;
         if (!owned) {
           var why = root.ShopRulesV2 ? root.ShopRulesV2.buyCheck(it, { level: st.level, stars: st.stars, coins: st.coins, owned: {}, vip: st.vip, badges: st.badges }) : '';
           if (why) return Promise.resolve({ ok: false, error: why, state: view() });
           if (!st.vip) st.coins -= (it.price || 0);
           st.owned.push(id);
+          bought = true;
         }
-        st.equipped[key] = id;
-        return Promise.resolve({ ok: true, state: view(), message: owned ? 'On your card.' : 'Bought. It is on your card.' });
+        if (!bought) st.equipped[key] = id;
+        return Promise.resolve({ ok: true, state: view(), message: bought ? 'Bought. Wear it from your looks to show it.' : 'On your card.' });
       }
     };
   }
@@ -57,6 +59,9 @@
   function supabase(cfg, getToken) {
     var base = String(cfg.supabaseUrl || '').replace(/\/$/, '');
     var key = cfg.supabaseAnonKey || '';
+    // Owned ids from the last shop read (null until the first read). Used to tell a new purchase from a wear tap.
+    var ownedKnown = null;
+    function wornKey(state, id) { return Object.keys(state.equipped || {}).filter(function (k) { return state.equipped[k] === id; })[0] || ''; }
     function rpc(name, body) {
       return fetch(base + '/rest/v1/rpc/' + name, {
         method: 'POST',
@@ -113,13 +118,28 @@
       load: function () {
         return rpc('shop_state', { p_token: getToken() }).then(function (j) {
           if (!j || j.ok === false) return { ok: false, error: (j && j.error) || 'Could not load the shop' };
-          return { ok: true, state: R.normalise(j) };
+          var st = R.normalise(j);
+          ownedKnown = st.owned.slice();
+          return { ok: true, state: st };
         });
       },
+      // A purchase never stays worn. If the server wears a newly bought item, one more shop_act takes it off
+      // (shop_act toggles a worn item). A wear tap on an owned item is left alone, and so is any tap before the first read.
       act: function (id, tag) {
+        var wasOwned = !!ownedKnown && ownedKnown.indexOf(id) > -1;
         return rpc('shop_act', { p_token: getToken(), p_item: id, p_tag: tag || '' }).then(function (j) {
           if (!j || j.ok === false) return { ok: false, error: (j && j.error) || 'Could not save. Try again.' };
-          return { ok: true, state: R.normalise(j), message: j.message };
+          var st = R.normalise(j);
+          var bought = ownedKnown !== null && !wasOwned && st.owned.indexOf(id) > -1;
+          if (!bought || !wornKey(st, id)) { ownedKnown = st.owned.slice(); return { ok: true, state: st, message: j.message }; }
+          return rpc('shop_act', { p_token: getToken(), p_item: id, p_tag: tag || '' }).then(function (j2) {
+            var st2 = (j2 && j2.ok !== false) ? R.normalise(j2) : st;
+            ownedKnown = st2.owned.slice();
+            return { ok: true, state: st2, message: 'Bought. Wear it from your looks to show it.' };
+          }).catch(function () {
+            ownedKnown = st.owned.slice();
+            return { ok: true, state: st, message: 'Bought. Wear it from your looks to show it.' };
+          });
         });
       }
     };

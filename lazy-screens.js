@@ -25,6 +25,7 @@
  "screens/prestige/prestige.css",
  "screens/mvp/mvp.css",
  "screens/push/push.css",
+ "shop/shop-climb.css",
  "prestige-celebration.css",
  "screens/head-to-head/head-to-head.css",
  "screens/my-account/my-account.css",

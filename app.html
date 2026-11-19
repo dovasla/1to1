@@ -25,6 +25,10 @@
 <link rel="stylesheet" href="lib/weekly-rival.css">
 <link rel="stylesheet" href="lib/hype-recap.css">
 <link rel="stylesheet" href="lib/delights.css">
+<link rel="stylesheet" href="lobby/lobby.css">
+<link rel="stylesheet" href="shop/shop-climb.css">
+<link rel="stylesheet" href="effects/faction-effects.css">
+<link rel="stylesheet" href="shop/skill-tree.css">
 <link rel="stylesheet" href="screens/profile/profile.css">
 <link rel="stylesheet" href="icons/characters/picker.css">
 <link rel="stylesheet" href="screens/leaderboard/leaderboard.css">
@@ -104,7 +108,9 @@
     </section>
 
     <section class="view" id="v-live" data-view="live" aria-label="Live" hidden>
+      <div id="lobbyBox" class="lobby-box" hidden></div>
       <div id="live"></div>
+      <div id="factionBoard" class="faction-board"></div>
       <h2>Standings</h2>
       <div class="card">
         <ul class="list" id="standings"></ul>
@@ -167,6 +173,8 @@
 <script src="lib/player-name.js"></script>
 <script src="lib/weekly-rival.js"></script>
 <script src="lib/hype.js"></script>
+<script src="lib/lobby-reactions.js"></script>
+<script src="lobby/lobby-hype.js"></script>
 <script src="lib/moments.js"></script>
 <script src="lib/delight-rules.js"></script>
 <script src="lib/cart-icon.js"></script>
@@ -187,6 +195,10 @@
 <script src="shop/shop-backend.js"></script>
 <script src="lib/run-day.js"></script>
 <script src="shop/shop-effects.js"></script>
+<script src="shop/skill-tree-data.js"></script>
+<script src="lib/clan-tag.js"></script>
+<script src="lib/faction-points.js"></script>
+<script src="shop/skill-tree.js"></script>
 <script src="shop-visible/shop-strip.js"></script>
 <script src="screens/home/home.js"></script>
 <script src="screens/court-view/court-view.js"></script>
