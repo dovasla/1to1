@@ -141,7 +141,7 @@
     var left = !!lineup.left;
     return '<section class="lv-card" aria-labelledby="lvLine">' +
       '<div class="lv-top"><span class="lv-cap">Game ' + esc(lineup.game) + ' lineup</span></div>' +
-      '<h2 class="lv-h" id="lvLine">' + (left ? 'Who\u2019s playing' : 'Who you play with') + '</h2>' +
+      '<h2 class="lv-h" id="lvLine">' + (left ? 'Who\u2019s playing' : 'Your team') + '</h2>' +
       '<div class="lv-teams">' +
         teamListHtml(lineup.teamA, players[lineup.teamA] || [], lineup.teamA === me) +
         teamListHtml(lineup.teamB, players[lineup.teamB] || [], lineup.teamB === me) +
@@ -182,7 +182,7 @@
 
   // R143 / the organiser: in or paid but not on a team yet. Personal page only: no names, no counts.
   function waitingHtml(d) {
-    return '<section class="lv-card lv-empty lv-wait" aria-label="Your run"><h2 class="lv-h">You’re in. More to come.</h2>' +
+    return '<section class="lv-card lv-empty lv-wait" aria-label="Your run"><h2 class="lv-h">You’re in</h2>' +
       (d.paid ? '<p class="lv-muted">Paid for today.</p>' : '') +
       '<p class="lv-muted">Teams show here when the organiser sends them.</p></section>';
   }
@@ -236,14 +236,14 @@
   }
   function closedPopupHtml() {
     return '<section class="lv-card lv-closed" role="dialog" aria-modal="true" aria-labelledby="lvClosed">' +
-      '<h2 class="lv-h" id="lvClosed">The run has been closed</h2>' +
+      '<h2 class="lv-h" id="lvClosed">Run closed</h2>' +
       '<p class="lv-muted">Thanks for coming.</p>' +
       '<button class="lv-btn" type="button" data-cv="home">Go Home</button>' +
       '<button class="lv-btn" type="button" data-cv="close">Close</button></section>';
   }
 
   function emptyHtml() {
-    return '<section class="lv-card lv-empty"><h2 class="lv-h">No game on court</h2>' +
+    return '<section class="lv-card lv-empty"><h2 class="lv-h">No game</h2>' +
       '<p class="lv-muted">Games show here when the run starts. This page updates on its own.</p></section>';
   }
 

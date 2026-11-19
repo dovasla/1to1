@@ -119,9 +119,13 @@
   background: var(--card);
   border: 2px solid var(--line);
   color: var(--ink);
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex: none;
 }
+/* Default icon (mask glyph) sits dead centre in the circle, not in the top-left corner. */
+.lb-av .ph-glyph { width: 20px; height: 20px; flex: none; }
 .lb-av img {
   position: absolute;
   left: -35%;

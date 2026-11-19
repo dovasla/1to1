@@ -54,10 +54,10 @@ var prev4 = { runOver: false, runKey: F.runKey(newStart) };
 var next4 = { runOver: true, runKey: F.runKey(newEnd) };
 assert.strictEqual(L.closedPopupKey(prev4, next4, ['2026-11-11 19:00']), '2026-11-18 19:00', 'pop-up for the new run');
 var html4 = L.html({ runOver: true, runKey: F.runKey(newEnd), now: null, upcoming: [], results: null });
-assert.ok(html4.indexOf('No game on court') >= 0, 'default view after the run is closed');
+assert.ok(html4.indexOf('No game') >= 0, 'default view after the run is closed');
 assert.ok(html4.indexOf('Run is over') < 0 && html4.indexOf('Run&#39;s over') < 0, 'no stale over card');
 assert.ok(html4.indexOf('The run has been closed') < 0, 'pop-up is not in the page itself');
-out.push('4 new run ended: ended, pop-up due, default "No game on court" view');
+out.push('4 new run ended: ended, pop-up due, default "No game" view');
 
 // Player who opened Live after the run already ended: no pop-up.
 assert.strictEqual(L.closedPopupKey({ runOver: true, runKey: '2026-11-18 19:00' }, { runOver: true, runKey: '2026-11-18 19:00' }, []), null);

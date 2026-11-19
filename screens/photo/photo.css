@@ -3,9 +3,9 @@
 .photo-card .muted{font-size:14px;margin:6px 0}
 .ph-grid{display:grid;grid-template-columns:repeat(5,minmax(48px,1fr));gap:8px;margin-top:10px}
 .ph-pick{min-height:48px;min-width:48px;border-radius:12px;border:2px solid #2a2a2a;background:#0b0b0b;display:flex;align-items:center;justify-content:center;padding:0}
-.ph-pick.on{border-color:#FFD60A}
-.ph-pick:focus-visible{outline:3px solid #0A5CFF;outline-offset:2px}
-.ph-glyph{display:block;width:28px;height:28px;background:#FFD60A;-webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center}
+.ph-pick.on{border-color:var(--brand-text)}
+.ph-pick:focus-visible{outline:3px solid var(--link);outline-offset:2px}
+.ph-glyph{display:block;width:28px;height:28px;background:var(--brand-text);-webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center}
 @media (max-width:360px){.ph-grid{grid-template-columns:repeat(4,minmax(48px,1fr))}}
 
 /* r7: avatars on the board and the card (photo or Phosphor icon) */

@@ -67,3 +67,7 @@ a:focus-visible, button:focus-visible, input:focus-visible { outline:3px solid v
 
 /* #profile is also the id of the Profile content div, so "#profile" links scroll to it. Keep the Back link in view. */
 #profile { scroll-margin-top:64px; }
+
+/* Last run recap and MVP vote, at the top of Stats (moved from Home). Empty when nothing is waiting. */
+.stats-recap-box:empty { display:none; }
+.stats-recap-box { margin:0 0 12px; }

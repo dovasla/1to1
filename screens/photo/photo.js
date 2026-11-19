@@ -87,13 +87,19 @@
     var s = state || {};
     var status = STATUS_TEXT[s.status] ? s.status : 'none';
     var cur = iconById(s.icon) ? s.icon : '';
-    var icons = ICONS.map(function (ic) {
+    // An approved photo is one more choice: "My photo" (no icon saved) shows it everywhere the icon shows.
+    var hasPhoto = s.status === 'approved' && /^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(String(s.image || ''));
+    var photoPick = hasPhoto
+      ? '<button type="button" class="ph-pick ph-mine' + (!cur ? ' on' : '') + '" data-ph-icon="" aria-pressed="' + (!cur ? 'true' : 'false') +
+        '" aria-label="My photo"><img src="' + s.image + '" alt="" width="40" height="40" style="border-radius:50%;display:block"></button>'
+      : '';
+    var icons = photoPick + ICONS.map(function (ic) {
       var on = ic.id === cur;
       return '<button type="button" class="ph-pick' + (on ? ' on' : '') + '" data-ph-icon="' + esc(ic.id) +
         '" aria-pressed="' + (on ? 'true' : 'false') + '" aria-label="' + esc(ic.name) + '">' +
         '<span class="ph-glyph" style="-webkit-mask-image:url(icons/phosphor/' + esc(ic.id) + '.svg);mask-image:url(icons/phosphor/' + esc(ic.id) + '.svg)"></span></button>';
     }).join('');
-    return '<section class="card photo-card" aria-labelledby="phT"><h2 class="cap" id="phT">Your photo or icon</h2>' +
+    return '<section class="card photo-card" aria-labelledby="phT"><h2 class="cap" id="phT">Your icon</h2>' +
       '<p class="muted" data-ph-status>' + esc(STATUS_TEXT[status]) + '</p>' +
       (/^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(String(s.image || '')) ? '<img class="ph-preview" alt="Your photo" src="' + s.image + '" width="96" height="96">' : '') +
       '<label class="btn yellow ph-upload">Add my photo<input type="file" accept="image/*" data-ph-file hidden></label>' +

@@ -4,7 +4,7 @@
 // Only same-origin GET requests are handled and saved. The online database and any other
 // cross-origin call go straight to the network and are never saved.
 importScripts('brand/names.js');
-const CACHE = 'player-shell-1-next72z-r20';
+const CACHE = 'player-shell-1-next72z-r21';
 const SHELL = [
   './', 'signup.html', 'app.html', 'night.html', 'offline.html',
   'manifest.webmanifest', 'pwa.js', 'pwa.css', 'pwa-push.js', 'lib/player-alerts.js', 'lib/run-alerts-hook.js',

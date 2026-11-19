@@ -1,29 +1,29 @@
-/* Generated from revamp/SKILLTREE-OFFERS-19NOV.md by a one-off script. Edit the doc, then regenerate. */
+/* Generated from revamp/SKILLTREE-OFFERS-19NOV.md. Names: Glass (frost), Drive (ember), Press (brass, the fourth name, see FOURTH_NAME in lib/faction-points.js), Baseline (slate). Lane (indigo) is retired from the picker. */
 window.SkillTreeData = {
  "factions": [
   {
    "id": "ember",
-   "name": "Ember",
-   "blurb": "Runs hot, plays long.",
+   "name": "Drive",
+   "blurb": "Points at the basket.",
    "color": "#E8833A",
    "nodes": [
     {
      "level": 1,
      "big": false,
-     "look": "Ember mark (basic colour, start)",
-     "name": "Title: Ember"
+     "look": "Faction mark (start)",
+     "name": "Title: Drive"
     },
     {
      "level": 3,
      "big": false,
-     "look": "[CARD 1] Burn 1: faint warm edge, slow pulse",
+     "look": "[CARD 1] Card edge: thin, slow pulse",
      "name": "Title: Active"
     },
     {
      "level": 6,
      "big": false,
-     "look": "[BADGE 1] Ember badge by the photo",
-     "name": "Title: Warm"
+     "look": "[BADGE 1] Badge by the photo",
+     "name": "Title: Regular"
     },
     {
      "level": 9,
@@ -40,25 +40,25 @@ window.SkillTreeData = {
     {
      "level": 15,
      "big": true,
-     "look": "[CARD 2] Burn 2: stronger edge",
-     "name": "[NAME 1] Name flicker"
+     "look": "[CARD 2] Card edge: strong",
+     "name": "[NAME 1] Name: bold edge"
     },
     {
      "level": 18,
      "big": false,
      "look": "Coins +130",
-     "name": "Title: Steady Warm"
+     "name": "Title: Steady"
     },
     {
      "level": 21,
      "big": false,
      "look": "Coins +150",
-     "name": "Title: Torch"
+     "name": "Title: Floor General"
     },
     {
      "level": 24,
      "big": false,
-     "look": "Title: Glow",
+     "look": "Title: Sixth Man",
      "name": "★ +2% XP on a weekly run"
     },
     {
@@ -70,8 +70,8 @@ window.SkillTreeData = {
     {
      "level": 30,
      "big": true,
-     "look": "[CARD 3] Burn 3: rising embers",
-     "name": "[NAME 2] Name burns gold to orange"
+     "look": "[CARD 3] Card: rising sparks",
+     "name": "[NAME 2] Name: gold"
     },
     {
      "level": 33,
@@ -82,81 +82,81 @@ window.SkillTreeData = {
     {
      "level": 36,
      "big": false,
-     "look": "Title: Long Burn",
+     "look": "Title: Iron Man",
      "name": "★ +3% XP on runs of 4+ games"
     },
     {
      "level": 39,
      "big": false,
      "look": "Coins +330",
-     "name": "Title: Ash and Ember (rare)"
+     "name": "Title: Ringer (rare)"
     },
     {
      "level": 42,
      "big": false,
-     "look": "Title: Quick",
-     "name": "[BADGE 3] Ember crest badge"
+     "look": "Title: Quick Hands",
+     "name": "[BADGE 3] Top badge"
     },
     {
      "level": 45,
      "big": true,
-     "look": "[CARD 4] Burn 4: flames at the base",
-     "name": "[NAME 3] Full warm name"
+     "look": "[CARD 4] Card: base glow",
+     "name": "[NAME 3] Name: full colour"
     },
     {
      "level": 48,
      "big": false,
-     "look": "[BANNER 2] Banner, second style",
+     "look": "[BANNER 2] Banner: second style",
      "name": "Coins +480"
     },
     {
      "level": 51,
      "big": false,
-     "look": "Title: Furnace (rare)",
+     "look": "Title: Playmaker (rare)",
      "name": "★ +3% XP on a weekly run"
     },
     {
      "level": 54,
      "big": false,
      "look": "Coins +560",
-     "name": "Title: Slow Fade"
+     "name": "Title: Veteran"
     },
     {
      "level": 57,
      "big": false,
-     "look": "Title: Slow Melt (rare)",
+     "look": "Title: Mainstay (rare)",
      "name": "★ +3% coins on a 10-game month"
     },
     {
      "level": 60,
      "big": true,
-     "look": "[CARD 5] Burn 5: the whole card burns",
-     "name": "[BANNER 3] Top banner, title Ember Crest Master"
+     "look": "[CARD 5] Card: full colour",
+     "name": "[BANNER 3] Top banner, title Drive Master"
     }
    ]
   },
   {
    "id": "frost",
-   "name": "Frost",
-   "blurb": "Steady, clean, calm.",
+   "name": "Glass",
+   "blurb": "Rebounds and second chances.",
    "color": "#8FD3FF",
    "nodes": [
     {
      "level": 1,
      "big": false,
-     "look": "Frost mark (basic colour, start)",
-     "name": "Title: Frost"
+     "look": "Faction mark (start)",
+     "name": "Title: Glass"
     },
     {
      "level": 3,
      "big": false,
-     "look": "[CARD 1] Cool edge: thin pale-blue border",
+     "look": "[CARD 1] Card edge: thin, pale blue",
      "name": "Title: Cool"
     },
     {
      "level": 6,
      "big": false,
-     "look": "[BADGE 1] Snowflake badge by the photo",
+     "look": "[BADGE 1] Badge by the photo",
      "name": "Title: Steady"
     },
     {
@@ -174,43 +174,43 @@ window.SkillTreeData = {
     {
      "level": 15,
      "big": true,
-     "look": "[CARD 2] Ice frame: clean ice-blue frame",
-     "name": "[NAME 1] Pale shimmer name"
+     "look": "[CARD 2] Card: clean blue frame",
+     "name": "[NAME 1] Name: light edge"
     },
     {
      "level": 18,
      "big": false,
      "look": "Coins +130",
-     "name": "Title: Calm Hand"
+     "name": "Title: Set Shot"
     },
     {
      "level": 21,
      "big": false,
      "look": "Coins +150",
-     "name": "Title: Still"
+     "name": "Title: Free Throw"
     },
     {
      "level": 24,
      "big": false,
-     "look": "Title: Trim",
+     "look": "Title: Clean Cut",
      "name": "★ +2% coins for 4 weeks in a row"
     },
     {
      "level": 27,
      "big": false,
      "look": "Coins +190",
-     "name": "Title: Still Water"
+     "name": "Title: Glue Hands"
     },
     {
      "level": 30,
      "big": true,
-     "look": "[CARD 3] Snowfall behind the card",
-     "name": "[NAME 2] Frost name, pale to white"
+     "look": "[CARD 3] Card: soft backdrop",
+     "name": "[NAME 2] Name: pale"
     },
     {
      "level": 33,
      "big": false,
-     "look": "[BANNER 1] Snowfall banner",
+     "look": "[BANNER 1] Banner: soft",
      "name": "Coins +270"
     },
     {
@@ -223,68 +223,68 @@ window.SkillTreeData = {
      "level": 39,
      "big": false,
      "look": "Coins +330",
-     "name": "Title: Permafrost (rare)"
+     "name": "Title: Lockdown (rare)"
     },
     {
      "level": 42,
      "big": false,
-     "look": "Title: Crystal",
-     "name": "[BADGE 3] Frost crest badge"
+     "look": "Title: Sniper",
+     "name": "[BADGE 3] Top badge"
     },
     {
      "level": 45,
      "big": true,
-     "look": "[CARD 4] Frost sheen: a moving shine across the card",
-     "name": "[NAME 3] Ice glint name"
+     "look": "[CARD 4] Card: moving shine",
+     "name": "[NAME 3] Name: shine"
     },
     {
      "level": 48,
      "big": false,
-     "look": "[BANNER 2] Aurora banner",
+     "look": "[BANNER 2] Banner: second style",
      "name": "Coins +480"
     },
     {
      "level": 51,
      "big": false,
-     "look": "Title: Polar (rare)",
+     "look": "Title: Top Seed (rare)",
      "name": "★ +3% XP on a weekly run"
     },
     {
      "level": 54,
      "big": false,
      "look": "Coins +560",
-     "name": "Title: Steel"
+     "name": "Title: Hard Nosed"
     },
     {
      "level": 57,
      "big": false,
-     "look": "Title: Still Glass (rare)",
+     "look": "Title: Hall Rat (rare)",
      "name": "★ +3% coins on a 10-game month"
     },
     {
      "level": 60,
      "big": true,
-     "look": "[CARD 5] Full frost card, the whole card ices over",
-     "name": "[BANNER 3] Top ice banner, title Frost Crest Master"
+     "look": "[CARD 5] Card: full blue",
+     "name": "[BANNER 3] Top banner, title Hall of Fame"
     }
    ]
   },
   {
    "id": "brass",
-   "name": "Brass",
-   "blurb": "Earned, not given.",
+   "name": "Press",
+   "blurb": "Defence that makes it hard.",
    "color": "#D4A84B",
    "nodes": [
     {
      "level": 1,
      "big": false,
-     "look": "Brass mark (basic colour, start)",
-     "name": "Title: Brass"
+     "look": "Faction mark (start)",
+     "name": "Title: Press"
     },
     {
      "level": 3,
      "big": false,
-     "look": "[CARD 1] Gold edge",
+     "look": "[CARD 1] Card edge: gold",
      "name": "Title: Rookie"
     },
     {
@@ -308,8 +308,8 @@ window.SkillTreeData = {
     {
      "level": 15,
      "big": true,
-     "look": "[CARD 2] Gold frame, refined",
-     "name": "[NAME 1] Gold name"
+     "look": "[CARD 2] Card: gold frame",
+     "name": "[NAME 1] Name: gold"
     },
     {
      "level": 18,
@@ -321,12 +321,12 @@ window.SkillTreeData = {
      "level": 21,
      "big": false,
      "look": "Coins +150",
-     "name": "Title: Coin Trail"
+     "name": "Title: Money Man"
     },
     {
      "level": 24,
      "big": false,
-     "look": "Title: Seal",
+     "look": "Title: Lockdown",
      "name": "★ +2% XP on a captain run"
     },
     {
@@ -338,87 +338,87 @@ window.SkillTreeData = {
     {
      "level": 30,
      "big": true,
-     "look": "[CARD 3] Gold card: full gold background",
-     "name": "[NAME 2] Gold shine name"
+     "look": "[CARD 3] Card: gold backdrop",
+     "name": "[NAME 2] Name: gold shine"
     },
     {
      "level": 33,
      "big": false,
-     "look": "[BANNER 1] Seal banner",
+     "look": "[BANNER 1] Banner: gold",
      "name": "Coins +270"
     },
     {
      "level": 36,
      "big": false,
-     "look": "Title: Double Edge",
+     "look": "Title: Two Way",
      "name": "★ +3% XP on runs of 4+ games"
     },
     {
      "level": 39,
      "big": false,
      "look": "Coins +330",
-     "name": "Title: Vault (rare)"
+     "name": "Title: Safe Hands (rare)"
     },
     {
      "level": 42,
      "big": false,
-     "look": "Title: Map",
-     "name": "[BADGE 3] Seal badge"
+     "look": "Title: Game Plan",
+     "name": "[BADGE 3] Top badge"
     },
     {
      "level": 45,
      "big": true,
-     "look": "[CARD 4] Gem frame: gold frame with gems",
-     "name": "[NAME 3] Gem name"
+     "look": "[CARD 4] Card: gem frame",
+     "name": "[NAME 3] Name: gem"
     },
     {
      "level": 48,
      "big": false,
-     "look": "[BANNER 2] Crown banner",
+     "look": "[BANNER 2] Banner: second style",
      "name": "Coins +480"
     },
     {
      "level": 51,
      "big": false,
-     "look": "Title: Sovereign (rare)",
+     "look": "Title: Franchise (rare)",
      "name": "★ +3% XP on a weekly run"
     },
     {
      "level": 54,
      "big": false,
      "look": "Coins +560",
-     "name": "Title: Royal"
+     "name": "Title: Starter"
     },
     {
      "level": 57,
      "big": false,
-     "look": "Title: Midas (rare)",
+     "look": "Title: Top Scorer (rare)",
      "name": "★ +3% coins on a 10-game month"
     },
     {
      "level": 60,
      "big": true,
-     "look": "[CARD 5] Gold crown card, the top look",
-     "name": "[BANNER 3] Vault banner, title Brass Crest Master"
+     "look": "[CARD 5] Card: full gold",
+     "name": "[BANNER 3] Top banner, title Press Master"
     }
    ]
   },
   {
    "id": "indigo",
-   "name": "Indigo",
-   "blurb": "Busy nights, long hauls.",
+   "name": "Lane",
+   "blurb": "Busy nights and long runs.",
    "color": "#7F77DD",
    "nodes": [
     {
      "level": 1,
      "big": false,
-     "look": "Indigo mark (basic colour, start)",
-     "name": "Title: Indigo"
+     "look": "Faction mark (start)",
+     "name": "Title: Lane"
     },
     {
      "level": 3,
      "big": false,
-     "look": "[CARD 1] Violet edge",
+     "look": "[CARD 1] Card edge: violet",
      "name": "Title: Spark Plug"
     },
     {
@@ -442,43 +442,43 @@ window.SkillTreeData = {
     {
      "level": 15,
      "big": true,
-     "look": "[CARD 2] Storm frame",
-     "name": "[NAME 1] Static crackle name"
+     "look": "[CARD 2] Card: bold frame",
+     "name": "[NAME 1] Name: bold edge"
     },
     {
      "level": 18,
      "big": false,
      "look": "Coins +130",
-     "name": "Title: Downpour"
+     "name": "Title: Second Wind"
     },
     {
      "level": 21,
      "big": false,
      "look": "Coins +150",
-     "name": "Title: Charged"
+     "name": "Title: Hot Hand"
     },
     {
      "level": 24,
      "big": false,
-     "look": "Title: Bolt",
+     "look": "Title: Fast Break",
      "name": "★ +2% coins for 3 busy nights"
     },
     {
      "level": 27,
      "big": false,
      "look": "Coins +190",
-     "name": "Title: Haze"
+     "name": "Title: Late Night"
     },
     {
      "level": 30,
      "big": true,
-     "look": "[CARD 3] Storm card: full violet-blue background",
-     "name": "[NAME 2] Violet flicker name"
+     "look": "[CARD 3] Card: violet backdrop",
+     "name": "[NAME 2] Name: violet"
     },
     {
      "level": 33,
      "big": false,
-     "look": "[BANNER 1] Storm front banner",
+     "look": "[BANNER 1] Banner: front edge",
      "name": "Coins +270"
     },
     {
@@ -491,68 +491,68 @@ window.SkillTreeData = {
      "level": 39,
      "big": false,
      "look": "Coins +330",
-     "name": "Title: Eye of Storm (rare)"
+     "name": "Title: Triple Double (rare)"
     },
     {
      "level": 42,
      "big": false,
-     "look": "[BADGE 3] Hurricane badge",
+     "look": "[BADGE 3] Top badge",
      "name": "Title: Long Haul"
     },
     {
      "level": 45,
      "big": true,
-     "look": "[CARD 4] Wide storm frame",
-     "name": "[NAME 3] Lightning name"
+     "look": "[CARD 4] Card: wide frame",
+     "name": "[NAME 3] Name: bright"
     },
     {
      "level": 48,
      "big": false,
-     "look": "[BANNER 2] Rolling storm banner",
+     "look": "[BANNER 2] Banner: second style",
      "name": "Coins +480"
     },
     {
      "level": 51,
      "big": false,
-     "look": "Title: Season (rare)",
+     "look": "Title: Season Ticket (rare)",
      "name": "★ +3% XP on a weekly run"
     },
     {
      "level": 54,
      "big": false,
      "look": "Coins +560",
-     "name": "Title: Flicker"
+     "name": "Title: Quick Feet"
     },
     {
      "level": 57,
      "big": false,
-     "look": "Title: Calm Centre (rare)",
+     "look": "Title: Cool Head (rare)",
      "name": "★ +3% coins on a 10-game month"
     },
     {
      "level": 60,
      "big": true,
-     "look": "[CARD 5] Storm finish: full violet top look",
-     "name": "[BANNER 3] Storm top banner, title Indigo Crest Master"
+     "look": "[CARD 5] Card: full violet",
+     "name": "[BANNER 3] Top banner, title Lane Master"
     }
    ]
   },
   {
    "id": "slate",
-   "name": "Slate",
-   "blurb": "Quiet work, late comebacks.",
+   "name": "Baseline",
+   "blurb": "Steady all-rounders.",
    "color": "#9AA3AD",
    "nodes": [
     {
      "level": 1,
      "big": false,
-     "look": "Slate mark (basic colour, start)",
-     "name": "Title: Slate"
+     "look": "Faction mark (start)",
+     "name": "Title: Baseline"
     },
     {
      "level": 3,
      "big": false,
-     "look": "[CARD 1] Grey edge",
+     "look": "[CARD 1] Card edge: grey",
      "name": "Title: Quiet"
     },
     {
@@ -576,14 +576,14 @@ window.SkillTreeData = {
     {
      "level": 15,
      "big": true,
-     "look": "[CARD 2] Night frame, dark silver",
-     "name": "[NAME 1] Silver trim name"
+     "look": "[CARD 2] Card: dark silver frame",
+     "name": "[NAME 1] Name: silver trim"
     },
     {
      "level": 18,
      "big": false,
      "look": "Coins +130",
-     "name": "Title: Outline"
+     "name": "Title: Off Ball"
     },
     {
      "level": 21,
@@ -594,80 +594,80 @@ window.SkillTreeData = {
     {
      "level": 24,
      "big": false,
-     "look": "Title: Smoke",
+     "look": "Title: Quick Release",
      "name": "★ +2% coins for a comeback"
     },
     {
      "level": 27,
      "big": false,
      "look": "Coins +190",
-     "name": "Title: Stealth"
+     "name": "Title: Sneaky"
     },
     {
      "level": 30,
      "big": true,
-     "look": "[CARD 3] Dark card with a silver ring",
-     "name": "[NAME 2] Grey fade name"
+     "look": "[CARD 3] Card: silver ring",
+     "name": "[NAME 2] Name: grey fade"
     },
     {
      "level": 33,
      "big": false,
-     "look": "[BANNER 1] Smoke banner",
+     "look": "[BANNER 1] Banner: grey",
      "name": "Coins +270"
     },
     {
      "level": 36,
      "big": false,
-     "look": "Title: Ghost",
+     "look": "Title: Hard to Guard",
      "name": "★ +3% XP on a comeback"
     },
     {
      "level": 39,
      "big": false,
      "look": "Coins +330",
-     "name": "Title: Obsidian (rare)"
+     "name": "Title: Closer (rare)"
     },
     {
      "level": 42,
      "big": false,
      "look": "[BADGE 3] Sharpshooter badge",
-     "name": "Title: Fade"
+     "name": "Title: Fadeaway"
     },
     {
      "level": 45,
      "big": true,
-     "look": "[CARD 4] Black glass frame",
-     "name": "[NAME 3] Last light name"
+     "look": "[CARD 4] Card: black frame",
+     "name": "[NAME 3] Name: full grey"
     },
     {
      "level": 48,
      "big": false,
-     "look": "[BANNER 2] Silver banner",
+     "look": "[BANNER 2] Banner: silver",
      "name": "Coins +480"
     },
     {
      "level": 51,
      "big": false,
-     "look": "Title: Late (rare)",
+     "look": "Title: Last Shot (rare)",
      "name": "★ +3% XP on a weekly run"
     },
     {
      "level": 54,
      "big": false,
      "look": "Coins +560",
-     "name": "Title: Silver Trim"
+     "name": "Title: Silver Shot"
     },
     {
      "level": 57,
      "big": false,
-     "look": "Title: Dark Matter (rare)",
+     "look": "Title: Night Shift (rare)",
      "name": "★ +3% coins on a 10-game month"
     },
     {
      "level": 60,
      "big": true,
-     "look": "[CARD 5] Shadow finish: full dark top look",
-     "name": "[BANNER 3] Eclipse banner, title Slate Crest Master"
+     "look": "[CARD 5] Card: full dark",
+     "name": "[BANNER 3] Top banner, title Baseline Master"
     }
    ]
   }

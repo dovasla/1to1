@@ -1,7 +1,7 @@
 /* Skill tree (player app): chooser, showcase, full-screen branching tree, node sheet, equip panel. 360px first. */
 .st { color: #F5F5F5; font-family: Barlow, system-ui, sans-serif; min-height: 100%; }
 .st--tree { position: fixed; inset: 0; z-index: 30; background: #0E0E0E; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: 24px; }
-.st-lbl { font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: #9A9A9A; }
+.st-lbl { font-size: 14px; letter-spacing: .06em; text-transform: uppercase; color: #9A9A9A; }
 .st-h { margin: 0; font-size: 26px; line-height: 1.1; text-transform: uppercase; color: #FFD21F; }
 .st-h3 { margin: 6px 0 0; font-size: 20px; text-transform: uppercase; color: #FFD21F; }
 .st-sub { margin: 8px 0 0; font-size: 15px; color: #C9C9C9; line-height: 1.4; }
@@ -21,8 +21,8 @@
 /* Showcase (preview only) */
 .st-show { position: fixed; inset: 0; z-index: 60; background: #0E0E0E; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
 .st-show-top { display: flex; justify-content: space-between; align-items: center; }
-.st-show-tag { font-size: 13px; color: #9A9A9A; text-transform: uppercase; letter-spacing: .06em; }
-.st-x { min-height: 44px; padding: 0 14px; border-radius: 12px; background: #171717; border: 1px solid #2A2A2A; color: #F5F5F5; font: inherit; font-weight: 700; }
+.st-show-tag { font-size: 14px; color: #9A9A9A; text-transform: uppercase; letter-spacing: .06em; }
+.st-x { min-height: 48px; padding: 0 14px; border-radius: 12px; background: #171717; border: 1px solid #2A2A2A; color: #F5F5F5; font: inherit; font-weight: 700; }
 .st-show-band { height: 52px; border-radius: 14px; overflow: hidden; background: #171717; }
 .st-card { position: relative; border-radius: 16px; }
 .st-card--show { padding: 4px; }
@@ -43,7 +43,7 @@
 .st-live { width: 100%; font-size: 14px; color: #FFD21F; font-weight: 700; }
 .st-teaser { margin: 12px 16px 0; padding: 10px 12px; background: #171717; border: 1px solid #E8833A; border-radius: 12px; font-size: 15px; font-weight: 800; text-transform: uppercase; color: #FFD21F; }
 .st-war { margin: 8px 16px 0; font-size: 14px; color: #F2A15C; }
-.st-tier { margin: 14px 16px 6px; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: #9A9A9A; }
+.st-tier { margin: 14px 16px 6px; font-size: 14px; letter-spacing: .06em; text-transform: uppercase; color: #9A9A9A; }
 .st-spine-wrap { position: relative; padding: 4px 8px 16px; }
 .st-spine { position: absolute; left: 50%; top: 0; bottom: 16px; width: 2px; margin-left: -1px; background: var(--fc); opacity: .5; }
 .st-row { position: relative; display: grid; grid-template-columns: 1fr 28px 1fr; align-items: center; gap: 6px; margin: 6px 0; }
@@ -54,8 +54,8 @@
 .st-node { min-height: 56px; padding: 6px 8px; border-radius: 12px; background: #171717; border: 1px solid #2A2A2A; color: inherit; font: inherit; text-align: left; cursor: pointer; display: flex; flex-direction: column; justify-content: center; gap: 2px; min-width: 0; }
 .st-node--look { grid-column: 1; }
 .st-node--name { grid-column: 3; text-align: right; align-items: flex-end; }
-.st-node-l { font-size: 11px; color: #9A9A9A; text-transform: uppercase; letter-spacing: .04em; }
-.st-node-t { font-size: 13px; font-weight: 700; line-height: 1.2; overflow-wrap: anywhere; }
+.st-node-l { font-size: 14px; color: #9A9A9A; text-transform: uppercase; letter-spacing: .04em; }
+.st-node-t { font-size: 14px; font-weight: 700; line-height: 1.2; overflow-wrap: anywhere; }
 .st-node--done { border: 2px solid var(--fc); }
 .st-node--open { border: 2px dashed var(--fc); }
 .st-node--locked { opacity: .45; }
@@ -63,7 +63,7 @@
 .st-node--big { box-shadow: 0 0 0 3px rgba(255, 210, 31, .25); border-color: #FFD21F; }
 .st-node--big.st-node--done { border-color: #FFD21F; }
 .st-node.is-sel { outline: 2px solid #FFD21F; outline-offset: 2px; }
-.st-legend { margin: 6px 16px 0; font-size: 13px; color: #9A9A9A; }
+.st-legend { margin: 6px 16px 0; font-size: 14px; color: #9A9A9A; }
 .st-legend b { color: #FFD21F; }
 .st-msg { margin: 10px 16px; font-size: 15px; color: #FFD21F; }
 
@@ -73,18 +73,18 @@
 @keyframes st-up { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
 .st-grab { width: 44px; height: 5px; border-radius: 3px; background: #2A2A2A; margin: 0 auto 10px; }
 .st-sheet-hd { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-.st-chip { display: inline-flex; align-items: center; min-height: 32px; padding: 0 10px; border-radius: 999px; background: #0E0E0E; border: 1px solid #2A2A2A; font-size: 13px; font-weight: 700; color: #F5F5F5; }
+.st-chip { display: inline-flex; align-items: center; min-height: 32px; padding: 0 10px; border-radius: 999px; background: #0E0E0E; border: 1px solid #2A2A2A; font-size: 14px; font-weight: 700; color: #F5F5F5; }
 .st-chip--on { border-color: #FFD21F; color: #FFD21F; }
 .st-chip.is-on { border-color: #FFD21F; color: #FFD21F; }
 .st-prev { margin: 12px 0; display: flex; flex-direction: column; align-items: center; gap: 8px; }
 .st-prev .st-card { width: 100%; }
-.st-pill { display: inline-flex; min-height: 28px; align-items: center; padding: 0 12px; border-radius: 999px; background: #0E0E0E; border: 1px solid #FFD21F; font-size: 13px; font-weight: 800; text-transform: uppercase; color: #FFD21F; }
+.st-pill { display: inline-flex; min-height: 28px; align-items: center; padding: 0 12px; border-radius: 999px; background: #0E0E0E; border: 1px solid #FFD21F; font-size: 14px; font-weight: 800; text-transform: uppercase; color: #FFD21F; }
 .st-what { margin: 0 0 14px; font-size: 15px; color: #C9C9C9; line-height: 1.4; }
 .st-q { margin: 0 0 10px; font-size: 15px; font-weight: 700; color: #FFD21F; }
 
 /* Profile equip */
 .st-equip { display: grid; gap: 12px; margin-top: 8px; }
-.st-eq-nm { font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: #9A9A9A; margin-bottom: 6px; }
+.st-eq-nm { font-size: 14px; text-transform: uppercase; letter-spacing: .05em; color: #9A9A9A; margin-bottom: 6px; }
 .st-eq-ch { display: flex; flex-wrap: wrap; gap: 8px; }
 .st-eq-ch .st-chip { cursor: pointer; min-height: 40px; }
 
@@ -110,7 +110,7 @@
 .st-frow-pts { color: #FFD21F; }
 
 /* Prestige 1 of 1 set: one look per faction and slot. Earned at prestige, owned, worn only when chosen. */
-.st-set { margin: 6px 16px 0; font-size: 13px; font-weight: 800; text-transform: uppercase; color: #9A9A9A; letter-spacing: .04em; }
+.st-set { margin: 6px 16px 0; font-size: 14px; font-weight: 800; text-transform: uppercase; color: #9A9A9A; letter-spacing: .04em; }
 @keyframes st-1of1-breathe { 0%, 100% { box-shadow: 0 0 0 2px #FFD21F, 0 0 14px var(--fx-a); } 50% { box-shadow: 0 0 0 2px #FFD21F, 0 0 26px var(--fx-a); } }
 @keyframes st-1of1-sheen { 0% { background-position: 0 50%; } 100% { background-position: 200% 50%; } }
 
@@ -152,9 +152,19 @@
 .st-inv-tile--locked { cursor: default; opacity: .6; align-items: flex-start; }
 .st-inv-tile--locked .st-inv-q { font-size: 22px; font-weight: 800; color: #9A9A9A; }
 .st-inv-lbl { font-size: 14px; font-weight: 700; line-height: 1.2; }
-.st-inv-hint { font-size: 12px; color: #9A9A9A; }
+.st-inv-hint { font-size: 14px; color: #9A9A9A; }
 .st-inv-off { margin-top: 8px; }
-.st-inv-link { margin-left: auto; font-size: 13px; }
+.st-inv-link { margin-left: auto; font-size: 14px; }
 .st-inv-sw { display: block; width: 100%; height: 22px; border-radius: 8px; background: #0E0E0E; margin-bottom: 4px; }
 .st-inv-sw[class*="-badge-"] { width: 28px; height: 28px; border-radius: 50%; }
 .st-inv-sw[class*="-1of1-badge"] { width: 28px; height: 28px; border-radius: 50%; }
+
+/* Chooser accordion: the tree opens under the faction row (View). One open at a time. */
+.st-facli { list-style: none; }
+.st-facli.is-open > .st-fac { border-color: var(--fc); }
+.st-prev-panel { margin-top: 8px; padding: 12px; border-radius: 14px; background: #121212; border: 1px solid #2A2A2A; display: flex; flex-direction: column; gap: 10px; }
+.st-prev-card { width: 100%; max-width: 240px; margin: 0 auto; }
+.st-prev-panel .st-btn { width: 100%; margin-top: 4px; }
+.st-prev-panel .st-spine-wrap { padding-top: 0; }
+.st-node--static { cursor: default; }
+.st-prev-panel .st-tier { margin: 12px 0 6px; }

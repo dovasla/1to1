@@ -91,8 +91,6 @@
       <div id="homeRival" class="home-rival" hidden></div>
       <!-- Night recap card (lib/night-recap.js): shows after a played night, with Share. -->
       <div id="homeRecap" class="home-recap" hidden></div>
-      <!-- P5b: last night's recap and MVP vote. Hidden when there is no played night. -->
-      <div id="recapBox"></div>
       <!-- Below the next game. Shown only while Home has room (at most three cards). -->
       <section class="card home-alerts" id="homeAlerts" aria-labelledby="homeAlertsH" hidden>
         <h2 id="homeAlertsH">Turn on run alerts</h2>
@@ -110,7 +108,6 @@
     <section class="view" id="v-live" data-view="live" aria-label="Live" hidden>
       <div id="lobbyBox" class="lobby-box" hidden></div>
       <div id="live"></div>
-      <div id="factionBoard" class="faction-board"></div>
       <h2>Standings</h2>
       <div class="card">
         <ul class="list" id="standings"></ul>
@@ -120,6 +117,8 @@
     </section>
 
     <section class="view" id="v-stats" data-view="stats" aria-label="Stats" hidden>
+      <!-- P5b, moved from Home: last run recap and MVP vote. Shown at the top of Stats only when a recap or vote is waiting. -->
+      <div id="recapBox" class="stats-recap-box"></div>
       <div id="stats"></div>
     </section>
 
@@ -197,7 +196,6 @@
 <script src="shop/shop-effects.js"></script>
 <script src="shop/skill-tree-data.js"></script>
 <script src="lib/clan-tag.js"></script>
-<script src="lib/faction-points.js"></script>
 <script src="shop/skill-tree.js"></script>
 <script src="shop-visible/shop-strip.js"></script>
 <script src="screens/home/home.js"></script>

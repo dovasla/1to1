@@ -135,8 +135,19 @@
   // r8: Home shows one "Enter the code" button. The keypad opens on tap, so the card is calm until it is needed.
   function keyHtml(kp) {
     if (!kp) return '';
-    if (kp.joined || kp.open) return keypadHtml(kp);
+    if (kp.joined) return keypadHtml(kp);
+    if (kp.open) return '';   // the keypad is the slide-up sheet (sheetHtml), so the card keeps one button
     return '<button type="button" class="ph-btn ph-kp-open ph-door-btn" data-key="open">ENTER DOOR CODE</button>';
+  }
+
+  // Slide-up door code sheet: big digits, close X, tap outside to close.
+  function sheetHtml(kp) {
+    if (!kp || !kp.open || kp.joined) return '';
+    return '<div class="ph-sheet-wrap">' +
+      '<div class="ph-sheet" role="dialog" aria-modal="true" aria-label="Enter door code">' +
+        '<button type="button" class="ph-sheet-x" data-key="close" aria-label="Close">&times;</button>' +
+        keypadHtml(kp) +
+      '</div></div>';
   }
 
   function keypadHtml(kp) {
@@ -183,7 +194,7 @@
       return '' +
         '<div class="ph-card ph-card--hero">' +
           '<span class="ph-cap">' + (d.next && window.PlayerRunDay && window.PlayerRunDay.isTonight(d.next, now) ? 'Tonight' : 'Next run') + '</span>' +
-          '<h2>Run is on</h2>' +
+          '<h2>Run live</h2>' +
           (d.runLabel ? '<p class="ph-vs">' + esc(d.runLabel) + '</p>' : '') +
           '<p class="ph-note">Teams show when the organiser sends them.</p>' +
           keyHtml(kp) +
@@ -193,7 +204,7 @@
       return '' +
         '<div class="ph-card">' +
           '<span class="ph-cap">Run</span>' +
-          '<h2>No run on</h2>' +
+          '<h2>No run</h2>' +
           '<p class="ph-muted">Next run: <b class="ph-ink">' + esc(d.nextRunLabel || 'Date not set yet') + '</b></p>' +
         '</div>';
     }
@@ -277,14 +288,14 @@
         '<div class="ph-top-r">' +
           '<a class="ph-coins" href="#shop" data-go="shop" aria-label="Coins, open shop">' + ICON.coin +
             '<b>' + esc(d.coins == null ? '–' : d.coins) + '</b><span class="ph-cap">Coins</span></a>' +
-          '<a class="ph-basket" href="#shop" data-go="shop" aria-label="Shop">' + cart + '</a>' +
         '</div>' +
       '</header>' +
       '<p class="ph-note ph-tree-line"><a href="#profile/tree" data-go="tree">Skill tree</a></p>' +
       '<div data-slot="tonight">' + tonightHtml(d, now, busy, kp) + '</div>' +
       payHtml(d.pay) +
       streak +
-      (d.updatedAt ? '<p class="ph-note ph-updated">' + ICON.clock + ' Last updated ' + esc(d.updatedAt) + '</p>' : '');
+      (d.updatedAt ? '<p class="ph-note ph-updated">' + ICON.clock + ' Last updated ' + esc(d.updatedAt) + '</p>' : '') +
+      sheetHtml(kp);
   }
 
   // The night the calendar file is made from: the next run's start time.
@@ -340,6 +351,7 @@
     }
     function tapKey(k) {
       var kp = state.kp;
+      if (k === 'close') { kp.open = false; render(); return; }
       if (kp.busy || kp.joined) return;
       if (k === 'open') { kp.open = true; render(); return; }
       if (k === 'retry') { submitJoin(); return; }
@@ -362,6 +374,7 @@
     }
 
     function onClick(e) {
+      if (e.target.classList && e.target.classList.contains('ph-sheet-wrap')) { tapKey('close'); return; }   // tap outside closes
       var kk = e.target.closest ? e.target.closest('[data-key]') : null;
       if (kk && el.contains(kk)) { e.preventDefault(); tapKey(kk.getAttribute('data-key')); return; }
       var rs = e.target.closest ? e.target.closest('[data-rsvp]') : null;

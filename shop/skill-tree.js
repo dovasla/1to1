@@ -1,11 +1,11 @@
-/* Skill tree (player app). Five factions, one branching tree each, levels 1 to 60.
+/* Skill tree (player app). One tree for everyone (factions removed, 19 Nov): unlocks by level, levels 1 to 60.
    Browser: window.ShopTree. Node: module.exports (rules only).
    Data: shop/skill-tree-data.js (generated from revamp/SKILLTREE-OFFERS-19NOV.md).
    Effects: effects/faction-effects.css (fx-<faction>-<slot>-<stage> classes).
    Rules: unlock is free and needs the player's level. No coins, no XP is spent. Unlocks save on this phone only.
    Equip is separate (equipPanel, on Profile). Unlocking never equips.
    Use:
-     ShopTree.mount(el, { name, level, onExit })   // full screen tree, or the chooser if no faction yet
+     ShopTree.mount(el, { name, level, onExit })   // the one skill tree
      ShopTree.equipPanel(el, { })                    // Profile: 5 equip slots
 */
 (function (root, factory) {
@@ -16,16 +16,25 @@
   'use strict';
 
   var KEY = '1to1-skill-tree';
-  var FACTION_IDS = ['ember', 'frost', 'brass', 'indigo', 'slate'];
+  var FACTION_IDS = ['ember', 'frost', 'brass', 'indigo', 'slate']; // all five stay valid for saved players; indigo is retired from the picker
   var SLOT_NAMES = { card: 'Card effect', banner: 'Banner', name: 'Name effect', badge: 'Badge', title: 'Title pill' };
   var TIERS = [[1, 'Tier 1 · small'], [15, 'Tier 2 · detail'], [27, 'Tier 3 · motion'], [39, 'Tier 4 · strong'], [51, 'Tier 5 · top']];
 
   // ---- Rules (pure) ----
 
-  function factions() { return (win && win.SkillTreeData && win.SkillTreeData.factions) || []; }
-  function faction(id) { return factions().filter(function (f) { return f.id === id; })[0] || null; }
+  // Names come from FactionPoints (one place to change them). Retired factions stay valid for saved players.
+  function dataFactions() { return (win && win.SkillTreeData && win.SkillTreeData.factions) || []; }
+  function dataFaction(id) { return dataFactions().filter(function (f) { return f.id === id; })[0] || null; }
+  // One tree for everyone. Its nodes and look set come from the shared id below (frost).
+  var TREE_ID = 'frost';
+  function sharedTree() {
+    var base = dataFaction(TREE_ID) || { id: TREE_ID, nodes: [] };
+    return Object.assign({}, base, { name: 'Skill tree', color: '#FFD21F' });
+  }
+  function factions() { return [sharedTree()]; }
+  function faction() { return sharedTree(); }
 
-  // A saved faction only counts if it is one of the five (old test values count as "not picked").
+  // A saved faction only counts if it is one of the known ids (old test values count as "not picked").
   function validFaction(id) { return FACTION_IDS.indexOf(String(id || '')) > -1 ? String(id) : ''; }
 
   function nodeId(level, branch) { return level + '-' + branch; }
@@ -45,6 +54,10 @@
 
   // Plain words for a cell: the [TAG] prefix is removed.
   function plain(text) { return String(text || '').replace(/^\[[A-Z]+ \d\]\s*/, ''); }
+
+  // Coin rewards sit in the Look column in the data, but they are not looks: shown as "Reward".
+  function isCoinReward(text) { return /^Coins \+/.test(plain(text)); }
+  function branchLabel(n) { return n.branch === 'name' ? 'Name' : (isCoinReward(n.text) ? 'Reward' : 'Look'); }
 
   function titleOf(text) {
     var m = plain(text).match(/^Title:\s*(.+)$/);
@@ -96,7 +109,7 @@
     try { s = JSON.parse((win && win.localStorage.getItem(KEY)) || 'null'); } catch (e) { s = null; }
     s = s && typeof s === 'object' ? s : {};
     return {
-      faction: validFaction(s.faction),
+      faction: TREE_ID,
       unlocked: s.unlocked && typeof s.unlocked === 'object' ? s.unlocked : {},
       equipped: s.equipped && typeof s.equipped === 'object' ? s.equipped : {},
       warOn: !!s.warOn,
@@ -158,42 +171,35 @@
     return '<div class="st-card ' + (extra || '') + '">' + win.PlayerName.html({ name: name, level: level, size: 'full', noCall: true, clanTag: ownLook().clanTag }) + '</div>';
   }
 
-  // Preview-only showcase: a max level, max prestige card with every unlock of the faction.
-  function showcaseHtml(f) {
-    var fx = function (slot, stage) { return fxClass(f.id, slot, stage); };
-    return '<div class="st-show" role="dialog" aria-modal="true" aria-label="' + esc(f.name) + ' showcase">' +
-      '<div class="st-show-top"><span class="st-show-tag">Preview only</span><button class="st-x" type="button" data-act="show-close">Close</button></div>' +
-      '<div class="st-show-band ' + fx('banner', 3) + '"></div>' +
-      '<div class="st-card st-card--show ' + fx('card', 5) + '">' +
-        (win.PlayerName ? win.PlayerName.html({ name: 'Jord K', level: 60, stars: 5, size: 'full', noCall: true }) : '') +
-      '</div>' +
-      '<div class="st-show-badges"><span class="st-disc ' + fx('badge', 3) + '"></span><span class="st-disc ' + fx('badge', 2) + '"></span><span class="st-disc ' + fx('badge', 1) + '"></span></div>' +
-      '<h2 class="st-h">' + esc(f.name) + ' at full power</h2>' +
-      '<p class="st-sub">Every ' + esc(f.name) + ' unlock on one card. Nothing is equipped or charged here.</p>' +
-      '<button class="st-btn" type="button" data-act="choose" data-v="' + esc(f.id) + '">Choose ' + esc(f.name) + '</button>' +
-      '</div>';
-  }
-
-  // Chooser: five faction cards.
-  function chooserHtml() {
-    var items = factions().map(function (f) {
-      return '<li><button class="st-fac st-fac--' + f.id + '" type="button" data-act="show" data-v="' + f.id + '" style="--fc:' + f.color + '">' +
-        '<span class="st-fac-dot" aria-hidden="true"></span><span class="st-fac-tx"><span class="st-fac-nm">' + esc(f.name) + '</span>' +
-        '<span class="st-fac-ds">' + esc(f.blurb) + '</span></span><span class="st-go">View</span></button></li>';
-    }).join('');
-    return '<header class="st-hd"><div class="st-lbl">Skill tree</div><h2 class="st-h">Pick your faction</h2>' +
-      '<p class="st-sub">Your faction is your tree. Tap one to see it at full power. You can pick once, so choose with care.</p></header>' +
-      '<ul class="st-facs">' + items + '</ul>';
-  }
-
-  function nodeHtml(f, n, playerLevel, unlocked, sel) {
+  function nodeHtml(f, n, playerLevel, unlocked, sel, preview) {
     var st = stateOf(n, playerLevel, unlocked);
-    var shown = st !== 'locked';
+    var shown = preview || st !== 'locked';
     var txt = shown ? plain(n.text) : '?';
-    var cls = 'st-node st-node--' + st + (n.big ? ' st-node--big' : '') + (sel ? ' is-sel' : '');
-    return '<button class="' + cls + ' st-node--' + n.branch + '" type="button" data-act="node" data-level="' + n.level + '" data-branch="' + n.branch + '">' +
-      '<span class="st-node-l">Level ' + n.level + (n.big ? ' · BIG' : '') + ' · ' + (n.branch === 'look' ? 'Look' : 'Name') + '</span>' +
-      '<span class="st-node-t">' + esc(txt) + '</span></button>';
+    if (preview) st = n.level <= (playerLevel | 0) ? 'open' : 'locked';
+    var cls = 'st-node st-node--' + st + (n.big ? ' st-node--big' : '') + (sel ? ' is-sel' : '') + (preview ? ' st-node--static' : '');
+    var inner = '<span class="st-node-l">Level ' + n.level + (n.big ? ' · BIG' : '') + ' · ' + branchLabel(n) + '</span>' +
+      '<span class="st-node-t">' + esc(txt) + '</span>';
+    if (preview) return '<div class="' + cls + ' st-node--' + n.branch + '">' + inner + '</div>';
+    return '<button class="' + cls + ' st-node--' + n.branch + '" type="button" data-act="node" data-level="' + n.level + '" data-branch="' + n.branch + '">' + inner + '</button>';
+  }
+
+  // Rows in level order (1 to 60): Look left, Name right, a hub between, tier bands. Preview = read-only.
+  function rowsHtml(f, pl, unlocked, preview, sel) {
+    var rows = '';
+    var byLevel = {};
+    nodesOf(f).forEach(function (n) { (byLevel[n.level] = byLevel[n.level] || {})[n.branch] = n; });
+    f.nodes.forEach(function (fn) {
+      var tier = TIERS.filter(function (x) { return fn.level >= x[0]; }).pop();
+      if (tier && tier[0] === fn.level) rows += '<div class="st-tier">' + esc(tier[1]) + '</div>';
+      var look = byLevel[fn.level].look, name = byLevel[fn.level].name;
+      var lookState = stateOf(look, pl, unlocked);
+      rows += '<div class="st-row' + (fn.big ? ' st-row--big' : '') + '">' +
+        nodeHtml(f, look, pl, unlocked, !!(sel && sel === nodeId(fn.level, 'look')), preview) +
+        '<span class="st-hub' + (fn.big ? ' st-hub--big' : '') + (lookState === 'done' ? ' is-on' : '') + '" aria-hidden="true"></span>' +
+        nodeHtml(f, name, pl, unlocked, !!(sel && sel === nodeId(fn.level, 'name')), preview) +
+        '</div>';
+    });
+    return rows;
   }
 
   // The full-screen branching tree: spine down the middle, Look left, Name right, tier bands.
@@ -202,28 +208,14 @@
     var t = totals(f, s.unlocked);
     var nb = nextBig(pl);
     var teaser = nb ? 'Big unlock at ' + nb + ' · ?' : 'All big unlocks reached';
-    var rows = '';
-    var byLevel = {};
-    nodesOf(f).forEach(function (n) { (byLevel[n.level] = byLevel[n.level] || {})[n.branch] = n; });
-    f.nodes.forEach(function (fn) {
-      var tier = TIERS.filter(function (x) { return fn.level >= x[0]; }).pop();
-      if (tier && tier[0] === fn.level) rows += '<div class="st-tier">' + esc(tier[1]) + '</div>';
-      var look = byLevel[fn.level].look, name = byLevel[fn.level].name;
-      var lookState = stateOf(look, pl, s.unlocked);
-      rows += '<div class="st-row' + (fn.big ? ' st-row--big' : '') + '">' +
-        nodeHtml(f, look, pl, s.unlocked, !!(host.sel && host.sel === nodeId(fn.level, 'look'))) +
-        '<span class="st-hub' + (fn.big ? ' st-hub--big' : '') + (lookState === 'done' ? ' is-on' : '') + '" aria-hidden="true"></span>' +
-        nodeHtml(f, name, pl, s.unlocked, !!(host.sel && host.sel === nodeId(fn.level, 'name'))) +
-        '</div>';
-    });
+    var rows = rowsHtml(f, pl, s.unlocked, false, host.sel);
     return '<div class="st-ftop" style="--fc:' + f.color + '">' +
       '<button class="st-down" type="button" data-act="exit" aria-label="Leave the tree"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v14M6 12l6 6 6-6"/></svg></button>' +
       '<div class="st-ftitle"><span class="st-lbl">Level ' + pl + '</span><h2 class="st-h">' + esc(f.name) + '</h2></div>' +
       '<span class="st-live" aria-live="polite">Boost +' + t.boost + '% · ' + t.done + ' of ' + t.total + '</span>' +
       '<a class="st-x st-inv-link" href="#profile/inventory">Equip in Inventory</a></div>' +
       '<p class="st-teaser">' + esc(teaser) + '</p>' +
-      '<p class="st-set">' + (hasSet(host) ? esc(f.name) + ' 1 of 1 set is yours. Wear it on Profile.' : '1 of 1 set · ? · Earned at prestige') + '</p>' +
-      (s.warOn ? '<p class="st-war">Faction war is on.</p>' : '') +
+      '<p class="st-set">' + (hasSet(host) ? 'Prestige set is yours. Wear it on Profile.' : 'Prestige set · ? · Earned at prestige') + '</p>' +
       '<div class="st-spine-wrap"><div class="st-spine" aria-hidden="true"></div>' + rows + '</div>' +
       '<p class="st-legend"><b>Gold ring</b> = big node. Solid = yours. Dashed = open now. "?" = not reached yet.</p>';
   }
@@ -247,7 +239,7 @@
     else if (sheet.confirm) foot = '<p class="st-q">Unlock this for free? Your level is not spent.</p><div class="st-row2"><button class="st-btn ghost" type="button" data-act="cancel">Not yet</button><button class="st-btn" type="button" data-act="unlock" data-v="' + sel + '">Yes, unlock</button></div>';
     else foot = '<div class="st-row2"><button class="st-btn ghost" type="button" data-act="close">Cancel</button><button class="st-btn" type="button" data-act="ask">Unlock</button></div>';
     return '<div class="st-dim" data-act="close"></div><div class="st-sheet" role="dialog" aria-modal="true" aria-label="Node">' +
-      '<div class="st-grab"></div><div class="st-sheet-hd">' + status + '<span class="st-node-l">Level ' + level + ' · ' + (branch === 'look' ? 'Look' : 'Name') + '</span></div>' +
+      '<div class="st-grab"></div><div class="st-sheet-hd">' + status + '<span class="st-node-l">Level ' + level + ' · ' + branchLabel(n) + '</span></div>' +
       '<h3 class="st-h3">' + esc(plain(n.text)) + '</h3>' +
       '<div class="st-prev">' + preview + '</div>' +
       '<p class="st-what">' + esc(what) + '</p>' + foot + '</div>';
@@ -259,17 +251,12 @@
     host = host || {};
     var f = null;
     var msg = '';
-    var show = null;   // faction id showing in the showcase
     var sheetOpen = false;
 
     function render() {
       if (!el) return;
       var s = read();
-      f = faction(s.faction);
-      if (!f) {
-        el.innerHTML = '<section class="st st--chooser">' + chooserHtml() + (show ? showcaseHtml(faction(show)) : '') + '</section>';
-        return;
-      }
+      f = sharedTree();
       el.innerHTML = '<section class="st st--tree" style="--fc:' + f.color + '">' + treeHtml(f, Object.assign({}, host, { sel: sheetOpen && sheet ? sheet.sel : '' }), s) +
         (sheetOpen && sheet ? sheetHtml(f, host, s, sheet.sel) : '') +
         (msg ? '<p class="st-msg" role="status">' + esc(msg) + '</p>' : '') + '</section>';
@@ -280,11 +267,6 @@
       if (!t) return;
       var a = t.getAttribute('data-act'), v = t.getAttribute('data-v');
       var s = read();
-      if (a === 'show') { show = v; return render(); }
-      if (a === 'show-close') { show = null; return render(); }
-      if (a === 'choose') {
-        s.faction = validFaction(v); write(s); show = null; msg = ''; return render();
-      }
       if (a === 'exit') { if (host.onExit) host.onExit(); return; }
       if (a === 'node') {
         sheet = { sel: t.getAttribute('data-level') + '-' + t.getAttribute('data-branch'), confirm: false };
@@ -379,19 +361,6 @@
 
   function icon(path) { return '<svg class="st-ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><path d="' + path + '"/></svg>'; }
 
-  // Live tab: faction war standings for the month. nights = [{ faction, date, games: [{ pts, won }] }] (empty until the server is live).
-  function factionBoard(el, nights, month) {
-    if (!el || !win.FactionPoints) return;
-    var rows = win.FactionPoints.seasonStandings(nights || [], month);
-    var list = rows.map(function (r, i) {
-      var f = faction(r.faction) || { name: r.faction, color: '#9A9A9A' };
-      return '<li class="st-frow" style="--fc:' + f.color + '"><span class="st-frow-pos">' + (i + 1) + '</span>' +
-        '<span class="st-frow-nm">' + esc(f.name) + '</span><span class="st-frow-pts">' + r.points + ' pts</span></li>';
-    }).join('');
-    el.innerHTML = '<h2>Faction war</h2><p class="st-sub">Points from your runs this month. Thursday and Sunday runs count.</p>' +
-      '<ol class="st-frows">' + list + '</ol><p class="st-muted">Points start once the server is live.</p>';
-  }
-
   // Inventory / Customize: everything owned, grouped by slot. Wear one per slot; tap a worn one to take it off.
   // Unowned items show "?" and where to get them. Own screen (not inside the tree or the shop).
   var SLOT_LABEL = { card: 'Card effect', banner: 'Banner', name: 'Name effect', badge: 'Badge', title: 'Title pill' };
@@ -482,7 +451,6 @@
     inventory: inventory,
     ownLook: ownLook,
     fromPublic: fromPublic,
-    factionBoard: factionBoard,
     tagPanel: tagPanel,
     mount: mount,
     equipPanel: equipPanel,

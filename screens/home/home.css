@@ -23,7 +23,7 @@
 /* 18 Nov: the level line wraps into the space left of the coins pill (it used to run under the pill). */
 .ph-lvl { margin:0; font-size:18px; font-weight:800; white-space:normal; line-height:1.25; flex:1 1 auto; min-width:0; }
 .ph-top-r { display:flex; align-items:center; gap:8px; flex:none; }
-.ph-basket { display:flex; align-items:center; justify-content:center; width:48px; height:48px; border-radius:12px; border:2px solid var(--line); background:var(--card); color:var(--brand-text); text-decoration:none; flex:none; }
+.ph-basket { display:flex; align-items:center; justify-content:center; width:48px; height:48px; border-radius:12px; border:2px solid var(--edge); background:var(--card); color:var(--brand-text); text-decoration:none; flex:none; }
 .ph-basket svg, .ph-basket svg * { fill:none; stroke:currentColor; }
 .ph-basket svg { width:40px; height:40px; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
 .ph-season { display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; text-align:center; margin:12px 0; }
@@ -136,3 +136,23 @@
 
 /* 18 Nov: the one Home action when no run is on. Big, yellow, easy to hit. */
 .ph .ph-btn.ph-door-btn { display:flex; width:100%; min-height:56px; align-items:center; justify-content:center; font-size:20px; font-weight:900; letter-spacing:.06em; text-transform:uppercase; margin-top:12px; }
+
+/* Door code sheet: slides up from the bottom. Close X and tap outside close it. */
+.ph-sheet-wrap { position:fixed; inset:0; z-index:60; display:flex; align-items:flex-end; justify-content:center; background:rgba(0,0,0,.6); animation:ph-sheet-fade .18s ease-out; }
+.ph-sheet { position:relative; width:100%; max-width:520px; max-height:88vh; overflow:auto; padding:20px 16px calc(20px + env(safe-area-inset-bottom)); border-radius:20px 20px 0 0; background:var(--card); border-top:3px solid var(--brand-text); animation:ph-sheet-up .22s ease-out; }
+.ph-sheet-x { position:absolute; top:8px; right:8px; width:48px; height:48px; border:0; background:transparent; color:var(--ink); font-size:32px; line-height:1; }
+.ph-sheet-x:focus-visible { outline:3px solid var(--focus); outline-offset:2px; }
+@keyframes ph-sheet-up { from { transform:translateY(100%); } to { transform:none; } }
+
+/* Spacing pass (19 Nov): the Skill tree link is a 48px tap chip, and the cards that sit beside .ph share its 16px side gutter. */
+.ph-tree-line { margin:8px 0 0; }
+.ph-tree-line a { display:inline-flex; align-items:center; min-height:48px; padding:0 14px; border:2px solid var(--line); border-radius:999px; background:var(--card); color:var(--brand-text); font-size:14px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; }
+#v-home > .home-install, #v-home > .home-alerts, #v-home > .home-rival, #v-home > .home-shop { margin-left:16px; margin-right:16px; }
+/* 19 Nov: the install card is out of Home; the Shop card takes its place. The install code stays in app.js. */
+#v-home > #homeInstall { display:none !important; }
+.home-shop { margin-top:12px; margin-bottom:12px; padding:14px 16px; background:var(--card); border:1px solid var(--line); border-left:4px solid var(--brand); border-radius:var(--radius); }
+.home-shop h2 { margin:0 0 8px; font:700 20px/1.2 var(--font-head); text-transform:uppercase; letter-spacing:.02em; color:var(--brand-text); }
+.home-shop p { margin:0 0 12px; font-size:16px; line-height:1.4; }
+.home-shop .btn { margin-top:0; min-height:48px; }
+@keyframes ph-sheet-fade { from { opacity:0; } to { opacity:1; } }
+@media (prefers-reduced-motion: reduce) { .ph-sheet, .ph-sheet-wrap { animation:none; } }

@@ -53,7 +53,7 @@
   function html(data, msg) {
     var d = data || {};
     var state = d.state || 'ready';
-    var head = '<h2 class="invite-title">Bring a friend</h2>';
+    var head = '<h2 class="invite-title">Bring mate</h2>';
     var lead = '<p class="invite-lead">When a friend plays their first run, you both get ' + REWARD + ' coins.</p>';
     if (state === 'loading') {
       return '<section class="invite-card" aria-busy="true">' + head + '<p class="invite-lead">Getting your link…</p></section>';

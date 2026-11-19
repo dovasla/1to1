@@ -45,7 +45,7 @@ body.shop-v2 { margin: 0; background: #0E0E0E; color: #F5F5F5; font-family: Barl
 .sb-tier-legend .sb-tier-bar { background: #FFD60A; }
 
 /* Price or state chip, top right. */
-.sb-chip { position: absolute; top: 10px; right: 8px; z-index: 2; background: rgba(0, 0, 0, .6); color: #fff; border-radius: 999px; padding: 4px 9px; font: 800 13px/1 system-ui, sans-serif; }
+.sb-chip { position: absolute; top: 10px; right: 8px; z-index: 2; background: rgba(0, 0, 0, .6); color: #fff; border-radius: 999px; padding: 4px 9px; font: 800 14px/1 system-ui, sans-serif; }
 .sb-chip-coin { color: #FFD60A; }
 .sb-chip-on { background: #1BBF72; color: #0E0E0E; }
 .sb-chip-lock { color: #B8BEC9; }
@@ -72,4 +72,4 @@ body.shop-v2 { margin: 0; background: #0E0E0E; color: #F5F5F5; font-family: Barl
 }
 
 /* Limited drops: end time under the tile (orange-red, never pure red). */
-.sb-ends { display: block; font-size: 12px; font-weight: 700; color: #FF7A1A; margin-top: 2px; }
+.sb-ends { display: block; font-size: 14px; font-weight: 700; color: #FF7A1A; margin-top: 2px; }

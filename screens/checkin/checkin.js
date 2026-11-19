@@ -51,7 +51,7 @@
   function html(state) {
     var s = state || { phase: 'enter', code: '' };
     if (s.phase === 'done') {
-      return '<div class="ci-card ci-done"><h2>You are here</h2><p class="ci-muted">Checked in. See you on court.</p></div>';
+      return '<div class="ci-card ci-done"><h2>Your spot</h2><p class="ci-muted">Checked in. See you on court.</p></div>';
     }
     var code = cleanCode(s.code);
     var boxes = '';
@@ -65,7 +65,7 @@
     var err = s.reason ? '<p class="ci-err" role="alert">' + esc(messageFor(s.reason)) + '</p>' : '<p class="ci-err" role="status"></p>';
     return '' +
       '<div class="ci-card" aria-busy="' + (busy ? 'true' : 'false') + '">' +
-        '<h2>Enter the 4-digit code</h2>' +
+        '<h2>Enter code</h2>' +
         '<p class="ci-muted">It’s on the organiser’s screen.</p>' +
         '<div class="ci-digits" aria-label="Code, ' + code.length + ' of 4 digits">' + boxes + '</div>' +
         '<div class="ci-pad">' + keys +

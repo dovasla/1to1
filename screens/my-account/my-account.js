@@ -52,7 +52,7 @@
         '<button type="submit" class="ma-btn is-danger">Continue</button></form>';
     }
     if (kind === 'delete-2') {
-      return '<form class="ma-sheet" data-ma-form="delete-2"><h2 class="ma-title">Are you sure?</h2>' +
+      return '<form class="ma-sheet" data-ma-form="delete-2"><h2 class="ma-title">Sure?</h2>' +
         '<p class="ma-hint">This cannot be undone.</p>' + err +
         '<button type="submit" class="ma-btn is-danger">Delete my account</button>' +
         '<button type="button" class="ma-btn is-quiet" data-ma-action="cancel">Keep my account</button></form>';

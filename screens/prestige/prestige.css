@@ -19,17 +19,17 @@
 .sheet-scrim { position: absolute; inset: 0; background: rgba(0, 0, 0, .6); }
 .sheet {
   position: relative; width: 100%; max-width: 520px; max-height: 88vh; overflow-y: auto;
-  box-sizing: border-box; background: #16181E; color: #F4F1EA; box-shadow: 0 -8px 30px rgba(0, 0, 0, .5);
+  box-sizing: border-box; background: var(--card); color: var(--ink); box-shadow: 0 -8px 30px rgba(0, 0, 0, .5);
   border-radius: 18px 18px 0 0; padding: 20px 16px 24px; animation: pr-up .22s var(--ease, ease-out);
 }
 @keyframes pr-up { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
 .sheet-title { margin: 0 0 8px; color:var(--yellow-text); font-size: 24px; letter-spacing: .04em; text-transform: uppercase; }
 .sheet-lead { font-size: 16px; margin: 0 0 14px; }
 .sheet .cap { margin-top: 14px; }
-.sheet .list li { font-size: 16px; padding: 8px 0; border-bottom: 1px solid #2A2E38; }
-.sheet .cap { color: #B9BDC8; }
-.sheet .btn:not(.yellow) { background: #1E2A44; color: #F4F1EA; }
-.sheet-err { color: #B3261E; font-size: 14px; min-height: 20px; margin: 10px 0 0; }
+.sheet .list li { font-size: 16px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.sheet .cap { color: var(--muted); }
+.sheet .btn:not(.yellow) { background: var(--raised); color: var(--ink); }
+.sheet-err { color: var(--red); font-size: 14px; min-height: 20px; margin: 10px 0 0; }
 .sheet-btns { display: grid; grid-template-columns: 1fr 1.4fr; gap: 10px; margin-top: 14px; }
 .sheet-btns .btn { min-height: 48px; }
 

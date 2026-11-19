@@ -2,7 +2,8 @@
    Source: revamp/brand/options/tokens-A-blackout.css + BRAND-LOCK-15NOV.md. Dark is the default.
    Bright mode: any element with data-theme="light" (the app root, or a screen overlay). Never follows the phone. */
 :root {
-  --bg:#0E0E0E; --card:#1A1C22; --raised:#23262E; --line:#2C2F38;
+  --bg:#0E0E0E; --card:#1A1C22; --raised:#23262E; --line:#2C2F38; --edge:#6B7184;
+  --yellow:var(--brand); --yellow-text:var(--brand-text); --on-yellow:var(--on-brand); --gold-text:var(--brand-text); --blue:var(--link);
   --ink:#F4F5F7; --muted:#AEB4C0;
   --brand:#FFD21F; --on-brand:#0E0E0E; --on-link:#FFFFFF; --brand-text:#FFD21F; --focus:#FFD21F;
   --heat:#FF9A1F; --link:#0A5CFF; --link-text:#6FA0FF; --green:#2BD67B; --red:#FF6B6B;
@@ -16,7 +17,7 @@
 }
 
 [data-theme="light"] {
-  --bg:#F3F5FA; --card:#FFFFFF; --raised:#EDF0F5; --line:#D9DEE8;
+  --bg:#F3F5FA; --card:#FFFFFF; --raised:#EDF0F5; --line:#D9DEE8; --edge:#7A8194;
   --ink:#111318; --muted:#4B5263;
   --brand:#FFD21F; --on-brand:#0E0E0E; --brand-text:#111318; --focus:#111318;
   --heat:#B0481A; --link:#0A5CFF; --link-text:#0A5CFF; --green:#0E7A43; --red:#C62828;

@@ -93,7 +93,7 @@
       '</section>';
 
     h += '<section class="card" aria-labelledby="prL">' +
-      '<h2 class="cap" id="prL">Level ' + v.level + ' of ' + MAX_LEVEL + '</h2>' +
+      '<h2 class="cap" id="prL">Level ' + v.level + '</h2>' +
       '<div class="bar" role="progressbar" aria-label="Progress to Level 60" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + v.pct + '">' +
       '<i style="width:' + v.pct + '%"></i></div>' +
       '<p class="muted">' + (v.eligible ? 'You have reached Level 60. You can prestige now.' : esc(v.toMax) + '.') + '</p>' +

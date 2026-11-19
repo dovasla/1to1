@@ -249,6 +249,7 @@
       '<p class="more-label more-head">App</p>' +
       '<div class="more-group">' +
         (hasPastPayment(d.history) ? rowHtml('pay', 'Payment history', 'Past runs you paid for') : '') +
+        rowHtml('reminders', 'Reminders', 'Off until you switch one on') +
         rowHtml('settings', 'Settings', settingsSummary(d)) +
         rowHtml('help', 'Help', 'How it works and getting help') +
       '</div>' +
@@ -409,7 +410,6 @@
         switchHtml('showme', d.showMe !== false, 'Show me to other players', 'Off: you show as “Player” and nobody can tap your name') +
         switchHtml('sound', !!(window.PlayerSound && PlayerSound.get()), 'Celebration sounds', 'Off unless you turn it on') +
         rowHtml('alerts', 'Run alerts', alertsSummary(d.alertsState || 'off')) +
-        rowHtml('reminders', 'Reminders', 'Off until you switch one on') +
         rowHtml('skill', 'Skill questions', owed ? 'To answer, once' : 'Done') +
       '</div>' +
       (owed ? '<p class="more-warn" role="status"><span aria-hidden="true">⚠</span> Skill questions still to answer</p>' : '') +

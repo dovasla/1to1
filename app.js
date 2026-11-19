@@ -1158,7 +1158,7 @@
     });
   }
 
-  // Skill tree page (#profile/tree). Full screen: pick a faction once, then the branching tree (shop/skill-tree.js).
+  // Skill tree page (#profile/tree). The one skill tree for everyone (shop/skill-tree.js).
   // Unlocks are free (level only) and save on this phone. Equip happens on Profile, never here.
   function renderTree() {
     var box = $('sub');
@@ -1443,10 +1443,8 @@
   function route() {
     if (!S.me) { showLogin(); return; }
     showShell();
-    // Attention glow: until a tree is picked, the Skill tree entry glows (see shop/shop-climb.css).
-    var treeSaved = '';
-    try { var st = JSON.parse(localStorage.getItem('1to1-skill-tree') || 'null'); treeSaved = st && ['ember', 'frost', 'brass', 'indigo', 'slate'].indexOf(st.faction) > -1 ? st.faction : ''; } catch (e) { treeSaved = ''; }
-    document.body.classList.toggle('tree-unpicked', !treeSaved);
+    // No pick any more (factions removed): the Skill tree entry does not glow.
+    document.body.classList.remove('tree-unpicked');
     var parts = (location.hash || '#home').slice(1).split('/');
     var head = parts[0], sub = parts[1] || '';
     if (sub === 'leaderboard') { location.hash = '#stats'; return; }
@@ -1743,7 +1741,6 @@
     route();
     updateTabDots();
     prefetchGroups();
-    if (window.ShopTree) ShopTree.factionBoard($('factionBoard'), [], new Date().toISOString().slice(0, 7));
   }
 
   function logIn() {
