@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0E0E0E">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png">
+<link rel="stylesheet" href="pwa.css">
+<link rel="manifest" href="manifest.webmanifest">
+<title data-name="fullName"></title>
+<link rel="icon" href="icons/icon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="app.css">
+<link rel="stylesheet" href="app-tokens.css">
+<link rel="stylesheet" href="shop-visible/shop-strip.css">
+<link rel="stylesheet" href="shop/shop-effects.css">
+<link rel="stylesheet" href="brand/components.css">
+<link rel="stylesheet" href="lib/player-name.css">
+<link rel="stylesheet" href="shop/shop-looks.css">
+<link rel="stylesheet" href="reveal/reveal.css">
+<link rel="stylesheet" href="loading/loading.css">
+<link rel="stylesheet" href="screens/home/home.css">
+<link rel="stylesheet" href="lib/weekly-rival.css">
+<link rel="stylesheet" href="lib/hype-recap.css">
+<link rel="stylesheet" href="lib/delights.css">
+<link rel="stylesheet" href="screens/profile/profile.css">
+<link rel="stylesheet" href="icons/characters/picker.css">
+<link rel="stylesheet" href="screens/leaderboard/leaderboard.css">
+<link rel="stylesheet" href="screens/stats-board/stats-board.css">
+<link rel="stylesheet" href="screens/head-to-head/head-to-head.css">
+<link rel="stylesheet" href="screens/streaks/streaks.css">
+<link rel="stylesheet" href="screens/live/live.css">
+<link rel="stylesheet" href="pay/pay.css">
+<link rel="stylesheet" href="screens/more/more.css">
+<link rel="stylesheet" href="screens/push/push.css">
+<link rel="stylesheet" href="screens/calendar/calendar.css">
+<link rel="stylesheet" href="screens/invite/invite.css">
+<link rel="stylesheet" href="screens/achievements/achievements.css">
+<link rel="stylesheet" href="screens/my-account/my-account.css">
+<link rel="stylesheet" href="screens/recap/recap.css">
+<link rel="stylesheet" href="screens/mvp/mvp.css">
+<link rel="stylesheet" href="app-shell.css">
+<link rel="stylesheet" href="onboarding/onboarding.css">
+<link rel="stylesheet" href="lib/pull-refresh.css">
+<link rel="stylesheet" href="brand/prestige-celebration.css">
+<link rel="stylesheet" href="lib/signal-line.css">
+<link rel="stylesheet" href="lib/run-state.css">
+<link rel="stylesheet" href="screens/peek/peek.css">
+<link rel="stylesheet" href="screens/photo/photo.css">
+<link rel="stylesheet" href="shell/device.css">
+<link rel="stylesheet" href="brand/look-r12.css">
+</head>
+<body>
+
+<!-- Log in (shown first, after the loading screen). Run is kept in memory only, as in night.html. -->
+<section class="login" id="login" aria-labelledby="loginH" hidden>
+  <h1 id="loginH">Log in</h1>
+  <p class="muted">Type your first name, last initial and PIN.</p>
+  <div class="card">
+    <label for="lFirst">First name</label>
+    <input id="lFirst" type="text" autocomplete="given-name" maxlength="20">
+    <label for="lLi">Last initial</label>
+    <input id="lLi" type="text" autocomplete="off" maxlength="2">
+    <label for="lPin">PIN</label>
+    <input id="lPin" type="password" inputmode="numeric" autocomplete="current-password" pattern="[0-9]*" maxlength="4">
+    <p class="err" id="loginErr" role="alert" hidden></p>
+    <button class="btn yellow" id="loginBtn" type="button">Log in</button>
+  </div>
+  <p class="muted centre">New here? <a href="signup.html?next=app.html" class="link tap">Sign up</a></p>
+  <p class="muted centre">Forgot your PIN? Ask at the desk.</p>
+</section>
+
+<!-- The app shell: four tabs. Each tab is one view; the router shows one at a time. -->
+<div class="shell" id="shell" hidden>
+  <!-- 72g: yellow Pay line in the top bar. Only while this player is in a run and owes; gone once paid. -->
+  <div class="top-stack">
+    <button class="pay-top" id="payTop" type="button" hidden></button>
+    <div class="live-strip" id="liveStrip" hidden><button class="live-strip-btn" id="liveStripBtn" type="button" aria-label="Live score, open Live"></button></div>
+  </div>
+  <main class="shell-main" id="main">
+
+    <section class="view" id="v-home" data-view="home" aria-label="Home">
+      <div id="home"></div>
+      <!-- Weekly rival card (lib/weekly-rival.js). Hidden until the week's pairing loads; hides itself without the server piece. -->
+      <div id="homeRival" class="home-rival" hidden></div>
+      <!-- Night recap card (lib/night-recap.js): shows after a played night, with Share. -->
+      <div id="homeRecap" class="home-recap" hidden></div>
+      <!-- P5b: last night's recap and MVP vote. Hidden when there is no played night. -->
+      <div id="recapBox"></div>
+      <!-- Below the next game. Shown only while Home has room (at most three cards). -->
+      <section class="card home-alerts" id="homeAlerts" aria-labelledby="homeAlertsH" hidden>
+        <h2 id="homeAlertsH">Turn on run alerts</h2>
+        <p class="muted">We tell you the moment a run is on, and when doors open. Tap the button, then Allow.</p>
+        <button class="btn yellow" id="homeAlertsBtn" type="button">Turn on run alerts</button>
+      </section>
+      <section class="card home-install" id="homeInstall" aria-labelledby="homeInstallH" hidden>
+        <h2 id="homeInstallH">Add <span data-name="brand"></span> to your phone</h2>
+        <p><b>iPhone:</b> in Safari, tap Share (the box with an arrow), then Add to Home Screen.</p>
+        <p><b>Android:</b> in Chrome, tap the three dots, then Install app.</p>
+        <button class="btn ghost small" id="homeInstallNo" type="button">Not now</button>
+      </section>
+    </section>
+
+    <section class="view" id="v-live" data-view="live" aria-label="Live" hidden>
+      <div id="live"></div>
+      <h2>Standings</h2>
+      <div class="card">
+        <ul class="list" id="standings"></ul>
+        <p class="muted" id="standNote"></p>
+        <p class="muted"><a href="#stats" class="link tap">Full standings on Stats</a></p>
+      </div>
+    </section>
+
+    <section class="view" id="v-stats" data-view="stats" aria-label="Stats" hidden>
+      <div id="stats"></div>
+    </section>
+
+    <section class="view" id="v-profile" data-view="profile" aria-label="Profile" hidden>
+      <a href="#more" class="back" id="profBack">Back to More</a>
+      <div id="profile"></div>
+    </section>
+
+    <section class="view" id="v-more" data-view="more" aria-label="More" hidden>
+      <div id="more"></div>
+    </section>
+
+    <section class="view" id="v-sub" data-view="sub" hidden>
+      <a href="#more" class="back" id="backLink">Back to More</a>
+      <div id="sub"></div>
+    </section>
+
+  </main>
+
+  <nav class="tabs" id="tabs" aria-label="Main">
+    <a href="#home" data-tab="home">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.2 11.4 L12.1 4.6 L19.9 11.2"/><path d="M6.4 9.9 V19.6 H18.1 V10.1"/><path d="M10.3 19.7 V14.6 H13.9 V19.8"/></svg>
+      <span data-name="tabs.home">Home</span>
+    </a>
+    <a href="#live" data-tab="live">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12.1" cy="11.9" r="2.1"/><path d="M7.3 7.2 C4.7 9.5 4.9 14.6 7.1 16.9"/><path d="M16.9 7.1 C19.4 9.4 19.1 14.8 16.8 17.0"/></svg>
+      <span data-name="tabs.live">Live</span>
+    </a>
+    <a href="#stats" data-tab="stats">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 19.2 V13.4"/><path d="M12 19.2 V5.6"/><path d="M18 19.2 V9.8"/></svg>
+      <span data-name="tabs.stats">Leaderboard</span>
+    </a>
+    <a href="#more" data-tab="more">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.6 7.3 H19.3"/><path d="M4.4 12.3 H19.6"/><path d="M4.8 17.2 H19.1"/></svg>
+      <span data-name="tabs.more">More</span>
+    </a>
+  </nav>
+</div>
+
+<script src="config.js"></script>
+<script src="rules.js"></script>
+<script src="backend.js"></script>
+<script src="lib/xp.js"></script>
+<script src="lib/load-timeout.js"></script>
+<script src="lib/live-cadence.js"></script>
+<script src="mvp-backend.js"></script>
+<script src="screens/mvp/mvp.js"></script>
+<script src="screens/recap/recap.js"></script>
+<script src="screens/recap/recap-loader.js"></script>
+<script src="screens/recap/recap-box.js"></script>
+<script src="lib/player-name.js"></script>
+<script src="lib/weekly-rival.js"></script>
+<script src="lib/hype.js"></script>
+<script src="lib/moments.js"></script>
+<script src="lib/delight-rules.js"></script>
+<script src="lib/cart-icon.js"></script>
+<script src="lib/pay-stamp.js"></script>
+<script src="lib/home-delights.js"></script>
+<script src="lib/sound-setting.js"></script>
+<script src="lib/seasonal.js"></script>
+<script>try { PlayerSeasonal.apply(document, new Date()); } catch (e) {}</script>
+<script src="lib/night-recap.js"></script>
+<script src="lib/filling-up.js"></script>
+<script src="brand/names.js"></script>
+<script src="brand/lockup.js"></script>
+<script src="loading/loading.js"></script>
+<script src="reveal/reveal.js"></script>
+<script src="shop/cosmetics.js"></script>
+<script src="shop/shop-rules.js"></script>
+<script src="shop/catalogue.js"></script>
+<script src="shop/shop-backend.js"></script>
+<script src="lib/run-day.js"></script>
+<script src="shop/shop-effects.js"></script>
+<script src="shop-visible/shop-strip.js"></script>
+<script src="screens/home/home.js"></script>
+<script src="screens/court-view/court-view.js"></script>
+<script src="screens/live/score-card.js"></script>
+<script src="screens/live/live-scoreboard.js"></script>
+<script src="screens/live/live.js"></script>
+<script src="pay/pay.js"></script>
+<script src="screens/my-account/my-account.js"></script>
+<script src="screens/achievements/achievements.js"></script>
+<script src="screens/more/more.js"></script>
+<script src="screens/calendar/calendar.js"></script>
+<script src="screens/invite/invite.js"></script>
+<script src="pwa-push.js"></script>
+<script type="module">
+  import { playerIconSvg } from './icons/players/player-icons.js';
+  window.PlayerIconSvg = playerIconSvg;
+</script>
+<script src="wording-56.js"></script>
+<script src="lib/lineup-gate.js"></script>
+<script src="lib/night-shape.js"></script>
+<script src="screens/live/live-feed.js"></script>
+<script src="onboarding/onboarding.js"></script>
+<script src="lib/pull-refresh.js"></script>
+<script src="screens/push/push.js"></script>
+<script src="lib/prestige-celebration.js"></script>
+<script src="lib/run-state.js"></script>
+<script src="lib/player-alerts.js"></script>
+<script src="lib/run-alerts-hook.js"></script>
+<script src="lib/signal-line.js"></script>
+<script src="app.js"></script>
+<script src="pwa.js"></script>
+</body>
+</html>

@@ -45,12 +45,12 @@
 
   // One court player as the view shows it.
   function courtPlayer(p) {
-    if (!p || p.hidden) return { name: 'Player', icon: PLAIN_ICON, hidden: true, pts: null, fouls: null, streak: null, gain: null, look: null };
+    if (!p || p.hidden) return { name: 'Player', icon: PLAIN_ICON, hidden: true, pts: null, allTime: null, fouls: null, streak: null, gain: null, look: null };
     var name = String(p.name || '').trim() || 'Guest';
     var icon = ICON_RE.test(String(p.icon || '')) ? String(p.icon) : PLAIN_ICON;
     // The look from the row (banner, name style, level) when the organiser sent it; else the lineup match (withLooks) fills it.
     var look = p.look || ((p.banner || p.nameStyle || p.level != null) ? lookFrom(p) : null);
-    return { name: name, icon: icon, hidden: false, pts: count(p.pts), fouls: count(p.fouls), streak: count(p.streak), gain: count(p.gain), look: look };
+    return { name: name, icon: icon, hidden: false, pts: count(p.pts), allTime: count(p.allTimePoints), fouls: count(p.fouls), streak: count(p.streak), gain: count(p.gain), look: look };
   }
 
   // Looks from the lineup (same public names): level, and what is worn (banner, name style). Court tokens show a worn look, not the full card.
@@ -192,6 +192,7 @@
       ' data-hk="' + esc(team + '|' + p.name) + '"' +
       (look && look.banner ? ' data-banner="' + esc(look.banner) + '"' : '') +
       (p.pts != null ? ' data-pts="' + esc(p.pts) + '"' : '') +
+      (p.allTime != null ? ' data-alltime="' + esc(p.allTime) + '"' : '') +
       (look && look.level != null ? ' data-level="' + esc(look.level) + '"' : '') +
       ' aria-label="' + esc(p.name + (p.pts != null ? ', ' + p.pts + ' points' : '') + (look && look.level != null ? ', level ' + look.level : '')) + '">' + face + '</button></li>';
   }
@@ -276,6 +277,7 @@
     }
     return '<div class="cv-stats3">' +
       cell('PTS TONIGHT', p.pts != null ? p.pts : '–') +
+      (p.allTime != null ? cell('ALL-TIME PTS', p.allTime) : '') +
       cell('LEVEL', p.level != null ? p.level : '–') +
       cell('WEEK STREAK', p.weekStreak != null ? p.weekStreak : '–') +
     '</div>';

@@ -1008,7 +1008,8 @@
     box.innerHTML = PlayerProfile.render(d) + (window.PlayerPhoto ? PlayerPhoto.render(photoState) : '') +
       (window.ShareCard ? '<p class="profile-links"><button type="button" class="btn yellow" id="shareCard">Share my card</button></p>' : '') +
       '<section class="profile-equip" aria-label="Your tag"><h2 class="st-h3">Your tag</h2><div id="tagBox"></div></section>' +
-      '<p class="profile-links"><a class="btn" href="#profile/inventory" data-go="inventory">Open inventory</a> <a class="btn" href="#profile/tree" data-go="tree">Skill tree</a></p>';
+      '<p class="profile-links"><a class="btn" href="#profile/inventory" data-go="inventory">Open inventory</a> <a class="btn" href="#profile/tree" data-go="tree">Skill tree</a></p>' +
+      '<p class="profile-links"><a class="btn" href="#more/account">My account</a></p>';
     if (window.PlayerPhoto) PlayerPhoto.bind(box, { onFile: onPhotoFile, onIcon: onPhotoIcon });
     if (window.ShopTree) ShopTree.tagPanel(box.querySelector('#tagBox'));
     loadPhoto();
@@ -1451,14 +1452,16 @@
     if (sub === 'leaderboard') { location.hash = '#stats'; return; }
     if (head === 'shop') { head = 'more'; sub = 'shop'; }
     var tab = head === 'profile' ? 'profile' : (TABS.indexOf(head) > -1 ? head : 'home');
-    if (sub && SUBS.indexOf(sub) < 0) { location.hash = '#' + tab; return; }
+    // My account lives on the More account panel; Profile links to it (#more/account).
+    var accountHere = tab === 'more' && sub === 'account';
+    if (sub && !accountHere && SUBS.indexOf(sub) < 0) { location.hash = '#' + tab; return; }
     // The screen's script loads first (once), then the same route runs again.
     var needs = (tab === 'stats' || sub === 'history') ? 'stats' : (tab === 'profile' ? 'profile' : '');
     if (needs && !groupDone[needs]) { ensureGroup(needs).then(route); return; }
 
     if (tab !== 'more' && S.moreScreen) S.moreScreen.reset();
-    var viewId = sub ? 'v-sub' : 'v-' + tab;
-    if (sub) {
+    var viewId = accountHere ? 'v-more' : (sub ? 'v-sub' : 'v-' + tab);
+    if (sub && !accountHere) {
       var back = $('backLink');
       back.setAttribute('href', SUB_PARENT[tab] || '#more');
       back.textContent = 'Back to ' + (TAB_LABEL[tab] || 'More');
@@ -1488,7 +1491,8 @@
     if (tab === 'stats' && !sub) loadSeasonBoard();
     if (tab === 'more' && S.moreScreen && !sub) S.moreScreen.update(moreData());
     if (tab === 'profile' && !sub) renderProfile();
-    if (sub) renderSub(sub);
+    if (accountHere && S.moreScreen) S.moreScreen.show('account');
+    if (sub && !accountHere) renderSub(sub);
     window.scrollTo(0, 0);
   }
 

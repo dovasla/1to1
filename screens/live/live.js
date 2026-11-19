@@ -61,12 +61,30 @@
     });
   }
 
+  // Per-player game points for one finished game (optional: players: { a: [{ name, pts }], b: [...] }). Pure.
+  function gamePtsOf(list) {
+    return (Array.isArray(list) ? list : []).filter(function (x) { return x && typeof x === 'object' && x.name != null; })
+      .map(function (x) { return { name: String(x.name || '') || 'Player', pts: Number(x.pts) || 0 }; })
+      .filter(function (x) { return x.pts > 0; })
+      .sort(function (a, b) { return b.pts - a.pts; });
+  }
+  // Points line under a Results row. Empty when the feed sends no per-player points.
+  function gamePtsHtml(r) {
+    var a = gamePtsOf(r.players && r.players.a), b = gamePtsOf(r.players && r.players.b);
+    function line(team, list) {
+      if (!list.length) return '';
+      return '<span class="lv-rpts"><b>' + esc(teamWord(team)) + '</b> ' +
+        list.map(function (x) { return esc(x.name) + ' ' + esc(x.pts); }).join(' · ') + '</span>';
+    }
+    return line(r.teamA, a) + line(r.teamB, b);
+  }
+
   // Finished games for the Results list: newest game first. Pure.
   function resultRows(list) {
     return (Array.isArray(list) ? list : []).filter(function (r) { return r && typeof r === 'object'; })
       .map(function (r) {
         return { no: Number(r.no) || 0, teamA: String(r.teamA || ''), teamB: String(r.teamB || ''),
-          scoreA: Number(r.scoreA) || 0, scoreB: Number(r.scoreB) || 0 };
+          scoreA: Number(r.scoreA) || 0, scoreB: Number(r.scoreB) || 0, players: r.players || null };
       })
       .sort(function (a, b) { return b.no - a.no; });
   }
@@ -158,7 +176,7 @@
           '<span class="lv-gbody"><span class="lv-rline"><b>' + esc(teamWord(r.teamA)) + '</b>' +
           '<span class="lv-rs">' + esc(r.scoreA) + ' – ' + esc(r.scoreB) + '</span>' +
           '<b>' + esc(teamWord(r.teamB)) + '</b></span>' +
-          '<span class="lv-muted">Game ' + esc(r.no) + '</span></span></li>';
+          '<span class="lv-muted">Game ' + esc(r.no) + '</span>' + gamePtsHtml(r) + '</span></li>';
       }).join('') + '</ol></section>';
   }
 
@@ -350,7 +368,8 @@
         level: CV.count(pl.getAttribute('data-level')),
         banner: pl.getAttribute('data-banner') || '',
         hk: pl.getAttribute('data-hk') || '',
-        side: pl.getAttribute('data-side') || 'a'
+        side: pl.getAttribute('data-side') || 'a',
+        allTime: CV.count(pl.getAttribute('data-alltime'))
       };
       lastFocus = pl;
       show(CV.cardHtml(current));
@@ -390,7 +409,8 @@
         pts: CV.count(pl.getAttribute('data-pts')),
         level: CV.count(pl.getAttribute('data-level')),
         banner: pl.getAttribute('data-banner') || '',
-        hk: pl.getAttribute('data-hk') || ''
+        hk: pl.getAttribute('data-hk') || '',
+        allTime: CV.count(pl.getAttribute('data-alltime'))
       };
     }
     function onDown(e) {

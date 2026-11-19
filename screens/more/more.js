@@ -243,7 +243,6 @@
       '<p class="more-label more-head">You</p>' +
       '<div class="more-group">' +
         linkRowHtml('#profile', 'Profile', 'Your card, look and numbers') +
-        rowHtml('account', 'My account', 'PIN, privacy, delete') +
         rowHtml('achievements', 'Badges and milestones', 'Badges you have earned and how close you are') +
         rowHtml('invite', 'Invite a mate', 'Bring someone along') +
       '</div>' +

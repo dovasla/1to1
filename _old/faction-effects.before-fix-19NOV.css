@@ -1,0 +1,958 @@
+/* ==========================================================
+   1TO1 faction effects (CSS only)
+   5 factions x (5 card + 3 banner + 3 name + 3 badge) = 70 classes.
+   Class pattern: .fx-<faction>-<slot>-<stage>
+   Slots: card, banner, name, badge.  Stage: 1 (faint) to top.
+   Animations use transform and opacity only. No blur filters.
+   Layers sit behind text (z-index -1) so names stay readable.
+   Reduced motion: all animation switches off, the resting look stays.
+   Colours come from --fx-a / --fx-b / --fx-c per faction.
+   Motion for particles comes from --fx-p / --fx-pd per faction.
+   Card effects set overflow: hidden on the card.
+   ========================================================== */
+
+/* ---- Faction colours and motion ---- */
+/* Ember: Fire. Burn escalates from a warm edge to a full burning card. */
+.fx-ember-card-1,
+.fx-ember-card-2,
+.fx-ember-card-3,
+.fx-ember-card-4,
+.fx-ember-card-5,
+.fx-ember-banner-1,
+.fx-ember-banner-2,
+.fx-ember-banner-3,
+.fx-ember-name-1,
+.fx-ember-name-2,
+.fx-ember-name-3,
+.fx-ember-badge-1,
+.fx-ember-badge-2,
+.fx-ember-badge-3 {
+  --fx-a: #FF5A1F;
+  --fx-b: #E8833A;
+  --fx-c: #FFD21F;
+  --fx-p: fx-rise;
+  --fx-pd: 3s;
+}
+
+/* Frost: Ice and snow. Pale edge to a full frost card. */
+.fx-frost-card-1,
+.fx-frost-card-2,
+.fx-frost-card-3,
+.fx-frost-card-4,
+.fx-frost-card-5,
+.fx-frost-banner-1,
+.fx-frost-banner-2,
+.fx-frost-banner-3,
+.fx-frost-name-1,
+.fx-frost-name-2,
+.fx-frost-name-3,
+.fx-frost-badge-1,
+.fx-frost-badge-2,
+.fx-frost-badge-3 {
+  --fx-a: #7FC8E8;
+  --fx-b: #BFE8FA;
+  --fx-c: #FFFFFF;
+  --fx-p: fx-fall;
+  --fx-pd: 5s;
+}
+
+/* Brass: Gold and seals. Gold edge to a gold crown card. */
+.fx-brass-card-1,
+.fx-brass-card-2,
+.fx-brass-card-3,
+.fx-brass-card-4,
+.fx-brass-card-5,
+.fx-brass-banner-1,
+.fx-brass-banner-2,
+.fx-brass-banner-3,
+.fx-brass-name-1,
+.fx-brass-name-2,
+.fx-brass-name-3,
+.fx-brass-badge-1,
+.fx-brass-badge-2,
+.fx-brass-badge-3 {
+  --fx-a: #B8892E;
+  --fx-b: #E8C86A;
+  --fx-c: #FFF1B8;
+  --fx-p: fx-twinkle;
+  --fx-pd: 2.4s;
+}
+
+/* Indigo: Storm and lightning. Violet edge to a storm card. */
+.fx-indigo-card-1,
+.fx-indigo-card-2,
+.fx-indigo-card-3,
+.fx-indigo-card-4,
+.fx-indigo-card-5,
+.fx-indigo-banner-1,
+.fx-indigo-banner-2,
+.fx-indigo-banner-3,
+.fx-indigo-name-1,
+.fx-indigo-name-2,
+.fx-indigo-name-3,
+.fx-indigo-badge-1,
+.fx-indigo-badge-2,
+.fx-indigo-badge-3 {
+  --fx-a: #6A5BD8;
+  --fx-b: #8F85F0;
+  --fx-c: #D8D3FF;
+  --fx-p: fx-fall;
+  --fx-pd: 1.4s;
+}
+
+/* Slate: Smoke and silver. Grey edge to a dark glass card. */
+.fx-slate-card-1,
+.fx-slate-card-2,
+.fx-slate-card-3,
+.fx-slate-card-4,
+.fx-slate-card-5,
+.fx-slate-banner-1,
+.fx-slate-banner-2,
+.fx-slate-banner-3,
+.fx-slate-name-1,
+.fx-slate-name-2,
+.fx-slate-name-3,
+.fx-slate-badge-1,
+.fx-slate-badge-2,
+.fx-slate-badge-3 {
+  --fx-a: #6B707A;
+  --fx-b: #A9AFBA;
+  --fx-c: #E6E9EF;
+  --fx-p: fx-drift;
+  --fx-pd: 6s;
+}
+
+/* ---- Keyframes (transform and opacity only) ---- */
+@keyframes fx-soft    { 0%,100% { opacity: .2; }  50% { opacity: .5; } }
+@keyframes fx-mid     { 0%,100% { opacity: .45; } 50% { opacity: .95; } }
+@keyframes fx-deep    { 0%,100% { opacity: .35; } 50% { opacity: .6; } }
+@keyframes fx-flame   { 0%,100% { transform: scaleY(1);    opacity: .5; }
+                        50%     { transform: scaleY(1.07); opacity: .8; } }
+@keyframes fx-rise    { from { transform: translateY(0); } to { transform: translateY(-40px); } }
+@keyframes fx-fall    { from { transform: translateY(0); } to { transform: translateY(40px); } }
+@keyframes fx-twinkle { 0%,100% { opacity: .25; } 50% { opacity: 1; } }
+@keyframes fx-drift   { 0%,100% { transform: translateX(-10px); } 50% { transform: translateX(10px); } }
+@keyframes fx-flicker { 0%,100% { opacity: 1; } 20% { opacity: .55; } 40% { opacity: 1; } 60% { opacity: .7; } 80% { opacity: 1; } }
+@keyframes fx-sweep   { from { transform: translateX(-120%); } to { transform: translateX(320%); } }
+@keyframes fx-slide   { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes fx-spin    { to { transform: rotate(360deg); } }
+
+/* ---- Cards: base ---- */
+.fx-ember-card-1,
+.fx-frost-card-1,
+.fx-brass-card-1,
+.fx-indigo-card-1,
+.fx-slate-card-1,
+.fx-ember-card-2,
+.fx-frost-card-2,
+.fx-brass-card-2,
+.fx-indigo-card-2,
+.fx-slate-card-2,
+.fx-ember-card-3,
+.fx-frost-card-3,
+.fx-brass-card-3,
+.fx-indigo-card-3,
+.fx-slate-card-3,
+.fx-ember-card-4,
+.fx-frost-card-4,
+.fx-brass-card-4,
+.fx-indigo-card-4,
+.fx-slate-card-4,
+.fx-ember-card-5,
+.fx-frost-card-5,
+.fx-brass-card-5,
+.fx-indigo-card-5,
+.fx-slate-card-5 {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+.fx-ember-card-1::before,
+.fx-frost-card-1::before,
+.fx-brass-card-1::before,
+.fx-indigo-card-1::before,
+.fx-slate-card-1::before,
+.fx-ember-card-2::before,
+.fx-frost-card-2::before,
+.fx-brass-card-2::before,
+.fx-indigo-card-2::before,
+.fx-slate-card-2::before,
+.fx-ember-card-3::before,
+.fx-frost-card-3::before,
+.fx-brass-card-3::before,
+.fx-indigo-card-3::before,
+.fx-slate-card-3::before,
+.fx-ember-card-4::before,
+.fx-frost-card-4::before,
+.fx-brass-card-4::before,
+.fx-indigo-card-4::before,
+.fx-slate-card-4::before,
+.fx-ember-card-5::before,
+.fx-frost-card-5::before,
+.fx-brass-card-5::before,
+.fx-indigo-card-5::before,
+.fx-slate-card-5::before,
+.fx-ember-card-1::after,
+.fx-frost-card-1::after,
+.fx-brass-card-1::after,
+.fx-indigo-card-1::after,
+.fx-slate-card-1::after,
+.fx-ember-card-2::after,
+.fx-frost-card-2::after,
+.fx-brass-card-2::after,
+.fx-indigo-card-2::after,
+.fx-slate-card-2::after,
+.fx-ember-card-3::after,
+.fx-frost-card-3::after,
+.fx-brass-card-3::after,
+.fx-indigo-card-3::after,
+.fx-slate-card-3::after,
+.fx-ember-card-4::after,
+.fx-frost-card-4::after,
+.fx-brass-card-4::after,
+.fx-indigo-card-4::after,
+.fx-slate-card-4::after,
+.fx-ember-card-5::after,
+.fx-frost-card-5::after,
+.fx-brass-card-5::after,
+.fx-indigo-card-5::after,
+.fx-slate-card-5::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  z-index: -1;
+}
+.fx-ember-card-1::before,
+.fx-frost-card-1::before,
+.fx-brass-card-1::before,
+.fx-indigo-card-1::before,
+.fx-slate-card-1::before,
+.fx-ember-card-2::before,
+.fx-frost-card-2::before,
+.fx-brass-card-2::before,
+.fx-indigo-card-2::before,
+.fx-slate-card-2::before,
+.fx-ember-card-3::before,
+.fx-frost-card-3::before,
+.fx-brass-card-3::before,
+.fx-indigo-card-3::before,
+.fx-slate-card-3::before,
+.fx-ember-card-4::before,
+.fx-frost-card-4::before,
+.fx-brass-card-4::before,
+.fx-indigo-card-4::before,
+.fx-slate-card-4::before,
+.fx-ember-card-5::before,
+.fx-frost-card-5::before,
+.fx-brass-card-5::before,
+.fx-indigo-card-5::before,
+.fx-slate-card-5::before {
+  inset: 0;
+  border-radius: inherit;
+}
+.fx-ember-card-1::after,
+.fx-frost-card-1::after,
+.fx-brass-card-1::after,
+.fx-indigo-card-1::after,
+.fx-slate-card-1::after,
+.fx-ember-card-2::after,
+.fx-frost-card-2::after,
+.fx-brass-card-2::after,
+.fx-indigo-card-2::after,
+.fx-slate-card-2::after,
+.fx-ember-card-3::after,
+.fx-frost-card-3::after,
+.fx-brass-card-3::after,
+.fx-indigo-card-3::after,
+.fx-slate-card-3::after,
+.fx-ember-card-4::after,
+.fx-frost-card-4::after,
+.fx-brass-card-4::after,
+.fx-indigo-card-4::after,
+.fx-slate-card-4::after,
+.fx-ember-card-5::after,
+.fx-frost-card-5::after,
+.fx-brass-card-5::after,
+.fx-indigo-card-5::after,
+.fx-slate-card-5::after {
+  inset: -40px 0 0 0;
+  border-radius: inherit;
+}
+/* particles: stages 3 to 5 only */
+.fx-ember-card-3::after,
+.fx-frost-card-3::after,
+.fx-brass-card-3::after,
+.fx-indigo-card-3::after,
+.fx-slate-card-3::after,
+.fx-ember-card-4::after,
+.fx-frost-card-4::after,
+.fx-brass-card-4::after,
+.fx-indigo-card-4::after,
+.fx-slate-card-4::after,
+.fx-ember-card-5::after,
+.fx-frost-card-5::after,
+.fx-brass-card-5::after,
+.fx-indigo-card-5::after,
+.fx-slate-card-5::after {
+  background: radial-gradient(circle, var(--fx-c) 0 1.2px, transparent 1.8px) 0 0 / 40px 40px;
+  animation: var(--fx-p) var(--fx-pd) linear infinite;
+}
+
+/* ---- Card stage 1: faint edge ---- */
+.fx-ember-card-1::before,
+.fx-frost-card-1::before,
+.fx-brass-card-1::before,
+.fx-indigo-card-1::before,
+.fx-slate-card-1::before {
+  border: 1px solid var(--fx-a);
+  opacity: .4;
+  animation: fx-soft 3.6s ease-in-out infinite;
+}
+
+/* ---- Card stage 2: stronger edge with glow ---- */
+.fx-ember-card-2::before,
+.fx-frost-card-2::before,
+.fx-brass-card-2::before,
+.fx-indigo-card-2::before,
+.fx-slate-card-2::before {
+  border: 2px solid var(--fx-a);
+  box-shadow: inset 0 0 14px -6px var(--fx-a);
+  opacity: .6;
+  animation: fx-mid 2.8s ease-in-out infinite;
+}
+
+/* ---- Card stage 3: stage 2 plus rising particles ---- */
+.fx-ember-card-3::before,
+.fx-frost-card-3::before,
+.fx-brass-card-3::before,
+.fx-indigo-card-3::before,
+.fx-slate-card-3::before {
+  border: 2px solid var(--fx-a);
+  box-shadow: inset 0 0 14px -6px var(--fx-a);
+  opacity: .6;
+  animation: fx-mid 2.8s ease-in-out infinite;
+}
+.fx-ember-card-3::after,
+.fx-frost-card-3::after,
+.fx-brass-card-3::after,
+.fx-indigo-card-3::after,
+.fx-slate-card-3::after {
+  opacity: .55;
+}
+
+/* ---- Card stage 4: flames at the base ---- */
+.fx-ember-card-4::before,
+.fx-frost-card-4::before,
+.fx-brass-card-4::before,
+.fx-indigo-card-4::before,
+.fx-slate-card-4::before {
+  border: 2px solid var(--fx-a);
+  background: linear-gradient(to top, var(--fx-a) 0%, transparent 60%);
+  transform-origin: 50% 100%;
+  animation: fx-flame 1.6s ease-in-out infinite;
+}
+.fx-ember-card-4::after,
+.fx-frost-card-4::after,
+.fx-brass-card-4::after,
+.fx-indigo-card-4::after,
+.fx-slate-card-4::after {
+  opacity: .7;
+}
+
+/* ---- Card stage 5: whole card lit (top look) ---- */
+.fx-ember-card-5::before,
+.fx-frost-card-5::before,
+.fx-brass-card-5::before,
+.fx-indigo-card-5::before,
+.fx-slate-card-5::before {
+  border: 2px solid var(--fx-c);
+  background: radial-gradient(120% 80% at 50% 100%, var(--fx-a) 0%, transparent 70%);
+  animation: fx-deep 2.2s ease-in-out infinite;
+}
+.fx-ember-card-5::after,
+.fx-frost-card-5::after,
+.fx-brass-card-5::after,
+.fx-indigo-card-5::after,
+.fx-slate-card-5::after {
+  opacity: .9;
+}
+
+/* ---- Banners ---- */
+.fx-ember-banner-1,
+.fx-frost-banner-1,
+.fx-brass-banner-1,
+.fx-indigo-banner-1,
+.fx-slate-banner-1,
+.fx-ember-banner-2,
+.fx-frost-banner-2,
+.fx-brass-banner-2,
+.fx-indigo-banner-2,
+.fx-slate-banner-2,
+.fx-ember-banner-3,
+.fx-frost-banner-3,
+.fx-brass-banner-3,
+.fx-indigo-banner-3,
+.fx-slate-banner-3 {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+.fx-ember-banner-1::before,
+.fx-frost-banner-1::before,
+.fx-brass-banner-1::before,
+.fx-indigo-banner-1::before,
+.fx-slate-banner-1::before,
+.fx-ember-banner-2::before,
+.fx-frost-banner-2::before,
+.fx-brass-banner-2::before,
+.fx-indigo-banner-2::before,
+.fx-slate-banner-2::before,
+.fx-ember-banner-3::before,
+.fx-frost-banner-3::before,
+.fx-brass-banner-3::before,
+.fx-indigo-banner-3::before,
+.fx-slate-banner-3::before,
+.fx-ember-banner-1::after,
+.fx-frost-banner-1::after,
+.fx-brass-banner-1::after,
+.fx-indigo-banner-1::after,
+.fx-slate-banner-1::after,
+.fx-ember-banner-2::after,
+.fx-frost-banner-2::after,
+.fx-brass-banner-2::after,
+.fx-indigo-banner-2::after,
+.fx-slate-banner-2::after,
+.fx-ember-banner-3::after,
+.fx-frost-banner-3::after,
+.fx-brass-banner-3::after,
+.fx-indigo-banner-3::after,
+.fx-slate-banner-3::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  z-index: -1;
+  top: 0;
+  left: 0;
+  bottom: 0;
+}
+.fx-ember-banner-1::before,
+.fx-frost-banner-1::before,
+.fx-brass-banner-1::before,
+.fx-indigo-banner-1::before,
+.fx-slate-banner-1::before,
+.fx-ember-banner-2::before,
+.fx-frost-banner-2::before,
+.fx-brass-banner-2::before,
+.fx-indigo-banner-2::before,
+.fx-slate-banner-2::before,
+.fx-ember-banner-3::before,
+.fx-frost-banner-3::before,
+.fx-brass-banner-3::before,
+.fx-indigo-banner-3::before,
+.fx-slate-banner-3::before {
+  width: 200%;
+  background: linear-gradient(90deg, transparent 0 25%, var(--fx-a) 40%, transparent 55%) 0 0 / 50% 100% repeat-x;
+}
+.fx-ember-banner-1::after,
+.fx-frost-banner-1::after,
+.fx-brass-banner-1::after,
+.fx-indigo-banner-1::after,
+.fx-slate-banner-1::after,
+.fx-ember-banner-2::after,
+.fx-frost-banner-2::after,
+.fx-brass-banner-2::after,
+.fx-indigo-banner-2::after,
+.fx-slate-banner-2::after,
+.fx-ember-banner-3::after,
+.fx-frost-banner-3::after,
+.fx-brass-banner-3::after,
+.fx-indigo-banner-3::after,
+.fx-slate-banner-3::after {
+  width: 100%;
+}
+
+/* banner 1: slow slide */
+.fx-ember-banner-1::before,
+.fx-frost-banner-1::before,
+.fx-brass-banner-1::before,
+.fx-indigo-banner-1::before,
+.fx-slate-banner-1::before {
+  opacity: .3;
+  animation: fx-slide 8s linear infinite;
+}
+/* banner 2: two bands moving opposite ways */
+.fx-ember-banner-2::before,
+.fx-frost-banner-2::before,
+.fx-brass-banner-2::before,
+.fx-indigo-banner-2::before,
+.fx-slate-banner-2::before {
+  opacity: .5;
+  animation: fx-slide 5s linear infinite;
+}
+.fx-ember-banner-2::after,
+.fx-frost-banner-2::after,
+.fx-brass-banner-2::after,
+.fx-indigo-banner-2::after,
+.fx-slate-banner-2::after {
+  background: linear-gradient(90deg, transparent 0 30%, var(--fx-b) 50%, transparent 70%) 0 0 / 50% 100% repeat-x;
+  opacity: .25;
+  animation: fx-slide 9s linear infinite reverse;
+}
+/* banner 3: top banner, fast band plus sparks */
+.fx-ember-banner-3::before,
+.fx-frost-banner-3::before,
+.fx-brass-banner-3::before,
+.fx-indigo-banner-3::before,
+.fx-slate-banner-3::before {
+  opacity: .6;
+  animation: fx-slide 4s linear infinite;
+}
+.fx-ember-banner-3::after,
+.fx-frost-banner-3::after,
+.fx-brass-banner-3::after,
+.fx-indigo-banner-3::after,
+.fx-slate-banner-3::after {
+  background: radial-gradient(circle, var(--fx-c) 0 1.2px, transparent 1.8px) 0 0 / 40px 40px;
+  opacity: .7;
+  animation: var(--fx-p) var(--fx-pd) linear infinite;
+}
+
+/* ---- Names ---- */
+.fx-ember-name-1,
+.fx-frost-name-1,
+.fx-brass-name-1,
+.fx-indigo-name-1,
+.fx-slate-name-1,
+.fx-ember-name-2,
+.fx-frost-name-2,
+.fx-brass-name-2,
+.fx-indigo-name-2,
+.fx-slate-name-2,
+.fx-ember-name-3,
+.fx-frost-name-3,
+.fx-brass-name-3,
+.fx-indigo-name-3,
+.fx-slate-name-3 {
+  position: relative;
+  display: inline-block;
+  isolation: isolate;
+  overflow: hidden;
+}
+.fx-ember-name-1::after,
+.fx-frost-name-1::after,
+.fx-brass-name-1::after,
+.fx-indigo-name-1::after,
+.fx-slate-name-1::after,
+.fx-ember-name-2::after,
+.fx-frost-name-2::after,
+.fx-brass-name-2::after,
+.fx-indigo-name-2::after,
+.fx-slate-name-2::after,
+.fx-ember-name-3::after,
+.fx-frost-name-3::after,
+.fx-brass-name-3::after,
+.fx-indigo-name-3::after,
+.fx-slate-name-3::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 40%;
+  pointer-events: none;
+  z-index: 1;
+  background: linear-gradient(90deg, transparent, #fff, transparent);
+  opacity: .3;
+}
+/* name 1: coloured name with a faint flicker sheen */
+.fx-ember-name-1,
+.fx-frost-name-1,
+.fx-brass-name-1,
+.fx-indigo-name-1,
+.fx-slate-name-1 {
+  color: var(--fx-b);
+  text-shadow: 0 0 6px var(--fx-a);
+}
+.fx-ember-name-1::after,
+.fx-frost-name-1::after,
+.fx-brass-name-1::after,
+.fx-indigo-name-1::after,
+.fx-slate-name-1::after {
+  animation: fx-sweep 5s linear infinite, fx-flicker 1.4s linear infinite;
+}
+/* name 2: gradient name, slow sheen */
+.fx-ember-name-2,
+.fx-frost-name-2,
+.fx-brass-name-2,
+.fx-indigo-name-2,
+.fx-slate-name-2 {
+  background: linear-gradient(90deg, var(--fx-a), var(--fx-b), var(--fx-c));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+.fx-ember-name-2::after,
+.fx-frost-name-2::after,
+.fx-brass-name-2::after,
+.fx-indigo-name-2::after,
+.fx-slate-name-2::after {
+  opacity: .35;
+  animation: fx-sweep 4s linear infinite;
+}
+/* name 3: full gradient name, faster sheen and flicker */
+.fx-ember-name-3,
+.fx-frost-name-3,
+.fx-brass-name-3,
+.fx-indigo-name-3,
+.fx-slate-name-3 {
+  background: linear-gradient(90deg, var(--fx-a), var(--fx-b), var(--fx-c), var(--fx-b), var(--fx-a));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+.fx-ember-name-3::after,
+.fx-frost-name-3::after,
+.fx-brass-name-3::after,
+.fx-indigo-name-3::after,
+.fx-slate-name-3::after {
+  opacity: .5;
+  animation: fx-sweep 2.6s linear infinite, fx-flicker 3s linear infinite;
+}
+
+/* ---- Badges (28px disc by the photo; resize if the screen needs it) ---- */
+.fx-ember-badge-1,
+.fx-frost-badge-1,
+.fx-brass-badge-1,
+.fx-indigo-badge-1,
+.fx-slate-badge-1,
+.fx-ember-badge-2,
+.fx-frost-badge-2,
+.fx-brass-badge-2,
+.fx-indigo-badge-2,
+.fx-slate-badge-2,
+.fx-ember-badge-3,
+.fx-frost-badge-3,
+.fx-brass-badge-3,
+.fx-indigo-badge-3,
+.fx-slate-badge-3 {
+  position: relative;
+  display: inline-block;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  isolation: isolate;
+  background: radial-gradient(circle at 35% 30%, var(--fx-c), var(--fx-b) 45%, var(--fx-a));
+}
+.fx-ember-badge-1::before,
+.fx-frost-badge-1::before,
+.fx-brass-badge-1::before,
+.fx-indigo-badge-1::before,
+.fx-slate-badge-1::before,
+.fx-ember-badge-2::before,
+.fx-frost-badge-2::before,
+.fx-brass-badge-2::before,
+.fx-indigo-badge-2::before,
+.fx-slate-badge-2::before,
+.fx-ember-badge-3::before,
+.fx-frost-badge-3::before,
+.fx-brass-badge-3::before,
+.fx-indigo-badge-3::before,
+.fx-slate-badge-3::before,
+.fx-ember-badge-1::after,
+.fx-frost-badge-1::after,
+.fx-brass-badge-1::after,
+.fx-indigo-badge-1::after,
+.fx-slate-badge-1::after,
+.fx-ember-badge-2::after,
+.fx-frost-badge-2::after,
+.fx-brass-badge-2::after,
+.fx-indigo-badge-2::after,
+.fx-slate-badge-2::after,
+.fx-ember-badge-3::after,
+.fx-frost-badge-3::after,
+.fx-brass-badge-3::after,
+.fx-indigo-badge-3::after,
+.fx-slate-badge-3::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  z-index: -1;
+  border-radius: 50%;
+}
+/* badge 1: breathing ring */
+.fx-ember-badge-1::before,
+.fx-frost-badge-1::before,
+.fx-brass-badge-1::before,
+.fx-indigo-badge-1::before,
+.fx-slate-badge-1::before {
+  inset: -3px;
+  border: 2px solid var(--fx-a);
+  animation: fx-soft 3s ease-in-out infinite;
+}
+/* badge 2: spinning ring plus inner glow */
+.fx-ember-badge-2::before,
+.fx-frost-badge-2::before,
+.fx-brass-badge-2::before,
+.fx-indigo-badge-2::before,
+.fx-slate-badge-2::before {
+  inset: -4px;
+  background: conic-gradient(var(--fx-a), var(--fx-c), var(--fx-a));
+  -webkit-mask: radial-gradient(farthest-side, transparent 78%, #000 80%);
+  mask: radial-gradient(farthest-side, transparent 78%, #000 80%);
+  animation: fx-spin 5s linear infinite;
+}
+.fx-ember-badge-2::after,
+.fx-frost-badge-2::after,
+.fx-brass-badge-2::after,
+.fx-indigo-badge-2::after,
+.fx-slate-badge-2::after {
+  inset: 6px;
+  background: radial-gradient(circle, var(--fx-c), transparent 70%);
+  animation: fx-soft 2.4s ease-in-out infinite;
+}
+/* badge 3: crest, slow two-tone ring and a glow */
+.fx-ember-badge-3,
+.fx-frost-badge-3,
+.fx-brass-badge-3,
+.fx-indigo-badge-3,
+.fx-slate-badge-3 {
+  box-shadow: 0 0 8px var(--fx-a);
+}
+.fx-ember-badge-3::before,
+.fx-frost-badge-3::before,
+.fx-brass-badge-3::before,
+.fx-indigo-badge-3::before,
+.fx-slate-badge-3::before {
+  inset: -4px;
+  background: conic-gradient(var(--fx-c), var(--fx-a), var(--fx-c), var(--fx-a), var(--fx-c));
+  -webkit-mask: radial-gradient(farthest-side, transparent 78%, #000 80%);
+  mask: radial-gradient(farthest-side, transparent 78%, #000 80%);
+  animation: fx-spin 9s linear infinite;
+}
+.fx-ember-badge-3::after,
+.fx-frost-badge-3::after,
+.fx-brass-badge-3::after,
+.fx-indigo-badge-3::after,
+.fx-slate-badge-3::after {
+  inset: 0;
+  background: radial-gradient(circle at 40% 35%, var(--fx-c), transparent 60%);
+  animation: fx-soft 2.6s ease-in-out infinite;
+}
+
+/* ---- Reduced motion: keep the resting look, stop all movement ---- */
+@media (prefers-reduced-motion: reduce) {
+  .fx-ember-card-1,
+  .fx-ember-card-1::before,
+  .fx-ember-card-1::after,
+  .fx-ember-card-2,
+  .fx-ember-card-2::before,
+  .fx-ember-card-2::after,
+  .fx-ember-card-3,
+  .fx-ember-card-3::before,
+  .fx-ember-card-3::after,
+  .fx-ember-card-4,
+  .fx-ember-card-4::before,
+  .fx-ember-card-4::after,
+  .fx-ember-card-5,
+  .fx-ember-card-5::before,
+  .fx-ember-card-5::after,
+  .fx-ember-banner-1,
+  .fx-ember-banner-1::before,
+  .fx-ember-banner-1::after,
+  .fx-ember-banner-2,
+  .fx-ember-banner-2::before,
+  .fx-ember-banner-2::after,
+  .fx-ember-banner-3,
+  .fx-ember-banner-3::before,
+  .fx-ember-banner-3::after,
+  .fx-ember-name-1,
+  .fx-ember-name-1::before,
+  .fx-ember-name-1::after,
+  .fx-ember-name-2,
+  .fx-ember-name-2::before,
+  .fx-ember-name-2::after,
+  .fx-ember-name-3,
+  .fx-ember-name-3::before,
+  .fx-ember-name-3::after,
+  .fx-ember-badge-1,
+  .fx-ember-badge-1::before,
+  .fx-ember-badge-1::after,
+  .fx-ember-badge-2,
+  .fx-ember-badge-2::before,
+  .fx-ember-badge-2::after,
+  .fx-ember-badge-3,
+  .fx-ember-badge-3::before,
+  .fx-ember-badge-3::after,
+  .fx-frost-card-1,
+  .fx-frost-card-1::before,
+  .fx-frost-card-1::after,
+  .fx-frost-card-2,
+  .fx-frost-card-2::before,
+  .fx-frost-card-2::after,
+  .fx-frost-card-3,
+  .fx-frost-card-3::before,
+  .fx-frost-card-3::after,
+  .fx-frost-card-4,
+  .fx-frost-card-4::before,
+  .fx-frost-card-4::after,
+  .fx-frost-card-5,
+  .fx-frost-card-5::before,
+  .fx-frost-card-5::after,
+  .fx-frost-banner-1,
+  .fx-frost-banner-1::before,
+  .fx-frost-banner-1::after,
+  .fx-frost-banner-2,
+  .fx-frost-banner-2::before,
+  .fx-frost-banner-2::after,
+  .fx-frost-banner-3,
+  .fx-frost-banner-3::before,
+  .fx-frost-banner-3::after,
+  .fx-frost-name-1,
+  .fx-frost-name-1::before,
+  .fx-frost-name-1::after,
+  .fx-frost-name-2,
+  .fx-frost-name-2::before,
+  .fx-frost-name-2::after,
+  .fx-frost-name-3,
+  .fx-frost-name-3::before,
+  .fx-frost-name-3::after,
+  .fx-frost-badge-1,
+  .fx-frost-badge-1::before,
+  .fx-frost-badge-1::after,
+  .fx-frost-badge-2,
+  .fx-frost-badge-2::before,
+  .fx-frost-badge-2::after,
+  .fx-frost-badge-3,
+  .fx-frost-badge-3::before,
+  .fx-frost-badge-3::after,
+  .fx-brass-card-1,
+  .fx-brass-card-1::before,
+  .fx-brass-card-1::after,
+  .fx-brass-card-2,
+  .fx-brass-card-2::before,
+  .fx-brass-card-2::after,
+  .fx-brass-card-3,
+  .fx-brass-card-3::before,
+  .fx-brass-card-3::after,
+  .fx-brass-card-4,
+  .fx-brass-card-4::before,
+  .fx-brass-card-4::after,
+  .fx-brass-card-5,
+  .fx-brass-card-5::before,
+  .fx-brass-card-5::after,
+  .fx-brass-banner-1,
+  .fx-brass-banner-1::before,
+  .fx-brass-banner-1::after,
+  .fx-brass-banner-2,
+  .fx-brass-banner-2::before,
+  .fx-brass-banner-2::after,
+  .fx-brass-banner-3,
+  .fx-brass-banner-3::before,
+  .fx-brass-banner-3::after,
+  .fx-brass-name-1,
+  .fx-brass-name-1::before,
+  .fx-brass-name-1::after,
+  .fx-brass-name-2,
+  .fx-brass-name-2::before,
+  .fx-brass-name-2::after,
+  .fx-brass-name-3,
+  .fx-brass-name-3::before,
+  .fx-brass-name-3::after,
+  .fx-brass-badge-1,
+  .fx-brass-badge-1::before,
+  .fx-brass-badge-1::after,
+  .fx-brass-badge-2,
+  .fx-brass-badge-2::before,
+  .fx-brass-badge-2::after,
+  .fx-brass-badge-3,
+  .fx-brass-badge-3::before,
+  .fx-brass-badge-3::after,
+  .fx-indigo-card-1,
+  .fx-indigo-card-1::before,
+  .fx-indigo-card-1::after,
+  .fx-indigo-card-2,
+  .fx-indigo-card-2::before,
+  .fx-indigo-card-2::after,
+  .fx-indigo-card-3,
+  .fx-indigo-card-3::before,
+  .fx-indigo-card-3::after,
+  .fx-indigo-card-4,
+  .fx-indigo-card-4::before,
+  .fx-indigo-card-4::after,
+  .fx-indigo-card-5,
+  .fx-indigo-card-5::before,
+  .fx-indigo-card-5::after,
+  .fx-indigo-banner-1,
+  .fx-indigo-banner-1::before,
+  .fx-indigo-banner-1::after,
+  .fx-indigo-banner-2,
+  .fx-indigo-banner-2::before,
+  .fx-indigo-banner-2::after,
+  .fx-indigo-banner-3,
+  .fx-indigo-banner-3::before,
+  .fx-indigo-banner-3::after,
+  .fx-indigo-name-1,
+  .fx-indigo-name-1::before,
+  .fx-indigo-name-1::after,
+  .fx-indigo-name-2,
+  .fx-indigo-name-2::before,
+  .fx-indigo-name-2::after,
+  .fx-indigo-name-3,
+  .fx-indigo-name-3::before,
+  .fx-indigo-name-3::after,
+  .fx-indigo-badge-1,
+  .fx-indigo-badge-1::before,
+  .fx-indigo-badge-1::after,
+  .fx-indigo-badge-2,
+  .fx-indigo-badge-2::before,
+  .fx-indigo-badge-2::after,
+  .fx-indigo-badge-3,
+  .fx-indigo-badge-3::before,
+  .fx-indigo-badge-3::after,
+  .fx-slate-card-1,
+  .fx-slate-card-1::before,
+  .fx-slate-card-1::after,
+  .fx-slate-card-2,
+  .fx-slate-card-2::before,
+  .fx-slate-card-2::after,
+  .fx-slate-card-3,
+  .fx-slate-card-3::before,
+  .fx-slate-card-3::after,
+  .fx-slate-card-4,
+  .fx-slate-card-4::before,
+  .fx-slate-card-4::after,
+  .fx-slate-card-5,
+  .fx-slate-card-5::before,
+  .fx-slate-card-5::after,
+  .fx-slate-banner-1,
+  .fx-slate-banner-1::before,
+  .fx-slate-banner-1::after,
+  .fx-slate-banner-2,
+  .fx-slate-banner-2::before,
+  .fx-slate-banner-2::after,
+  .fx-slate-banner-3,
+  .fx-slate-banner-3::before,
+  .fx-slate-banner-3::after,
+  .fx-slate-name-1,
+  .fx-slate-name-1::before,
+  .fx-slate-name-1::after,
+  .fx-slate-name-2,
+  .fx-slate-name-2::before,
+  .fx-slate-name-2::after,
+  .fx-slate-name-3,
+  .fx-slate-name-3::before,
+  .fx-slate-name-3::after,
+  .fx-slate-badge-1,
+  .fx-slate-badge-1::before,
+  .fx-slate-badge-1::after,
+  .fx-slate-badge-2,
+  .fx-slate-badge-2::before,
+  .fx-slate-badge-2::after,
+  .fx-slate-badge-3,
+  .fx-slate-badge-3::before,
+  .fx-slate-badge-3::after {
+    animation: none !important;
+  }
+}
