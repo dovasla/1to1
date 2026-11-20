@@ -284,13 +284,18 @@
     var cart = (window.PlayerCartIcon ? window.PlayerCartIcon.svg(44) : '');
     return '' +
       '<header class="ph-top">' +
-        '<p class="ph-lvl">' + (d.chip ? d.chip : '<b>' + lvl + '</b>') + ' · ' + pres + '</p>' +
+        '<div class="ph-top-l">' +
+          '<p class="ph-lvl">' + (d.chip ? d.chip : '<b>' + lvl + '</b>') + '</p>' +
+        '</div>' +
         '<div class="ph-top-r">' +
           '<a class="ph-coins" href="#shop" data-go="shop" aria-label="Coins, open shop">' + ICON.coin +
             '<b>' + esc(d.coins == null ? '–' : d.coins) + '</b><span class="ph-cap">Coins</span></a>' +
         '</div>' +
       '</header>' +
-      '<p class="ph-note ph-tree-line"><a href="#profile/tree" data-go="tree">Skill tree</a></p>' +
+      '<div class="ph-pair">' +
+        '<a class="ph-tile" href="#profile/tree" data-go="tree"><span class="ph-tile-cap">Skill tree</span><span class="ph-tile-sub">' + pres + '</span></a>' +
+        '<a class="ph-tile" href="#shop" data-go="shop"><span class="ph-tile-cap">Shop</span><span class="ph-tile-sub">Spend coins</span></a>' +
+      '</div>' +
       '<div data-slot="tonight">' + tonightHtml(d, now, busy, kp) + '</div>' +
       payHtml(d.pay) +
       streak +

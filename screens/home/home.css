@@ -21,7 +21,11 @@
 }
 .ph h1 { font-size:28px; line-height:1; margin:0; }  /* font and colour come from app-tokens.css */
 /* 18 Nov: the level line wraps into the space left of the coins pill (it used to run under the pill). */
-.ph-lvl { margin:0; font-size:18px; font-weight:800; white-space:normal; line-height:1.25; flex:1 1 auto; min-width:0; }
+/* 20 Nov: the name banner and the coins pill share one 48px row, centred on the same line. */
+.ph-top-l { display:flex; align-items:center; flex:1 1 auto; min-width:0; min-height:48px; }
+.ph-lvl { margin:0; font-size:18px; font-weight:800; white-space:normal; line-height:1.25; max-width:100%; min-width:0; min-height:48px; display:flex; align-items:center; }
+.ph-lvl > * { margin:0; }
+.ph-pres { margin:0; font-size:14px; font-weight:800; line-height:1.2; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
 .ph-top-r { display:flex; align-items:center; gap:8px; flex:none; }
 .ph-basket { display:flex; align-items:center; justify-content:center; width:48px; height:48px; border-radius:12px; border:2px solid var(--edge); background:var(--card); color:var(--brand-text); text-decoration:none; flex:none; }
 .ph-basket svg, .ph-basket svg * { fill:none; stroke:currentColor; }
@@ -55,7 +59,7 @@
 .ph-bar i { display:block; height:100%; background:var(--brand); border-radius:99px; transition:width .6s ease; }
 
 /* Tonight card */
-.ph-card { margin-top:12px; padding:14px; border-radius:16px; border:1px solid var(--line); background:var(--card); }
+.ph-card { margin-top:12px; padding:16px; border-radius:16px; border:1px solid var(--line); background:var(--card); }
 .ph-card--hero { border-color:var(--focus); }
 .ph-card h2 { font-size:24px; line-height:1.05; margin:6px 0 0; }  /* heading style from app-tokens.css */
 .ph-vs { font-size:18px; margin:6px 0 0; color:var(--muted); }
@@ -145,8 +149,12 @@
 @keyframes ph-sheet-up { from { transform:translateY(100%); } to { transform:none; } }
 
 /* Spacing pass (19 Nov): the Skill tree link is a 48px tap chip, and the cards that sit beside .ph share its 16px side gutter. */
-.ph-tree-line { margin:8px 0 0; }
-.ph-tree-line a { display:inline-flex; align-items:center; min-height:48px; padding:0 14px; border:2px solid var(--line); border-radius:999px; background:var(--card); color:var(--brand-text); font-size:14px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; }
+/* 20 Nov: Skill tree and Shop are two equal boxes side by side, the full width of the door code card. */
+.ph-pair { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px; }
+.ph-tile { display:flex; flex-direction:column; justify-content:center; gap:4px; min-height:96px; padding:14px 16px; border:2px solid var(--line); border-radius:var(--radius-card); background:var(--card); color:var(--ink); text-decoration:none; }
+.ph-tile:focus-visible { outline:3px solid var(--focus); outline-offset:2px; }
+.ph-tile-cap { font-family:var(--font-head); font-size:22px; font-weight:700; line-height:1.1; text-transform:uppercase; letter-spacing:.02em; color:var(--brand-text); }
+.ph-tile-sub { font-size:14px; font-weight:700; line-height:1.2; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
 #v-home > .home-install, #v-home > .home-alerts, #v-home > .home-rival, #v-home > .home-shop { margin-left:16px; margin-right:16px; }
 /* 19 Nov: the install card is out of Home; the Shop card takes its place. The install code stays in app.js. */
 #v-home > #homeInstall { display:none !important; }
